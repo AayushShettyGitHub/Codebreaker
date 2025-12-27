@@ -1,6 +1,8 @@
 package com.example.codebreaker.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 @Entity
@@ -17,15 +19,14 @@ public class Player {
     @Column(unique = true, nullable = false)
     private String username;
 
-    private String password; // for now plain, later encrypt
-
-    private int score;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String password;
 
     @Enumerated(EnumType.STRING)
-    private Role role; // ADMIN or MEMBER
+    private Role role;
 
     @ManyToOne
     @JoinColumn(name = "room_id")
+    @JsonIgnore
     private Room room;
 }
-

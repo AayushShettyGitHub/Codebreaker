@@ -1,46 +1,33 @@
-import { useState } from "react";
-import Signup from "./components/AuthComponents/Signup";
-import Login from "./components/AuthComponents/Login";
-import CreateRoom from "./components/RoomComponents/CreateRoom";
-import JoinRoom from "./components/RoomComponents/JoinRoom";
-import AdminRoom from "./components/RoomComponents/AdminRoom";
-import Submit from "./components/RoomComponents/Submit";
-import RoomDisplay from "./components/RoomComponents/RoomDisplay";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import AuthPage from "./components/Pages/AuthPage";
+import HomePage from "./components/Pages/Homepage";
+import { AuthProvider } from "./context/AuthContext";
+import { RoomProvider } from "./context/RoomContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
-  const [playerId, setPlayerId] = useState(null);
-  const [player, setPlayer] = useState(null);
-  const [room, setRoom] = useState(null);
-
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>CodeBreaker Test UI</h1>
+    
+    <AuthProvider>
+      <RoomProvider>
+        <BrowserRouter>
+        
 
-      {!playerId && (
-        <>
-          <Signup onSignup={(p) => { setPlayer(p); setPlayerId(p.id); }} />
-          <Login onLogin={(id) => setPlayerId(id)} />
-        </>
-      )}
-
-      {playerId && !room && (
-        <>
-          <CreateRoom playerId={playerId} onCreate={setRoom} />
-          <JoinRoom playerId={playerId} onJoin={setRoom} />
-        </>
-      )}
-
-      {room && (
-        <>
-          <RoomDisplay room={room} />
-
-          {room.admin?.id === playerId && (
-            <AdminRoom roomId={room.id} />
-          )}
-
-          <Submit roomId={room.id} playerId={playerId} />
-        </>
-      )}
-    </div>
+          <Routes>
+            
+            <Route path="/" element={<Navigate to="/auth" />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route
+              path="/home"
+              element={
+                <ProtectedRoute>
+                  <HomePage />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </BrowserRouter>
+      </RoomProvider>
+    </AuthProvider>
   );
 }

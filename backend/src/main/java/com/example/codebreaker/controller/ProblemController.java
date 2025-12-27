@@ -2,6 +2,7 @@ package com.example.codebreaker.controller;
 
 import com.example.codebreaker.model.Problem;
 import com.example.codebreaker.services.ProblemService;
+import com.example.codebreaker.Dto.ProblemWithTestCasesRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,13 +17,17 @@ public class ProblemController {
         this.service = service;
     }
 
-    @PostMapping
-    public Problem create(@RequestBody Problem problem) {
-        return service.create(problem);
+    @PostMapping("/{roomId}/with-test-cases")
+    public Problem createWithTestCases(
+            @PathVariable Long roomId,
+            @RequestBody ProblemWithTestCasesRequest request) {
+        return service.createWithTestCases(roomId, request);
     }
 
-    @GetMapping
-    public List<Problem> getAll() {
-        return service.getAll();
+    // New endpoint to fetch problem with test cases
+    @GetMapping("/{id}")
+    public Problem getProblem(@PathVariable Long id) {
+        return service.getById(id);
     }
 }
+
