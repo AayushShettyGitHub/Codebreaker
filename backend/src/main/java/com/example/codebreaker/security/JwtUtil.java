@@ -11,8 +11,8 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256); // secure random key
-    private final long expiration = 1000 * 60 * 60; // 1 hour
+    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private final long expiration = 1000 * 60 * 60;
 
     public String generateToken(String username, Long playerId, String role) {
         return Jwts.builder()

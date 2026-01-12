@@ -29,31 +29,31 @@ export default function CreateRoom({ playerId, onCreate }) {
   }
 
   return (
-    <div className="bg-white shadow rounded-lg p-4">
-      <h3 className="text-lg font-semibold">Create a Room</h3>
-      <p className="text-sm text-gray-500 mt-1">Create a room and invite others to join using the room code.</p>
+    <div className="bg-slate-900 border border-slate-700 shadow-lg rounded-lg p-6">
+      <h3 className="text-xl font-bold mb-2 bg-gradient-to-r from-sky-400 to-cyan-400 bg-clip-text text-transparent">Create Competition</h3>
+      <p className="text-sm text-slate-400 mb-4">Start a new coding competition and invite others using the room code.</p>
 
-      <div className="mt-3 space-y-3">
+      <div className="space-y-3">
         <input
-          className="w-full p-2 border rounded"
+          className="w-full p-3 border border-slate-600 rounded-lg bg-slate-800 text-white placeholder-slate-500 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20"
           placeholder="Room name"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
 
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-sm text-slate-300">
           <input
             type="checkbox"
             checked={isPrivate}
             onChange={() => setIsPrivate(!isPrivate)}
-            className="w-4 h-4"
+            className="w-4 h-4 accent-sky-500"
           />
           Private room
         </label>
 
-        <div className="flex justify-end">
+        <div className="flex justify-end pt-2">
           <button
-            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+            className="px-6 py-1.5 bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600 text-white font-semibold rounded-lg transition-all text-sm"
             onClick={handleCreate}
           >
             Create Room

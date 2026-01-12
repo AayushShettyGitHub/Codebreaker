@@ -8,5 +8,5 @@ import lombok.Data;
 public class TestCaseResult {
     private Long testCaseId;
     private boolean passed;
-    private String error; // runtime error or timeout
+    private String error;
 }

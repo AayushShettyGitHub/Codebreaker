@@ -11,7 +11,6 @@ export default function Lobby() {
   const { user } = useAuth();
   const { myRoom, setMyRoom, loading } = useRoom();
 
-  // Handle leaving the room
   async function handleLeave() {
     if (!myRoom || !user?.id) return;
 
@@ -38,10 +37,9 @@ export default function Lobby() {
           <RoomDisplay
             room={myRoom}
             currentUser={user}
-            onLeave={handleLeave} // Only for non-admins
+            onLeave={handleLeave}
           />
 
-          {/* Show admin controls only if current user is admin */}
           {myRoom.admin?.id === user?.id && (
             <AdminRoom
               roomId={myRoom.id}

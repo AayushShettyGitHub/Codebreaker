@@ -2,8 +2,10 @@ package com.example.codebreaker.services;
 
 import com.example.codebreaker.model.Player;
 import com.example.codebreaker.model.Room;
+import com.example.codebreaker.model.RoomPlayer;
 import com.example.codebreaker.model.Role;
 import com.example.codebreaker.repo.PlayerRepository;
+import com.example.codebreaker.repo.RoomPlayerRepository;
 import com.example.codebreaker.repo.RoomRepository;
 
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,11 +22,16 @@ public class PlayerService {
 
     private final PlayerRepository playerRepo;
     private final RoomRepository roomRepo;
+    private final RoomPlayerRepository roomPlayerRepo;
     private final PasswordEncoder passwordEncoder;
 
-    public PlayerService(PlayerRepository playerRepo, RoomRepository roomRepo, PasswordEncoder passwordEncoder) {
+    public PlayerService(PlayerRepository playerRepo,
+                         RoomRepository roomRepo,
+                         RoomPlayerRepository roomPlayerRepo,
+                         PasswordEncoder passwordEncoder) {
         this.playerRepo = playerRepo;
         this.roomRepo = roomRepo;
+        this.roomPlayerRepo = roomPlayerRepo;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -57,7 +64,6 @@ public class PlayerService {
         return player;
     }
 
-
     public Player joinRoom(Long roomId, Long playerId) {
         Room room = roomRepo.findById(roomId)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
@@ -68,11 +74,8 @@ public class PlayerService {
             throw new RuntimeException("Player already in a room");
         }
 
-        // delegate to RoomService behaviour by performing same actions here
         player.setRoom(room);
-        playerRepo.save(player);
-
-        return player;
+        return playerRepo.save(player);
     }
 
     public Player leaveRoom(Long playerId) {
@@ -90,7 +93,6 @@ public class PlayerService {
             return playerRepo.save(player);
         }
 
-        // Remove any RoomPlayer entries that reference this player
         room.getPlayers().removeIf(rp -> rp.getPlayer() != null && rp.getPlayer().getId().equals(playerId));
         player.setRoom(null);
 
@@ -98,11 +100,10 @@ public class PlayerService {
         return playerRepo.save(player);
     }
 
-    public List<Player> getPlayers(Long roomId) {
+    public List<RoomPlayer> getRoomPlayers(Long roomId) {
         Room room = roomRepo.findById(roomId)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
-
-        return playerRepo.findByRoom(room);
+        return roomPlayerRepo.findByRoom(room);
     }
 
     public Player getByUsernameAndRoom(String username, Room room) {
@@ -127,11 +128,9 @@ public class PlayerService {
             String username = SecurityContextHolder.getContext()
                     .getAuthentication()
                     .getName();
-
             if (username != null && !username.isEmpty()) {
                 return playerRepo.findByUsername(username);
             }
-
             return Optional.empty();
         } catch (Exception e) {
             return Optional.empty();

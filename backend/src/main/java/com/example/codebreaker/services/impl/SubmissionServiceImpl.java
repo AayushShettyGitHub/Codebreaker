@@ -4,16 +4,19 @@ import com.example.codebreaker.Dto.SubmissionRequest;
 import com.example.codebreaker.Dto.SubmissionResult;
 import com.example.codebreaker.Dto.TestCaseResult;
 import com.example.codebreaker.model.Problem;
-import com.example.codebreaker.model.Player;
-import com.example.codebreaker.model.TestCase;
+import com.example.codebreaker.model.Room;
 import com.example.codebreaker.model.RoomPlayer;
+import com.example.codebreaker.model.Submission;
 import com.example.codebreaker.repo.ProblemRepository;
-import com.example.codebreaker.services.PlayerService;
 import com.example.codebreaker.repo.RoomPlayerRepository;
+import com.example.codebreaker.repo.SubmissionRepository;
+import com.example.codebreaker.services.ScoringService;
 import com.example.codebreaker.services.SubmissionService;
 import com.example.codebreaker.util.DockerExecutor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,86 +25,103 @@ import java.util.List;
 public class SubmissionServiceImpl implements SubmissionService {
 
     private final ProblemRepository problemRepo;
-    private final PlayerService playerService;
     private final RoomPlayerRepository roomPlayerRepo;
+    private final SubmissionRepository submissionRepo;
+    private final ScoringService scoringService;
 
-    public SubmissionServiceImpl(ProblemRepository problemRepo, PlayerService playerService, RoomPlayerRepository roomPlayerRepo) {
+    public SubmissionServiceImpl(
+            ProblemRepository problemRepo,
+            RoomPlayerRepository roomPlayerRepo,
+            SubmissionRepository submissionRepo,
+            ScoringService scoringService
+    ) {
         this.problemRepo = problemRepo;
-        this.playerService = playerService;
         this.roomPlayerRepo = roomPlayerRepo;
+        this.submissionRepo = submissionRepo;
+        this.scoringService = scoringService;
     }
 
     @Override
     @Transactional
     public SubmissionResult submitCode(SubmissionRequest request) {
-        // Fetch problem and player
+
         Problem problem = problemRepo.findById(request.getProblemId())
                 .orElseThrow(() -> new RuntimeException("Problem not found"));
 
-        // Verify player is in the room
-        RoomPlayer roomPlayer = roomPlayerRepo.findByRoomIdAndPlayerId(request.getRoomId(), request.getPlayerId())
+        RoomPlayer roomPlayer = roomPlayerRepo
+                .findByRoomIdAndPlayerId(request.getRoomId(), request.getPlayerId())
                 .orElseThrow(() -> new RuntimeException("Player not in room"));
 
-        // Check if problem has test cases
+        Room room = roomPlayer.getRoom();
+
+        if (!room.isProblemActive()) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Submission window has closed"
+            );
+        }
+
+        if (roomPlayer.isHasAnsweredCorrectly()) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You have already solved this problem"
+            );
+        }
+
         if (problem.getTestCases() == null || problem.getTestCases().isEmpty()) {
             throw new RuntimeException("Problem has no test cases");
         }
 
-        // Execute code against all test cases
         List<TestCaseResult> results = new ArrayList<>();
         boolean allPassed = true;
 
-        for (TestCase tc : problem.getTestCases()) {
-            DockerExecutor.ExecutionResult execResult = DockerExecutor.execute(
-                    request.getLanguage(),
-                    request.getCode(),
-                    tc.getInput()
-            );
+        for (var tc : problem.getTestCases()) {
 
-            boolean passed = false;
-            String error = null;
+            DockerExecutor.ExecutionResult exec =
+                    DockerExecutor.execute(
+                            request.getLanguage(),
+                            request.getCode(),
+                            tc.getInput()
+                    );
 
-            if (execResult.success) {
-                // Compare output (trim whitespace)
-                String expectedOutput = tc.getOutput().trim();
-                String actualOutput = execResult.output.trim();
-                passed = expectedOutput.equals(actualOutput);
-
-                if (!passed) {
-                    error = "Output mismatch. Expected: " + expectedOutput + ", Got: " + actualOutput;
-                }
-            } else {
-                error = execResult.error;
-                passed = false;
-            }
+            boolean passed = exec.success &&
+                    exec.output.trim().equals(tc.getOutput().trim());
 
             results.add(TestCaseResult.builder()
                     .testCaseId(tc.getId())
                     .passed(passed)
-                    .error(error)
+                    .error(exec.success ? null : exec.error)
                     .build());
 
-            if (!passed) {
-                allPassed = false;
-            }
+            if (!passed) allPassed = false;
         }
 
-        // Update score if all passed
-        int scoreGain = 0;
+        Submission submission = Submission.builder()
+                .room(room)
+                .player(roomPlayer)
+                .problem(problem)
+                .code(request.getCode())
+                .language(request.getLanguage())
+                .passed(allPassed)
+                .build();
+
+        submissionRepo.save(submission);
+
+        int scoreGained = 0;
+
         if (allPassed) {
-            scoreGain = 50; // base score for passing all test cases
-            roomPlayer.setScore(roomPlayer.getScore() + scoreGain);
+            scoreGained = scoringService.applyScore(submission);
+
             roomPlayer.setHasAnsweredCorrectly(true);
             roomPlayer.setCorrectAnswerTimestamp(System.currentTimeMillis());
-            roomPlayerRepo.save(roomPlayer);
         }
 
         return SubmissionResult.builder()
-                .problemId(request.getProblemId())
+                .problemId(problem.getId())
                 .playerId(request.getPlayerId())
                 .results(results)
                 .allPassed(allPassed)
-                .score(allPassed ? scoreGain : 0)
+                .score(scoreGained)
                 .build();
     }
 }

@@ -45,7 +45,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                 List.of(new SimpleGrantedAuthority("ROLE_" + role))
                             );
 
-                        // Attach the numeric id claim to authentication details so controllers can access it
                         Object idObj = claims.get("id");
                         if (idObj instanceof Number) {
                             auth.setDetails(((Number) idObj).longValue());

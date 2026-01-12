@@ -30,45 +30,47 @@ public class ProblemService {
                 .orElseThrow(() -> new RuntimeException("Problem not found"));
     }
 
-    @Transactional
-    public Problem createWithTestCases(
-            Long roomId,
-            ProblemWithTestCasesRequest request
-    ) {
+   @Transactional
+public Problem createWithTestCases(
+        Long roomId,
+        ProblemWithTestCasesRequest request
+) {
+    Room room = roomRepository.findById(roomId)
+            .orElseThrow(() -> new RuntimeException("Room not found"));
 
-        // 1️⃣ Fetch room
-        Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new RuntimeException("Room not found"));
+    Problem problem = Problem.builder()
+            .title(request.getTitle())
+            .description(request.getDescription())
+            .difficulty(request.getDifficulty())
+            .room(room)
+            .testCases(new ArrayList<>())
+            .build();
 
-        // 2️⃣ Create problem
-        Problem problem = Problem.builder()
-                .title(request.getTitle())
-                .description(request.getDescription())
-                .difficulty(request.getDifficulty())
-                .room(room)
-                .testCases(new ArrayList<>())
-                .build();
-
-        // 3️⃣ Attach test cases
-        if (request.getTestCases() != null) {
-            for (ProblemWithTestCasesRequest.TestCaseRequest tcReq : request.getTestCases()) {
-                TestCase tc = TestCase.builder()
-                        .input(tcReq.getInput())
-                        .output(tcReq.getOutput())
-                        .problem(problem)
-                        .build();
-
-                problem.getTestCases().add(tc);
-            }
+    if (request.getTestCases() != null) {
+        for (ProblemWithTestCasesRequest.TestCaseRequest tcReq : request.getTestCases()) {
+            TestCase tc = TestCase.builder()
+                    .input(tcReq.getInput())
+                    .output(tcReq.getOutput())
+                    .problem(problem)
+                    .build();
+            problem.getTestCases().add(tc);
         }
-
-        // 4️⃣ Save problem (cascade saves test cases if configured)
-        Problem savedProblem = problemRepository.save(problem);
-
-        // 🔴 5️⃣ SET CURRENT PROBLEM FOR ROOM (THIS FIXES YOUR BUG)
-        room.setCurrentProblem(savedProblem);
-        roomRepository.save(room);
-
-        return savedProblem;
     }
+
+    Problem savedProblem = problemRepository.save(problem);
+
+    room.setCurrentProblem(savedProblem);
+    room.setCorrectAnswerCount(0);
+    room.setProblemStartTime(null);
+
+    room.getPlayers().forEach(rp -> {
+        rp.setHasAnsweredCorrectly(false);
+        rp.setCorrectAnswerTimestamp(null);
+        rp.setLastCorrectSubmissionTime(null);
+    });
+
+    roomRepository.save(room);
+
+    return savedProblem;
+}
 }

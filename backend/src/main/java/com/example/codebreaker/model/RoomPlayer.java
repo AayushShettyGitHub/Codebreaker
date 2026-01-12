@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Data
 @NoArgsConstructor
@@ -32,4 +34,6 @@ public class RoomPlayer {
 
     @Builder.Default
     private Long correctAnswerTimestamp = null;
+
+    private LocalDateTime lastCorrectSubmissionTime;
 }

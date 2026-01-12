@@ -14,5 +14,5 @@ public class SubmissionRequest {
     private Long playerId;
     private Long roomId;
     private String code;
-    private String language; // "java", "python", "javascript", "cpp"
+    private String language;
 }

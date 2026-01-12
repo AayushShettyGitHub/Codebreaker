@@ -24,7 +24,7 @@ public class PlayerDetailsService implements UserDetailsService {
         return org.springframework.security.core.userdetails.User
                 .withUsername(player.getUsername())
                 .password(player.getPassword())
-                .roles(player.getRole().name()) // ADMIN or MEMBER
+                .roles(player.getRole().name())
                 .build();
     }
 }

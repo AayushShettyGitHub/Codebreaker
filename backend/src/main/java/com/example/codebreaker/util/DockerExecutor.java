@@ -21,7 +21,6 @@ public class DockerExecutor {
 
             Process process = pb.start();
 
-            // send input via stdin
             if (input != null && !input.isEmpty()) {
                 try (BufferedWriter writer =
                              new BufferedWriter(new OutputStreamWriter(process.getOutputStream()))) {
@@ -52,8 +51,6 @@ public class DockerExecutor {
             return ExecutionResult.error(e.getMessage());
         }
     }
-
-    // ---------------- helpers ----------------
 
     private static String writeCodeFile(String language, String code) throws IOException {
         String ext = switch (language.toLowerCase()) {

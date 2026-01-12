@@ -27,23 +27,24 @@ public class Problem {
 
     private String difficulty;
 
-    @OneToOne
-    @JoinColumn(
-        name = "room_id",
-        nullable = false,
-        unique = true
-    )
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id", nullable = false)
     @JsonIgnore
     private Room room;
 
     @OneToMany(
         mappedBy = "problem",
-        cascade = CascadeType.ALL,
-        orphanRemoval = true
+        cascade = CascadeType.ALL
     )
     @Builder.Default
     private List<TestCase> testCases = new ArrayList<>();
 
+    @OneToMany(mappedBy = "problem")
+    @JsonIgnore
+    @Builder.Default
+    private List<Submission> submissions = new ArrayList<>();
+
     @Builder.Default
     private Long createdAt = System.currentTimeMillis();
 }
+

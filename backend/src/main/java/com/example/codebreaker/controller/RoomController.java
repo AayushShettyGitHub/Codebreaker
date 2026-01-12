@@ -3,6 +3,8 @@ package com.example.codebreaker.controller;
 import com.example.codebreaker.model.Player;
 import com.example.codebreaker.model.Problem;
 import com.example.codebreaker.model.Room;
+import com.example.codebreaker.model.Submission;
+import com.example.codebreaker.repo.SubmissionRepository;
 import com.example.codebreaker.services.RoomService;
 import com.example.codebreaker.services.PlayerService;
 import org.springframework.web.bind.annotation.*;
@@ -18,10 +20,12 @@ public class RoomController {
 
     private final RoomService roomService;
     private final PlayerService playerService;
+    private final SubmissionRepository submissionRepository;
 
-    public RoomController(RoomService roomService, PlayerService playerService) {
+    public RoomController(RoomService roomService, PlayerService playerService, SubmissionRepository submissionRepository) {
         this.roomService = roomService;
         this.playerService = playerService;
+        this.submissionRepository = submissionRepository;
     }
 
     @PostMapping
@@ -41,6 +45,15 @@ public class RoomController {
         return roomService.getRoom(roomId);
     }
 
+    @GetMapping("/{roomId}/submissions")
+    public List<Submission> getTopSubmissions(@PathVariable Long roomId) {
+        Room room = roomService.getRoom(roomId);
+        if (room == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Room not found");
+        }
+        return submissionRepository.findByRoomOrderBySubmittedAtDesc(room);
+    }
+
 
     @GetMapping("/me")
     public Room getMyRoom() {
@@ -48,7 +61,7 @@ public class RoomController {
                 .orElseThrow(() -> new RuntimeException("Not logged in"));
 
         Room room = player.getRoom();
-        if (room != null) room.getPlayers().size(); // load players
+        if (room != null) room.getPlayers().size();
         return room;
     }
 
@@ -72,18 +85,13 @@ public class RoomController {
 public Room joinRoomByCode(@RequestBody Map<String, String> payload) {
     // Get player ID
     Long playerId = extractPlayerId(payload);
+        String joinCode = payload.get("joinCode");
+        if (joinCode == null || joinCode.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "joinCode is required");
+        }
 
-    // Get the join code
-    String joinCode = payload.get("joinCode");
-    if (joinCode == null || joinCode.isEmpty()) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "joinCode is required");
-    }
+        Room room = roomService.joinRoomByCode(joinCode, playerId);
 
-    // Join the room
-    Room room = roomService.joinRoomByCode(joinCode, playerId);
-
-    // Load players to avoid lazy loading issues
-    room.getPlayers().size();
 
     return room;
 }
@@ -132,9 +140,6 @@ public Room joinRoomByCode(@RequestBody Map<String, String> payload) {
         return roomService.deleteRoom(roomId, playerId);
     }
 
-    // ------------------- Leave Room Endpoints -------------------
-
-// Leave room by authenticated player
 @PostMapping("/me/leave")
 public String leaveMyRoom() {
     Player player = playerService.getAuthenticatedPlayer()
@@ -148,7 +153,6 @@ public String leaveMyRoom() {
     return roomService.leaveRoom(room.getId(), player.getId());
 }
 
-// Leave room by specifying playerId (optional, for admin control or testing)
 @PostMapping("/{roomId}/leave")
 public String leaveRoom(@PathVariable Long roomId, @RequestBody Map<String, String> payload) {
     Long playerId = extractPlayerId(payload);
