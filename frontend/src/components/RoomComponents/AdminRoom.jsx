@@ -41,13 +41,15 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
         }
       } catch {}
     };
+    // Initial fetch
     fetchRoom();
-    const interval = setInterval(fetchRoom, 3000);
+    // Poll every 5 seconds only if problem is active, otherwise every 30 seconds
+    const interval = setInterval(fetchRoom, isProblemActive ? 5000 : 30000);
     return () => {
       active = false;
       clearInterval(interval);
     };
-  }, [roomId, setMyRoom]);
+  }, [roomId, setMyRoom, isProblemActive]);
 
   useEffect(() => {
     if (!roomId || isProblemActive) return;
@@ -311,6 +313,19 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
               />
             </div>
 
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-3">Max Correct Answers</label>
+              <input
+                type="number"
+                min={1}
+                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                value={maxCorrectAnswers}
+                onChange={e => setMaxCorrectAnswers(Number(e.target.value))}
+                placeholder="Number of players who can solve"
+              />
+              <p className="text-xs text-slate-400 mt-2">How many players can get correct answers for this problem</p>
+            </div>
+
             <div className="flex gap-3 pt-6">
               <button
                 className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-blue-500/50 transform hover:scale-105 text-sm"
@@ -393,27 +408,6 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
               )}
             </div>
 
-            <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <span>✅</span> Max Correct Answers
-              </h3>
-              <div className="flex gap-3">
-                <input
-                  type="number"
-                  min={1}
-                  className="flex-1 px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                  value={maxCorrectAnswers}
-                  onChange={e => setMaxCorrectAnswers(Number(e.target.value))}
-                />
-                <button
-                  onClick={handleSetMaxAnswers}
-                  className="px-6 py-3 bg-gradient-to-r from-emerald-500/80 to-teal-500/80 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-emerald-500/50 transform hover:scale-105 text-sm"
-                >
-                  Set
-                </button>
-              </div>
-            </div>
-
             <div className="border-t border-slate-700/50 pt-6">
               <button
                 className="w-full px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:opacity-50 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-red-500/50 text-sm"
@@ -428,10 +422,21 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
 
         {activeTab === "leaderboard" && (
           <div className="max-w-3xl">
-            <div className="text-sm text-slate-400 mb-4 flex items-center gap-2">
-              <span>👥 {players?.length || 0} players</span>
-              <span>•</span>
-              <span>🎯 Goal: {myRoom?.maxCorrectAnswers || 0} correct</span>
+            <div className="mb-6 p-4 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/30 rounded-xl">
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold mb-1">Total Players</p>
+                  <p className="text-2xl font-bold text-cyan-400">{players?.length || 0}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold mb-1">Max Answers</p>
+                  <p className="text-2xl font-bold text-emerald-400">{myRoom?.maxCorrectAnswers || 0}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold mb-1">Solved</p>
+                  <p className="text-2xl font-bold text-orange-400">{players?.filter(p => p.hasAnsweredCorrectly)?.length || 0}</p>
+                </div>
+              </div>
             </div>
             {players?.length > 0 ? (
               <div className="space-y-3">
@@ -446,7 +451,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
                         {idx + 1}
                       </div>
                       <div className="flex-1">
-                        <p className="text-white font-semibold">{player.username}</p>
+                        <p className="text-white font-semibold flex items-center gap-2">{player.username} {player.hasAnsweredCorrectly && "✅"}</p>
                         <p className="text-xs text-slate-400">{player.id === myRoom.admin?.id ? "👑 Admin" : "Participant"}</p>
                       </div>
                       <div className="text-right">
@@ -468,37 +473,50 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
           <div className="max-w-4xl">
             {!isProblemActive ? (
               <>
-                <div className="text-sm text-slate-400 mb-4">
-                  {topSubmissions?.length > 0 ? `📊 ${topSubmissions.length} top submissions for problem ${myRoom?.currentProblem?.id}` : "📊 No submissions yet"}
+                <div className="mb-4 p-3 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-lg">
+                  <p className="text-sm font-semibold text-slate-300">
+                    {topSubmissions?.length > 0 ? `📊 Top ${topSubmissions.length} Submissions` : "📊 No submissions yet"}
+                  </p>
+                  {topSubmissions?.length > 0 && myRoom?.currentProblem && (
+                    <p className="text-xs text-slate-400 mt-1">Problem: {myRoom.currentProblem.title}</p>
+                  )}
                 </div>
                 {topSubmissions?.length > 0 ? (
                   <div className="space-y-4">
                 {topSubmissions.map((sub, idx) => (
-                  <div key={sub.id} className="border border-slate-700/50 rounded-2xl p-5 bg-gradient-to-br from-slate-800/50 to-slate-800/30 hover:border-cyan-500/50 transition-all">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 font-bold text-white text-lg">
-                          #{idx + 1}
+                  <div key={sub.id} className="border border-slate-700 rounded-2xl overflow-hidden bg-slate-900/40 hover:border-cyan-500/70 transition-all hover:shadow-lg hover:shadow-cyan-500/10">
+                    <div className={`px-5 py-4 border-b border-slate-700 ${sub.passed ? "bg-emerald-500/10" : "bg-red-500/10"}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 font-bold text-white text-sm">
+                            {idx + 1}
+                          </div>
+                          <div>
+                            <p className="text-white font-bold">{sub.player?.username || "Unknown"}</p>
+                            <p className="text-xs text-slate-400">{sub.language?.toUpperCase() || "N/A"} • {new Date(sub.submittedAt).toLocaleString()}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-white font-bold text-lg">{sub.player?.username || "Unknown"}</p>
-                          <p className="text-xs text-slate-400 mt-1">{sub.language?.toUpperCase() || "N/A"}</p>
-                        </div>
+                        <span className={`text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 ${sub.passed ? "bg-emerald-500/30 text-emerald-300 border border-emerald-500/50" : "bg-red-500/30 text-red-300 border border-red-500/50"}`}>
+                          {sub.passed ? "✓ PASSED" : "✗ FAILED"}
+                        </span>
                       </div>
-                      <span className={`text-sm font-bold px-4 py-2 rounded-lg transition-all ${sub.passed ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50" : "bg-red-500/20 text-red-400 border border-red-500/50"}`}>
-                        {sub.passed ? "✓ PASSED" : "✗ FAILED"}
-                      </span>
                     </div>
-                    <div className="bg-slate-950/80 rounded-xl p-4 max-h-64 overflow-auto border border-slate-700/50">
-                      <pre className="text-slate-300 font-mono text-xs whitespace-pre-wrap break-words leading-relaxed">{sub.code}</pre>
+                    <div className="p-5">
+                      <div className="bg-slate-950/60 rounded-xl border border-slate-700/50 overflow-hidden">
+                        <div className="flex items-center justify-between px-4 py-2 bg-slate-900/50 border-b border-slate-700/50">
+                          <span className="text-xs font-semibold text-slate-400">CODE</span>
+                          <span className="text-xs text-slate-500">{sub.code?.length || 0} characters</span>
+                        </div>
+                        <pre className="p-4 text-slate-300 font-mono text-sm whitespace-pre-wrap break-words leading-relaxed max-h-72 overflow-auto">{sub.code}</pre>
+                      </div>
                     </div>
-                    <p className="text-xs text-slate-500 mt-3">Submitted at: {new Date(sub.submittedAt).toLocaleTimeString()}</p>
                   </div>
                 ))}
               </div>
                 ) : (
-                  <div className="text-center py-12">
-                    <p className="text-slate-500 text-sm">💤 Waiting for submissions...</p>
+                  <div className="text-center py-16">
+                    <p className="text-slate-500 text-sm font-medium">💤 Waiting for submissions...</p>
+                    <p className="text-slate-600 text-xs mt-2">Solutions will appear here after the timer ends</p>
                   </div>
                 )}
               </>

@@ -64,11 +64,11 @@ export function RoomProvider({ children }) {
     };
 
     pollRoom();
-    roomPollingRef.current = setInterval(pollRoom, 300000);
+    roomPollingRef.current = setInterval(pollRoom, 10000); // Poll every 10 seconds
 
     const pollPlayers = async () => fetchPlayers(myRoom.id);
     pollPlayers();
-    playersPollingRef.current = setInterval(pollPlayers, 300000);
+    playersPollingRef.current = setInterval(pollPlayers, 15000); // Poll every 15 seconds
 
     return () => {
       if (roomPollingRef.current) clearInterval(roomPollingRef.current);
@@ -83,6 +83,7 @@ export function RoomProvider({ children }) {
         players,
         setMyRoom,
         fetchMyRoom,
+        fetchPlayers,
         loading
       }}
     >

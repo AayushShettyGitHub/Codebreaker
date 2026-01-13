@@ -3,7 +3,7 @@ import api from "../../config/client";
 import { useRoom } from "../../context/RoomContext";
 
 export default function RoomDisplay({ currentUser, onLeave = null }) {
-  const { myRoom, players, setMyRoom } = useRoom();
+  const { myRoom, players, setMyRoom, fetchPlayers } = useRoom();
   const [activeTab, setActiveTab] = useState("leaderboard");
   const [timeLeft, setTimeLeft] = useState(0);
   const room = myRoom;
@@ -46,14 +46,19 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
     try {
       if (playerId === currentUser.id) {
         await api.post(`/rooms/me/leave`);
+        setMyRoom(null);
         onLeave?.();
       } else if (isAdmin) {
         await api.post(`/rooms/${room.id}/leave`, { playerId });
-        const res = await api.get(`/rooms/${room.id}`);
-        setMyRoom(res.data);
+        // Fetch updated room and players
+        const roomRes = await api.get(`/rooms/${room.id}`);
+        setMyRoom(roomRes.data);
+        // Fetch updated players list
+        await fetchPlayers(room.id);
       }
     } catch (err) {
       console.error("Failed to leave/remove player:", err);
+      alert("Failed to remove player: " + (err.response?.data?.message || err.message));
     }
   };
 
@@ -94,7 +99,23 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
         {activeTab === "leaderboard" && (
           <div>
-            <div className="text-sm text-slate-400 font-semibold mb-4">Top Players</div>
+            <div className="mb-6 p-4 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/30 rounded-xl">
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold mb-1">Total Players</p>
+                  <p className="text-2xl font-bold text-cyan-400">{players?.length || 0}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold mb-1">Max Answers</p>
+                  <p className="text-2xl font-bold text-emerald-400">{room?.maxCorrectAnswers || 0}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold mb-1">Solved</p>
+                  <p className="text-2xl font-bold text-orange-400">{players?.filter(p => p.hasAnsweredCorrectly)?.length || 0}</p>
+                </div>
+              </div>
+            </div>
+            <div className="text-sm text-slate-400 font-semibold mb-4">🏆 Rankings</div>
             {leaderboard.length === 0 && <div className="text-slate-500 text-center py-8">👥 No players yet</div>}
             {leaderboard.map((player, index) => {
               const isCurrentUser = currentUser?.id === player.id;

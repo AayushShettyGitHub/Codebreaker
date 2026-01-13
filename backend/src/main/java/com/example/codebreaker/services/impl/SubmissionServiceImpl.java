@@ -68,6 +68,13 @@ public class SubmissionServiceImpl implements SubmissionService {
             );
         }
 
+        if (room.getCorrectAnswerCount() >= room.getMaxCorrectAnswers()) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Maximum correct answers reached for this problem"
+            );
+        }
+
         if (problem.getTestCases() == null || problem.getTestCases().isEmpty()) {
             throw new RuntimeException("Problem has no test cases");
         }
