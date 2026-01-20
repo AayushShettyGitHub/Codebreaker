@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import CreateRoom from "../RoomComponents/CreateRoom";
@@ -16,6 +16,7 @@ export default function HomePage() {
   const { user, loading: authLoading } = useAuth();
   const { myRoom, setMyRoom, loading: roomLoading } = useRoom();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -49,9 +50,9 @@ export default function HomePage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 flex flex-col">
       <Navbar user={user} />
 
-      <main className="flex-1 container max-w-7xl mx-auto py-8 px-6">
+      <main className="flex-1 container max-w-7xl mx-auto py-4 md:py-8 px-6 md:px-8 w-full">
         {!myRoom ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-2xl mx-auto">
             <div className="transform hover:scale-105 transition-all">
               <CreateRoom playerId={user?.id} onCreate={setMyRoom} />
             </div>
@@ -60,9 +61,24 @@ export default function HomePage() {
             </div>
           </div>
         ) : (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 auto-rows-max">
-              <div className="lg:col-span-1 h-fit">
+          <div className="space-y-6 md:space-y-8">
+            {/* Mobile Toggle Button */}
+            <div className="md:hidden flex justify-between items-center">
+              <h2 className="text-lg font-bold text-white">{myRoom.name}</h2>
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/50 rounded-lg text-blue-400 transition-all"
+              >
+                <span className="text-xl">{sidebarOpen ? "✕" : "☰"}</span>
+              </button>
+            </div>
+
+            {/* Responsive Grid Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 auto-rows-max">
+              {/* Side Panel - Room Display (Mobile Sidebar / Desktop Left) */}
+              <div className={`${
+                sidebarOpen ? "block" : "hidden md:block"
+              } lg:col-span-1 h-fit`}>
                 <RoomDisplay
                   room={myRoom}
                   currentUser={user}
@@ -70,7 +86,8 @@ export default function HomePage() {
                 />
               </div>
 
-              <div className="lg:col-span-2 space-y-8">
+              {/* Main Content Area */}
+              <div className="lg:col-span-3 space-y-6 md:space-y-8">
                 {myRoom.admin?.id === user?.id && (
                   <div className="h-fit">
                     <AdminRoom

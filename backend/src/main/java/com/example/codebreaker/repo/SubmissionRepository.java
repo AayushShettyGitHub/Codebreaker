@@ -17,4 +17,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     
     @Query("SELECT s FROM Submission s WHERE s.room.id = :roomId ORDER BY s.id DESC LIMIT 3")
     List<Submission> findTop3ByRoomId(@Param("roomId") Long roomId);
+    
+    void deleteByPlayer(RoomPlayer player);
 }

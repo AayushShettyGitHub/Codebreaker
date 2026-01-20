@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../../config/client";
 import SubmissionResult from "./SubmissionResult";
+import CodeEditor from "../CodeEditor";
 import { useRoom } from "../../context/RoomContext";
 
 export default function Submit({ playerId }) {
@@ -14,11 +15,13 @@ export default function Submit({ playerId }) {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [maxSubmissionsReached, setMaxSubmissionsReached] = useState(false);
 
   useEffect(() => {
     setCode("# write your solution here\n");
     setResult(null);
     setError("");
+    setMaxSubmissionsReached(false);
   }, [problemId]);
 
   async function handleSubmit() {
@@ -41,38 +44,57 @@ export default function Submit({ playerId }) {
       });
 
       setResult(res.data);
+      
+      // Check if max submissions have been EXCEEDED (not just reached)
+      if (res.data.correctAnswerCount > res.data.maxCorrectAnswers) {
+        setMaxSubmissionsReached(true);
+      }
     } catch (err) {
-      setError(err.response?.data?.error || "Submission failed");
+      const errorMessage = err.response?.data?.error || "Submission failed";
+      
+      // Check if error is about max answers
+      if (errorMessage.includes("Maximum correct answers")) {
+        setMaxSubmissionsReached(true);
+        setError("✋ Maximum submissions reached! No more solutions can be accepted.");
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
   }
 
-  const isDisabled = loading || !playerId || !roomId || !problemId;
+  const isDisabled = loading || !playerId || !roomId || !problemId || maxSubmissionsReached;
 
   return (
-    <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-xl border border-slate-700/50 p-6 rounded-3xl shadow-2xl flex flex-col h-full">
-      <div className="flex items-center gap-2 mb-6">
-        <span className="text-2xl">💻</span>
-        <h3 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Code Submission</h3>
+    <div className="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-lg border border-slate-700 p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-2xl flex flex-col h-full">
+      <div className="flex items-center gap-2 mb-4 md:mb-6">
+        <span className="text-xl md:text-2xl">💻</span>
+        <h3 className="text-lg md:text-xl font-bold bg-gradient-to-r from-slate-400 to-slate-300 bg-clip-text text-transparent">Code Submission</h3>
       </div>
 
       {!problemId && (
-        <div className="mb-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
-          <p className="text-yellow-400 text-sm font-medium">⏳ No active problem yet</p>
+        <div className="mb-4 p-3 md:p-4 bg-yellow-600/20 border border-yellow-600/40 rounded-lg md:rounded-xl">
+          <p className="text-yellow-300 text-xs md:text-sm font-medium">⏳ No active problem yet</p>
         </div>
       )}
 
-      {error && (
-        <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl animate-pulse">
-          <p className="text-red-400 text-sm font-medium">❌ {error}</p>
+      {maxSubmissionsReached && (
+        <div className="mb-4 p-3 md:p-4 bg-orange-600/20 border border-orange-600/40 rounded-lg md:rounded-xl animate-pulse">
+          <p className="text-orange-300 text-xs md:text-sm font-medium">✋ Maximum submissions reached! No more solutions can be accepted.</p>
         </div>
       )}
 
-      <div className="mb-5">
-        <label className="block text-sm font-semibold text-slate-300 mb-3">Programming Language</label>
+      {error && !maxSubmissionsReached && (
+        <div className="mb-4 p-3 md:p-4 bg-red-600/20 border border-red-600/40 rounded-lg md:rounded-xl animate-pulse">
+          <p className="text-red-300 text-xs md:text-sm font-medium">❌ {error}</p>
+        </div>
+      )}
+
+      <div className="mb-4 md:mb-5">
+        <label className="block text-xs md:text-sm font-semibold text-slate-300 mb-2 md:mb-3">Programming Language</label>
         <select
-          className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+          className="w-full px-3 md:px-4 py-2 md:py-3 bg-slate-800/70 border border-slate-700 rounded-lg md:rounded-xl text-white text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all"
           value={language}
           onChange={e => setLanguage(e.target.value)}
           disabled={isDisabled}
@@ -84,20 +106,25 @@ export default function Submit({ playerId }) {
         </select>
       </div>
 
-      <div className="mb-5 flex-1 flex flex-col min-h-96">
-        <label className="block text-sm font-semibold text-slate-300 mb-3">Your Code</label>
-        <textarea
-          className="flex-1 p-4 bg-slate-950/50 border border-slate-700 rounded-xl text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-          placeholder="# write your solution here"
-          value={code}
-          onChange={e => setCode(e.target.value)}
-          disabled={isDisabled}
-        />
+      <div className="mb-4 md:mb-5 flex-1 flex flex-col min-h-64 md:min-h-96">
+        <label className="block text-xs md:text-sm font-semibold text-slate-300 mb-2 md:mb-3">Your Code</label>
+        <div className="flex-1 overflow-hidden rounded-lg">
+          <CodeEditor 
+            value={code} 
+            onChange={setCode} 
+            language={language}
+            disabled={isDisabled}
+          />
+        </div>
       </div>
 
-      <div className="flex gap-3 pt-4">
+      <div className="flex flex-col sm:flex-row gap-2 md:gap-3 pt-4">
         <button
-          className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-blue-500/50 transform hover:scale-105 text-sm"
+          className={`flex-1 px-4 py-3 md:py-4 text-white font-bold rounded-lg md:rounded-xl transition-all shadow-lg transform text-sm md:text-base whitespace-nowrap ${
+            isDisabled
+              ? "bg-slate-600 opacity-50 cursor-not-allowed"
+              : "bg-gradient-to-r from-slate-600 to-slate-500 hover:from-slate-700 hover:to-slate-600 hover:shadow-slate-500/50 hover:scale-105"
+          }`}
           onClick={handleSubmit}
           disabled={isDisabled}
         >
@@ -105,7 +132,7 @@ export default function Submit({ playerId }) {
         </button>
 
         <button
-          className="px-4 py-3 bg-slate-700/50 hover:bg-slate-700 disabled:opacity-50 text-slate-200 font-bold rounded-xl transition-all text-sm border border-slate-700"
+          className="flex-1 px-4 py-3 md:py-4 bg-slate-700/50 hover:bg-slate-700 disabled:opacity-50 text-slate-200 font-bold rounded-lg md:rounded-xl transition-all text-sm md:text-base border border-slate-700 whitespace-nowrap"
           onClick={() => setCode("# write your solution here\n")}
           disabled={isDisabled}
         >
@@ -115,6 +142,13 @@ export default function Submit({ playerId }) {
 
       {result && (
         <div className="mt-6 pt-6 border-t border-slate-700">
+          {result.correctAnswerCount > result.maxCorrectAnswers && (
+            <div className="mb-4 p-3 bg-orange-600/20 border border-orange-600/40 rounded-lg">
+              <p className="text-orange-300 text-xs font-medium">
+                ⚠️ Submissions exceeded: {result.correctAnswerCount} / {result.maxCorrectAnswers}
+              </p>
+            </div>
+          )}
           <SubmissionResult result={result} />
         </div>
       )}

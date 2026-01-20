@@ -22,7 +22,7 @@ public class Submission {
     @JoinColumn(name = "room_id")
     private Room room;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "room_player_id")
     private RoomPlayer player;
 

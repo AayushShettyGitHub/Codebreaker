@@ -13,37 +13,43 @@ export default function Login() {
 
     try {
       await api.post("/auth/login", { username, password });
-      navigate("/home");
+      navigate("/home", { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
     }
   }
 
   return (
-    <div className="bg-slate-900 border border-slate-700 rounded-lg p-8 max-w-md">
-      <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-sky-400 to-cyan-400 bg-clip-text text-transparent">Login to CodeBreaker</h2>
-      <div className="space-y-4">
-        <input 
-          className="w-full p-3 border border-slate-600 rounded-lg bg-slate-800 text-white placeholder-slate-500 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20" 
-          placeholder="Username" 
-          value={username} 
-          onChange={(e) => setUsername(e.target.value)} 
-        />
-        <input 
-          type="password" 
-          className="w-full p-3 border border-slate-600 rounded-lg bg-slate-800 text-white placeholder-slate-500 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20" 
-          placeholder="Password" 
-          value={password} 
-          onChange={(e) => setPassword(e.target.value)} 
-        />
+    <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-lg border border-slate-700/60 rounded-2xl p-8 max-w-md shadow-2xl">
+      <h2 className="text-3xl font-bold mb-8 bg-gradient-to-r from-slate-400 to-slate-300 bg-clip-text text-transparent">Login to CodeBreaker</h2>
+      <div className="space-y-5">
+        <div>
+          <label className="block text-xs font-semibold text-slate-300 mb-2">Username</label>
+          <input 
+            className="w-full px-4 py-3 border border-slate-600 rounded-lg bg-slate-800/50 text-white placeholder-slate-500 focus:border-slate-400 focus:ring-2 focus:ring-slate-400/20 focus:bg-slate-900 transition-all" 
+            placeholder="Enter your username" 
+            value={username} 
+            onChange={(e) => setUsername(e.target.value)} 
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-slate-300 mb-2">Password</label>
+          <input 
+            type="password" 
+            className="w-full px-4 py-3 border border-slate-600 rounded-lg bg-slate-800/50 text-white placeholder-slate-500 focus:border-slate-400 focus:ring-2 focus:ring-slate-400/20 focus:bg-slate-900 transition-all" 
+            placeholder="Enter your password" 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+          />
+        </div>
         <button 
           onClick={handleLogin}
-          className="w-full py-2 bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600 text-white font-semibold rounded-lg transition-all"
+          className="w-full py-3 bg-gradient-to-r from-slate-600 to-slate-500 hover:from-slate-700 hover:to-slate-600 text-white font-bold rounded-lg transition-all shadow-lg hover:shadow-slate-500/50 transform hover:scale-105 active:scale-100"
         >
-          Login
+          Sign In
         </button>
       </div>
-      {error && <p className="mt-4 text-red-400 text-sm">{error}</p>}
+      {error && <p className="mt-6 text-red-400 text-sm font-medium bg-red-600/10 p-3 rounded-lg border border-red-600/30">{error}</p>}
     </div>
   );
 }

@@ -11,7 +11,7 @@ export default function App() {
     <AuthProvider>
       <RoomProvider>
         <BrowserRouter>
-          <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
+          <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-blue-900 to-slate-950">
             <div className="flex-1">
               <Routes>
                 <Route path="/" element={<Navigate to="/auth" />} />

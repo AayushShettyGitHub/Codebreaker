@@ -98,6 +98,9 @@ public class SubmissionServiceImpl implements SubmissionService {
                     .testCaseId(tc.getId())
                     .passed(passed)
                     .error(exec.success ? null : exec.error)
+                    .input(tc.getInput())
+                    .expectedOutput(tc.getOutput())
+                    .actualOutput(exec.success ? exec.output : "")
                     .build());
 
             if (!passed) allPassed = false;
@@ -129,6 +132,8 @@ public class SubmissionServiceImpl implements SubmissionService {
                 .results(results)
                 .allPassed(allPassed)
                 .score(scoreGained)
+                .maxCorrectAnswers(room.getMaxCorrectAnswers())
+                .correctAnswerCount(room.getCorrectAnswerCount())
                 .build();
     }
 }

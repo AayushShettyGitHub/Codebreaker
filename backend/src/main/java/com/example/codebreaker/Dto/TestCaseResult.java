@@ -9,4 +9,7 @@ public class TestCaseResult {
     private Long testCaseId;
     private boolean passed;
     private String error;
+    private String expectedOutput;
+    private String actualOutput;
+    private String input;
 }

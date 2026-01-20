@@ -13,4 +13,6 @@ public class SubmissionResult {
     private List<TestCaseResult> results;
     private boolean allPassed;
     private int score;
+    private Integer maxCorrectAnswers;
+    private Integer correctAnswerCount;
 }

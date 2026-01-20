@@ -6,6 +6,7 @@ import com.example.codebreaker.model.Room;
 import com.example.codebreaker.model.RoomPlayer;
 import com.example.codebreaker.repo.RoomPlayerRepository;
 import com.example.codebreaker.repo.RoomRepository;
+import com.example.codebreaker.repo.SubmissionRepository;
 import com.example.codebreaker.websockets.RoomSocketController;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,17 +21,20 @@ public class RoomService {
 
     private final RoomRepository roomRepo;
     private final RoomPlayerRepository roomPlayerRepo;
+    private final SubmissionRepository submissionRepo;
     private final PlayerService playerService;
     private final RoomSocketController roomSocketController;
 
     public RoomService(
             RoomRepository roomRepo,
             RoomPlayerRepository roomPlayerRepo,
+            SubmissionRepository submissionRepo,
             PlayerService playerService,
             RoomSocketController roomSocketController
     ) {
         this.roomRepo = roomRepo;
         this.roomPlayerRepo = roomPlayerRepo;
+        this.submissionRepo = submissionRepo;
         this.playerService = playerService;
         this.roomSocketController = roomSocketController;
     }
@@ -131,6 +135,7 @@ public class RoomService {
                 .orElseThrow(() -> new RuntimeException("Room not found"));
 
         room.setMaxCorrectAnswers(maxAnswers);
+        room.setCorrectAnswerCount(0);
         Room saved = roomRepo.save(room);
 
         roomSocketController.maxCorrectSet(roomId, maxAnswers);
@@ -144,6 +149,7 @@ public class RoomService {
         return room;
     }
 
+    @Transactional
     public String leaveRoom(Long roomId, Long playerId) {
         Room room = roomRepo.findById(roomId)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
@@ -156,7 +162,12 @@ public class RoomService {
         }
 
         roomPlayerRepo.findByRoomAndPlayer(room, player)
-                .ifPresent(roomPlayerRepo::delete);
+                .ifPresent(roomPlayer -> {
+                    // Delete all submissions for this room player first
+                    submissionRepo.deleteByPlayer(roomPlayer);
+                    // Then delete the room player
+                    roomPlayerRepo.delete(roomPlayer);
+                });
 
         player.setRoom(null);
         playerService.save(player);
@@ -174,19 +185,30 @@ public class RoomService {
             throw new RuntimeException("Only admin can delete the room");
         }
 
-        List<RoomPlayer> rps = roomPlayerRepo.findByRoom(room);
-        for (RoomPlayer rp : rps) {
-            Player p = rp.getPlayer();
-            if (p != null) {
-                p.setRoom(null);
-                playerService.save(p);
+        try {
+            // Remove all players from the room
+            List<RoomPlayer> rps = roomPlayerRepo.findByRoom(room);
+            for (RoomPlayer rp : rps) {
+                Player p = rp.getPlayer();
+                if (p != null) {
+                    p.setRoom(null);
+                    playerService.save(p);
+                }
+                roomPlayerRepo.delete(rp);
             }
-            roomPlayerRepo.delete(rp);
-        }
 
-        roomRepo.delete(room);
-        roomSocketController.roomDeleted(roomId);
-        return "Room deleted.";
+            // Clear the admin reference before deletion
+            room.setAdmin(null);
+            room.setCurrentProblem(null);
+            roomRepo.save(room);
+
+            // Delete the room (cascade will handle submissions and problems)
+            roomRepo.delete(room);
+            roomSocketController.roomDeleted(roomId);
+            return "Room deleted.";
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to delete room: " + e.getMessage(), e);
+        }
     }
 
     public String submitAnswer(Long roomId, Long playerId, String answer) {

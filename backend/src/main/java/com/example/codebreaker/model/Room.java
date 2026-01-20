@@ -54,6 +54,11 @@ public class Room {
     @JsonIgnore
     private List<RoomPlayer> players = new ArrayList<>();
 
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    @JsonIgnore
+    private List<Submission> submissions = new ArrayList<>();
+
     public boolean isProblemActive() {
         if (problemStartTime == null || problemDuration == null) {
             return false;
