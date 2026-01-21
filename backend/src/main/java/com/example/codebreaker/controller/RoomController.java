@@ -83,7 +83,6 @@ public class RoomController {
 
     @PostMapping("/join")
 public Room joinRoomByCode(@RequestBody Map<String, String> payload) {
-    // Get player ID
     Long playerId = extractPlayerId(payload);
         String joinCode = payload.get("joinCode");
         if (joinCode == null || joinCode.isEmpty()) {

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import api from "../../config/client";
+import { toastError, toastSuccess } from "../../utils/toast";
 
 export default function CreateRoom({ playerId, onCreate }) {
   const [name, setName] = useState("");
@@ -7,12 +8,12 @@ export default function CreateRoom({ playerId, onCreate }) {
 
   async function handleCreate() {
     if (!playerId) {
-      alert("Player not logged in");
+      toastError("Player not logged in");
       return;
     }
 
     if (!name.trim()) {
-      alert("Room name cannot be empty");
+      toastError("Room name cannot be empty");
       return;
     }
 
@@ -22,9 +23,10 @@ export default function CreateRoom({ playerId, onCreate }) {
         privateRoom: isPrivate,
         playerId: playerId
       });
+      toastSuccess("Room created successfully!");
       onCreate(res.data);
     } catch (err) {
-      alert(err.response?.data?.message || "Error creating room");
+      toastError(err.response?.data?.message || "Error creating room");
     }
   }
 

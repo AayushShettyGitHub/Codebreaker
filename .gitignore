@@ -1,0 +1,45 @@
+# Logs
+*.log
+backend.log
+
+# Markdown documentation files (auto-generated)
+*.md
+!README.md
+
+# Node modules (frontend)
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Backend build artifacts
+backend/target/
+backend/build/
+backend/.gradle/
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Package manager locks (optional - uncomment if needed)
+# package-lock.json
+# pom-lock.json
+
+# IDE specific
+.classpath
+.project
+.settings/
+*.iml
+*.sublime-workspace

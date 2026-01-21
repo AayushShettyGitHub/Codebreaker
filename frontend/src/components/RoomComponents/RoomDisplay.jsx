@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../../config/client";
 import { useRoom } from "../../context/RoomContext";
+import websocketService from "../../services/websocketService";
+import { toastError, toastSuccess } from "../../utils/toast";
 
 export default function RoomDisplay({ currentUser, onLeave = null }) {
   const { myRoom, players, setMyRoom, fetchPlayers } = useRoom();
@@ -30,6 +32,23 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
     return () => clearInterval(interval);
   }, [isProblemActive, room?.problemStartTime, room?.problemDuration]);
 
+  useEffect(() => {
+    if (!room?.id || !websocketService.isReady()) return;
+
+    const handlePlayerUpdate = (message) => {
+      if (message.type === "PLAYERS_UPDATED" || message.type === "SCORE_UPDATE") {
+        console.log("Players updated via WebSocket");
+        fetchPlayers(room.id);
+      }
+    };
+
+    websocketService.subscribe(`/topic/room/${room.id}`, handlePlayerUpdate);
+
+    return () => {
+      websocketService.unsubscribe(`/topic/room/${room.id}`);
+    };
+  }, [room?.id, fetchPlayers]);
+
   const leaderboard = useMemo(() => {
     if (!players) return [];
     return [...players].sort((a, b) => {
@@ -50,16 +69,13 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
         onLeave?.();
       } else if (isAdmin) {
         await api.post(`/rooms/${room.id}/leave`, { playerId });
-        // Fetch updated room and players
         const roomRes = await api.get(`/rooms/${room.id}`);
         setMyRoom(roomRes.data);
-        // Fetch updated players list
         await fetchPlayers(room.id);
       }
     } catch (err) {
       console.error("Failed to leave/remove player:", err);
       
-      // Provide more helpful error messages
       let errorMsg = "Failed to remove player";
       
       if (err.response?.status === 409) {
@@ -72,7 +88,7 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
         errorMsg = err.message;
       }
       
-      alert(errorMsg);
+      toastError(errorMsg);
     }
   };
 
@@ -186,9 +202,9 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
                     <button
                       className="text-xs px-2 md:px-3 py-1.5 md:py-2 bg-red-600/20 hover:bg-red-600/40 text-red-400 rounded-lg transition-all font-semibold whitespace-nowrap flex-shrink-0"
                       onClick={() => handleLeavePlayer(player.id)}
-                      title={isCurrentUser || isAdmin ? "Leave / Remove player" : "Not allowed"}
+                      title={isCurrentUser ? "Leave room" : "Kick player"}
                     >
-                      {isCurrentUser ? "🚪 Leave" : "✕"}
+                      {isCurrentUser ? "🚪 Leave" : "👢 Kick"}
                     </button>
                   )}
                 </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../config/client";
+import websocketService from "../../services/websocketService";
 import SubmissionResult from "./SubmissionResult";
 import CodeEditor from "../CodeEditor";
 import { useRoom } from "../../context/RoomContext";
@@ -24,6 +25,31 @@ export default function Submit({ playerId }) {
     setMaxSubmissionsReached(false);
   }, [problemId]);
 
+  useEffect(() => {
+    if (!roomId || !websocketService.isReady()) return;
+
+    const handleSubmissionFeedback = (message) => {
+      if (message.type === "SUBMISSION_RECEIVED") {
+        console.log("Submission received notification:", message.playerUsername);
+      } else if (message.type === "SUBMISSION_RESULT") {
+        console.log("Submission result from other player:", message.result);
+        if (message.result?.allPassed) {
+          console.log(`${message.playerUsername} solved the problem!`);
+        }
+      } else if (message.type === "SCORE_UPDATE") {
+        if (message.correct && message.playerId !== playerId) {
+          console.log(`${message.playerUsername} scored ${message.score} points!`);
+        }
+      }
+    };
+
+    websocketService.subscribe(`/topic/room/${roomId}`, handleSubmissionFeedback);
+
+    return () => {
+      websocketService.unsubscribe(`/topic/room/${roomId}`);
+    };
+  }, [roomId, playerId]);
+
   async function handleSubmit() {
     if (!playerId || !roomId || !problemId) {
       setError("Missing player, room, or problem");
@@ -45,14 +71,12 @@ export default function Submit({ playerId }) {
 
       setResult(res.data);
       
-      // Check if max submissions have been EXCEEDED (not just reached)
       if (res.data.correctAnswerCount > res.data.maxCorrectAnswers) {
         setMaxSubmissionsReached(true);
       }
     } catch (err) {
       const errorMessage = err.response?.data?.error || "Submission failed";
       
-      // Check if error is about max answers
       if (errorMessage.includes("Maximum correct answers")) {
         setMaxSubmissionsReached(true);
         setError("✋ Maximum submissions reached! No more solutions can be accepted.");

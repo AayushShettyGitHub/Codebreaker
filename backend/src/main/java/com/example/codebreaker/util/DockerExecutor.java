@@ -129,8 +129,6 @@ public class DockerExecutor {
         } catch (Exception ignored) {}
     }
 
-    // ---------------- result ----------------
-
     public static class ExecutionResult {
         public final boolean success;
         public final String output;

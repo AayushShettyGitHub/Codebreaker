@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../config/client";
+import { toastError, toastSuccess } from "../../utils/toast";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -9,13 +10,20 @@ export default function Login() {
   const navigate = useNavigate();
 
   async function handleLogin() {
-    if (!username || !password) return setError("Both fields are required");
+    if (!username || !password) {
+      setError("Both fields are required");
+      toastError("Both fields are required");
+      return;
+    }
 
     try {
       await api.post("/auth/login", { username, password });
+      toastSuccess("Login successful!");
       navigate("/home", { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      const msg = err.response?.data?.message || "Login failed";
+      setError(msg);
+      toastError(msg);
     }
   }
 

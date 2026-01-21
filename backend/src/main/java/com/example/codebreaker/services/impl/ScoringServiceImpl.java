@@ -39,7 +39,6 @@ public class ScoringServiceImpl implements ScoringService {
         player.setScore(player.getScore() + gainedScore);
         player.setLastCorrectSubmissionTime(submission.getSubmittedAt());
 
-        // Increment the correct answer count for the room
         room.setCorrectAnswerCount(room.getCorrectAnswerCount() + 1);
 
         return gainedScore;

@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import api from "../config/client";
 import { useAuth } from "./AuthContext";
+import websocketService from "../services/websocketService";
+import { toastError } from "../utils/toast";
 
 const RoomContext = createContext(null);
 
@@ -10,9 +12,13 @@ export function RoomProvider({ children }) {
   const [myRoom, setMyRoom] = useState(null);
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [wsConnected, setWsConnected] = useState(false);
+  const [kickedOut, setKickedOut] = useState(false);
+  const [onKickNavigate, setOnKickNavigate] = useState(null);
 
   const roomPollingRef = useRef(null);
   const playersPollingRef = useRef(null);
+  const wsSubscriptionsRef = useRef({});
 
   const fetchMyRoom = useCallback(async () => {
     if (!user) {
@@ -48,33 +54,117 @@ export function RoomProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    if (!user) return;
+
+    const handleWSConnected = () => {
+      setWsConnected(true);
+      console.log("WebSocket connected in RoomProvider");
+    };
+
+    const handleWSError = (error) => {
+      console.error("WebSocket error:", error);
+      setWsConnected(false);
+    };
+
+    websocketService.connect(handleWSConnected, handleWSError);
+
+    return () => {
+      websocketService.disconnect();
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!wsConnected || !myRoom?.id) return;
+
+    const roomTopic = `/topic/room/${myRoom.id}`;
+
+    const handleRoomMessage = (message) => {
+      console.log("Room message received:", message);
+
+      if (message.type === "PLAYER_JOINED") {
+        console.log("Player joined:", message.player);
+        fetchPlayers(myRoom.id);
+      } else if (message.type === "PLAYER_LEFT") {
+        console.log("Player left:", message.player);
+        fetchPlayers(myRoom.id);
+      } else if (message.type === "PLAYER_KICKED") {
+        console.log("Player kicked:", message.playerId);
+        if (message.playerId === user?.id) {
+          setKickedOut(true);
+          toastError(`You have been kicked from the room!`);
+        } else {
+          fetchPlayers(myRoom.id);
+        }
+      } else if (message.type === "ROOM_UPDATED") {
+        setMyRoom(message.room);
+      } else if (message.type === "PROBLEM_SET") {
+        console.log("Problem set:", message.problem);
+        fetchMyRoom();
+      } else if (message.type === "PROBLEM_STARTED") {
+        console.log("Problem started:", message.problem);
+      } else if (message.type === "PROBLEM_ENDED") {
+        console.log("Problem ended");
+      } else if (message.type === "MAX_CORRECT_SET") {
+        console.log("Max correct set:", message.maxCorrectAnswers);
+        setMyRoom((prev) =>
+          prev
+            ? { ...prev, maxCorrectAnswers: message.maxCorrectAnswers }
+            : null
+        );
+      } else if (message.type === "SCORE_UPDATE") {
+        console.log("Score update:", message);
+        fetchPlayers(myRoom.id);
+      } else if (message.type === "SUBMISSION_RECEIVED") {
+        console.log("Submission received from:", message.playerUsername);
+      } else if (message.type === "SUBMISSION_RESULT") {
+        console.log("Submission result:", message.result);
+      } else if (message.type === "ROOM_DELETED") {
+        console.log("Room deleted");
+        setMyRoom(null);
+        setPlayers([]);
+      }
+    };
+
+    websocketService.subscribe(roomTopic, handleRoomMessage);
+    wsSubscriptionsRef.current[roomTopic] = true;
+
+    return () => {
+      websocketService.unsubscribe(roomTopic);
+      delete wsSubscriptionsRef.current[roomTopic];
+    };
+  }, [wsConnected, myRoom?.id, fetchPlayers, fetchMyRoom]);
+
+
+  useEffect(() => {
     fetchMyRoom();
   }, [fetchMyRoom]);
 
   useEffect(() => {
     if (!myRoom?.id) return;
 
-    const pollRoom = async () => {
-      try {
-        const res = await api.get(`/rooms/${myRoom.id}`);
-        setMyRoom(res.data || null);
-      } catch (err) {
-        console.error("Room polling failed:", err);
-      }
-    };
+    if (!wsConnected) {
+      const pollRoom = async () => {
+        try {
+          const res = await api.get(`/rooms/${myRoom.id}`);
+          setMyRoom(res.data || null);
+        } catch (err) {
+          console.error("Room polling failed:", err);
+        }
+      };
 
-    pollRoom();
-    roomPollingRef.current = setInterval(pollRoom, 10000); // Poll every 10 seconds
+      pollRoom();
+      roomPollingRef.current = setInterval(pollRoom, 5000);
 
-    const pollPlayers = async () => fetchPlayers(myRoom.id);
-    pollPlayers();
-    playersPollingRef.current = setInterval(pollPlayers, 15000); // Poll every 15 seconds
+      const pollPlayers = async () => fetchPlayers(myRoom.id);
+      pollPlayers();
+      playersPollingRef.current = setInterval(pollPlayers, 5000);
 
-    return () => {
-      if (roomPollingRef.current) clearInterval(roomPollingRef.current);
-      if (playersPollingRef.current) clearInterval(playersPollingRef.current);
-    };
-  }, [myRoom?.id, fetchPlayers]);
+      return () => {
+        if (roomPollingRef.current) clearInterval(roomPollingRef.current);
+        if (playersPollingRef.current) clearInterval(playersPollingRef.current);
+      };
+    }
+  }, [myRoom?.id, fetchPlayers, wsConnected]);
 
   return (
     <RoomContext.Provider
@@ -84,7 +174,12 @@ export function RoomProvider({ children }) {
         setMyRoom,
         fetchMyRoom,
         fetchPlayers,
-        loading
+        loading,
+        wsConnected,
+        kickedOut,
+        setKickedOut,
+        onKickNavigate,
+        setOnKickNavigate,
       }}
     >
       {children}

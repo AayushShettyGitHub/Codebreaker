@@ -163,17 +163,15 @@ public class RoomService {
 
         roomPlayerRepo.findByRoomAndPlayer(room, player)
                 .ifPresent(roomPlayer -> {
-                    // Delete all submissions for this room player first
                     submissionRepo.deleteByPlayer(roomPlayer);
-                    // Then delete the room player
                     roomPlayerRepo.delete(roomPlayer);
                 });
 
         player.setRoom(null);
         playerService.save(player);
 
-        roomSocketController.playerLeft(roomId, player);
-        return "Player left the room.";
+        roomSocketController.playerKicked(roomId, player);
+        return "Player kicked from the room.";
     }
 
     @Transactional
@@ -186,7 +184,6 @@ public class RoomService {
         }
 
         try {
-            // Remove all players from the room
             List<RoomPlayer> rps = roomPlayerRepo.findByRoom(room);
             for (RoomPlayer rp : rps) {
                 Player p = rp.getPlayer();
@@ -197,12 +194,10 @@ public class RoomService {
                 roomPlayerRepo.delete(rp);
             }
 
-            // Clear the admin reference before deletion
             room.setAdmin(null);
             room.setCurrentProblem(null);
             roomRepo.save(room);
 
-            // Delete the room (cascade will handle submissions and problems)
             roomRepo.delete(room);
             roomSocketController.roomDeleted(roomId);
             return "Room deleted.";

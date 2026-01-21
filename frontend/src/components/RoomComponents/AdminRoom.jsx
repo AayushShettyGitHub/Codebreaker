@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../../config/client";
 import { useRoom } from "../../context/RoomContext";
+import websocketService from "../../services/websocketService";
 import Submit from "./Submit";
 
 export default function AdminRoom({ adminId, playerId, onDelete }) {
@@ -41,9 +42,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
         }
       } catch {}
     };
-    // Initial fetch
     fetchRoom();
-    // Poll every 5 seconds only if problem is active, otherwise every 30 seconds
     const interval = setInterval(fetchRoom, isProblemActive ? 5000 : 30000);
     return () => {
       active = false;
@@ -65,6 +64,21 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
       }
     };
     fetchTopSubmissions();
+    
+    if (websocketService.isReady()) {
+      const handleSubmissionResult = (message) => {
+        if (message.type === "SUBMISSION_RESULT") {
+          console.log("New submission result:", message);
+          fetchTopSubmissions();
+        }
+      };
+      
+      websocketService.subscribe(`/topic/room/${roomId}`, handleSubmissionResult);
+      
+      return () => {
+        websocketService.unsubscribe(`/topic/room/${roomId}`);
+      };
+    }
   }, [roomId, isProblemActive, myRoom?.currentProblem?.id]);
 
   useEffect(() => {

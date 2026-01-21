@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../config/client";
+import { toastError, toastSuccess } from "../../utils/toast";
 
 export default function Signup({ onSignup }) {
   const [username, setUsername] = useState("");
@@ -11,15 +12,19 @@ export default function Signup({ onSignup }) {
   async function handleSignup() {
   if (!username || !password) {
     setError("Both fields are required");
+    toastError("Both fields are required");
     return;
   }
 
   try {
     await api.post("/auth/signup", { username, password });
     await api.post("/auth/login", { username, password });
+    toastSuccess("Signup successful!");
     navigate("/home");
   } catch (err) {
-    setError(err.response?.data || "Signup failed");
+    const msg = err.response?.data || "Signup failed";
+    setError(msg);
+    toastError(msg);
   }
 }
 

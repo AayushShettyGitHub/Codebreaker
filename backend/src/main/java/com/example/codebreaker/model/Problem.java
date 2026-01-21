@@ -39,7 +39,7 @@ public class Problem {
     @Builder.Default
     private List<TestCase> testCases = new ArrayList<>();
 
-    @OneToMany(mappedBy = "problem")
+    @OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     @Builder.Default
     private List<Submission> submissions = new ArrayList<>();

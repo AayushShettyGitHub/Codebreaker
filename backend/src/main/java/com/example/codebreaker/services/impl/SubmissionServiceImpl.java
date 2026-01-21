@@ -13,6 +13,7 @@ import com.example.codebreaker.repo.SubmissionRepository;
 import com.example.codebreaker.services.ScoringService;
 import com.example.codebreaker.services.SubmissionService;
 import com.example.codebreaker.util.DockerExecutor;
+import com.example.codebreaker.websockets.RoomSocketController;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,17 +29,20 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final RoomPlayerRepository roomPlayerRepo;
     private final SubmissionRepository submissionRepo;
     private final ScoringService scoringService;
+    private final RoomSocketController roomSocketController;
 
     public SubmissionServiceImpl(
             ProblemRepository problemRepo,
             RoomPlayerRepository roomPlayerRepo,
             SubmissionRepository submissionRepo,
-            ScoringService scoringService
+            ScoringService scoringService,
+            RoomSocketController roomSocketController
     ) {
         this.problemRepo = problemRepo;
         this.roomPlayerRepo = roomPlayerRepo;
         this.submissionRepo = submissionRepo;
         this.scoringService = scoringService;
+        this.roomSocketController = roomSocketController;
     }
 
     @Override
@@ -78,6 +82,8 @@ public class SubmissionServiceImpl implements SubmissionService {
         if (problem.getTestCases() == null || problem.getTestCases().isEmpty()) {
             throw new RuntimeException("Problem has no test cases");
         }
+
+        roomSocketController.submissionReceived(room.getId(), request.getPlayerId(), roomPlayer.getPlayer().getUsername());
 
         List<TestCaseResult> results = new ArrayList<>();
         boolean allPassed = true;
@@ -124,9 +130,18 @@ public class SubmissionServiceImpl implements SubmissionService {
 
             roomPlayer.setHasAnsweredCorrectly(true);
             roomPlayer.setCorrectAnswerTimestamp(System.currentTimeMillis());
+            roomPlayerRepo.save(roomPlayer);
+            
+            roomSocketController.scoreUpdated(
+                    room.getId(),
+                    request.getPlayerId(),
+                    roomPlayer.getPlayer().getUsername(),
+                    roomPlayer.getScore(),
+                    true
+            );
         }
 
-        return SubmissionResult.builder()
+        SubmissionResult result = SubmissionResult.builder()
                 .problemId(problem.getId())
                 .playerId(request.getPlayerId())
                 .results(results)
@@ -135,5 +150,9 @@ public class SubmissionServiceImpl implements SubmissionService {
                 .maxCorrectAnswers(room.getMaxCorrectAnswers())
                 .correctAnswerCount(room.getCorrectAnswerCount())
                 .build();
+
+        roomSocketController.submissionResult(room.getId(), result, roomPlayer.getPlayer().getUsername());
+
+        return result;
     }
 }
