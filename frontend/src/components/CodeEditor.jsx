@@ -94,7 +94,6 @@ const CodeEditor = ({ value, onChange, language = "python", disabled = false }) 
         backgroundColor: "#1a2332",
       }}
     >
-      {/* Header with controls */}
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between bg-gradient-to-b from-slate-800/95 to-slate-800/40 px-4 py-1.5 border-b border-slate-700 backdrop-blur-md">
         <div className="flex items-center gap-2">
           <span className="px-2.5 py-0.5 bg-gradient-to-r from-slate-600 to-slate-500 text-white text-xs font-bold rounded shadow-md">
@@ -120,7 +119,6 @@ const CodeEditor = ({ value, onChange, language = "python", disabled = false }) 
         </button>
       </div>
 
-      {/* Editor */}
       <div
         className="w-full h-full"
         style={{

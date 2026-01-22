@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useRoom } from "../../context/RoomContext";
 import api from "../../config/client";
 
 export default function JoinRoom({ playerId, onJoin }) {
+  const { fetchPlayers } = useRoom();
   const [joinCode, setJoinCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,7 +21,17 @@ export default function JoinRoom({ playerId, onJoin }) {
         joinCode
       });
 
-      onJoin(res.data);
+      const roomData = res.data;
+      console.log("✅ Successfully joined room:", roomData);
+      onJoin(roomData);
+      
+      if (roomData?.id) {
+        console.log("📥 Fetching players for room:", roomData.id);
+        setTimeout(() => {
+          fetchPlayers(roomData.id);
+          console.log("✅ Players fetch triggered for room:", roomData.id);
+        }, 100);
+      }
     } catch (err) {
       console.error(err);
       setError(

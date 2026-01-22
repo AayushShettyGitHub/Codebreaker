@@ -19,6 +19,9 @@ export default function Lobby() {
       setMyRoom(null);
     } catch (err) {
       console.error("Error leaving room:", err);
+      if (err.response?.status === 403 || err.response?.status === 410) {
+        setMyRoom(null);
+      }
     }
   }
 

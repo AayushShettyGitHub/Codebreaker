@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useRoom } from "../../context/RoomContext";
 import api from "../../config/client";
 import { toastError, toastSuccess } from "../../utils/toast";
 
 export default function CreateRoom({ playerId, onCreate }) {
+  const { fetchPlayers } = useRoom();
   const [name, setName] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
 
@@ -24,7 +26,17 @@ export default function CreateRoom({ playerId, onCreate }) {
         playerId: playerId
       });
       toastSuccess("Room created successfully!");
-      onCreate(res.data);
+      const roomData = res.data;
+      console.log("✅ Successfully created room:", roomData);
+      onCreate(roomData);
+      
+      if (roomData?.id) {
+        console.log("📥 Fetching players for room:", roomData.id);
+        setTimeout(() => {
+          fetchPlayers(roomData.id);
+          console.log("✅ Players fetch triggered for room:", roomData.id);
+        }, 100);
+      }
     } catch (err) {
       toastError(err.response?.data?.message || "Error creating room");
     }

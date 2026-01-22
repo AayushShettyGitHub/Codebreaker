@@ -4,15 +4,23 @@ package com.example.codebreaker.security;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
-
+import org.springframework.beans.factory.annotation.Value;
 import java.security.Key;
 import java.util.Date;
 
 @Component
 public class JwtUtil {
 
-    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    private final long expiration = 1000 * 60 * 60;
+    private final Key key;
+    private final long expiration;
+
+    public JwtUtil(
+        @Value("${jwt.secret}") String secret,
+        @Value("${jwt.expiration}") long expiration
+    ) {
+        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+        this.expiration = expiration;
+    }
 
     public String generateToken(String username, Long playerId, String role) {
         return Jwts.builder()
@@ -34,6 +42,7 @@ public class JwtUtil {
                 .getBody();
     }
 }
+
  
     
 

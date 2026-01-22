@@ -1,63 +1,142 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import api from "../../config/client";
 import { toastError, toastSuccess } from "../../utils/toast";
 
-export default function Signup({ onSignup }) {
+export default function Signup() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { checkAuth } = useAuth();
 
   async function handleSignup() {
-  if (!username || !password) {
-    setError("Both fields are required");
-    toastError("Both fields are required");
-    return;
-  }
+    if (!username || !password || !confirmPassword) {
+      setError("All fields are required");
+      toastError("All fields are required");
+      return;
+    }
 
-  try {
-    await api.post("/auth/signup", { username, password });
-    await api.post("/auth/login", { username, password });
-    toastSuccess("Signup successful!");
-    navigate("/home");
-  } catch (err) {
-    const msg = err.response?.data || "Signup failed";
-    setError(msg);
-    toastError(msg);
-  }
-}
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      toastError("Passwords do not match");
+      return;
+    }
 
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      toastError("Password must be at least 6 characters");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await api.post("/auth/signup", { username, password });
+      toastSuccess("Account created!");
+
+      await api.post("/auth/login", { username, password });
+      toastSuccess("Login successful!");
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      await checkAuth();
+      
+      navigate("/home", { replace: true });
+    } catch (err) {
+      const msg = err.response?.data?.message || err.response?.data || "Signup failed";
+      setError(msg);
+      toastError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <div className="bg-slate-900 border border-slate-700 rounded-lg p-8 max-w-md">
-      <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-sky-400 to-cyan-400 bg-clip-text text-transparent">Create Account</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-cyan-50 p-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-600 mb-4">
+            <span className="text-white text-3xl font-bold">CB</span>
+          </div>
+          <h1 className="text-4xl font-bold text-gray-900">CodeBreaker</h1>
+          <p className="text-gray-600 mt-2">Join the competition</p>
+        </div>
 
-      <div className="space-y-4">
-        <input
-          className="w-full p-3 border border-slate-600 rounded-lg bg-slate-800 text-white placeholder-slate-500 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
+        <div className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Account</h2>
+          <p className="text-gray-600 text-sm mb-8">Sign up to start competing</p>
 
-        <input
-          type="password"
-          className="w-full p-3 border border-slate-600 rounded-lg bg-slate-800 text-white placeholder-slate-500 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          <div className="space-y-5">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Username</label>
+              <input
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-white text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-0 transition-colors"
+                placeholder="Choose your username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                disabled={loading}
+              />
+            </div>
 
-        <button 
-          onClick={handleSignup}
-          className="w-full py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold rounded-lg transition-all"
-        >
-          Sign Up
-        </button>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+              <input
+                type="password"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-white text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-0 transition-colors"
+                placeholder="Create a password (min 6 characters)"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm Password</label>
+              <input
+                type="password"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-white text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-0 transition-colors"
+                placeholder="Confirm your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+
+            <button 
+              onClick={handleSignup}
+              disabled={loading}
+              className="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-100"
+            >
+              {loading ? "Creating account..." : "Sign Up"}
+            </button>
+          </div>
+
+          {error && (
+            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+              <p className="text-red-700 text-sm font-medium">❌ {error}</p>
+            </div>
+          )}
+
+          <div className="mt-6 text-center">
+            <p className="text-gray-600 text-sm">
+              Already have an account?{" "}
+              <button 
+                onClick={() => navigate("/auth?tab=login")}
+                className="text-blue-600 font-semibold hover:text-blue-700 transition-colors"
+              >
+                Sign in
+              </button>
+            </p>
+          </div>
+        </div>
+
+        <p className="text-center text-gray-500 text-xs mt-6">
+          Secure authentication with JWT • Your data is protected
+        </p>
       </div>
-
-      {error && <p className="mt-4 text-red-400 text-sm">{error}</p>}
     </div>
   );
 }

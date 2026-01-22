@@ -59,7 +59,6 @@ export default function SubmissionResult({ result }) {
                   </span>
                 </div>
 
-                {/* Input Section */}
                 {r.input && (
                   <div className="mb-3">
                     <p className="text-xs font-semibold text-slate-300 mb-2">📥 Input:</p>
@@ -69,7 +68,6 @@ export default function SubmissionResult({ result }) {
                   </div>
                 )}
 
-                {/* Expected Output Section */}
                 {r.expectedOutput && (
                   <div className="mb-3">
                     <p className="text-xs font-semibold text-emerald-300 mb-2">✓ Expected Output:</p>
@@ -79,7 +77,6 @@ export default function SubmissionResult({ result }) {
                   </div>
                 )}
 
-                {/* Actual Output Section */}
                 {r.actualOutput && (
                   <div className="mb-3">
                     <p className={`text-xs font-semibold mb-2 ${r.passed ? "text-blue-300" : "text-red-300"}`}>
@@ -95,7 +92,6 @@ export default function SubmissionResult({ result }) {
                   </div>
                 )}
 
-                {/* Error Message */}
                 {r.error && (
                   <div className="mt-3">
                     <p className="text-xs font-semibold text-red-300 mb-2">❌ Error:</p>

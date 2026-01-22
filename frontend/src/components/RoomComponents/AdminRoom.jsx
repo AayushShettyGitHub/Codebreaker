@@ -187,20 +187,20 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-xl border border-slate-700/50 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-full">
+    <div className="bg-white border border-gray-200 shadow-lg rounded-3xl overflow-hidden flex flex-col h-full">
       {message && (
-        <div className="animate-pulse bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-b border-emerald-500/30 px-6 py-3">
-          <p className="text-emerald-300 font-medium text-sm">{message}</p>
+        <div className="animate-pulse bg-blue-50 border-b border-blue-200 px-6 py-3">
+          <p className="text-blue-700 font-medium text-sm">{message}</p>
         </div>
       )}
 
-      <div className="sticky top-0 z-20 bg-gradient-to-r from-slate-900 to-slate-800 border-b border-slate-700/50 px-6 py-4">
+      <div className="sticky top-0 z-20 bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Admin Panel</h2>
+          <h2 className="text-xl font-bold text-gray-900">Admin Panel</h2>
           {isProblemActive && (
             <div className="flex items-center gap-3">
-              <span className="text-xs text-slate-400">Time Left:</span>
-              <div className={`font-mono font-bold text-lg px-4 py-1.5 rounded-lg ${timeLeft <= 30 ? "bg-red-500/20 text-red-400" : "bg-cyan-500/20 text-cyan-400"}`}>
+              <span className="text-xs text-gray-600">Time Left:</span>
+              <div className={`font-mono font-bold text-lg px-4 py-1.5 rounded-lg ${timeLeft <= 30 ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>
                 {Math.floor(timeLeft / 60).toString().padStart(2, "0")}:
                 {(timeLeft % 60).toString().padStart(2, "0")}
               </div>
@@ -209,7 +209,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
         </div>
       </div>
 
-      <div className="flex gap-2 border-b border-slate-700/50 bg-slate-800/30 px-6 py-3 overflow-x-auto">
+      <div className="flex gap-2 border-b border-gray-200 bg-gray-50 px-6 py-3 overflow-x-auto">
         {[
           { key: "problem", label: "📝 Post Problem" },
           { key: "submit", label: "💻 Submit Code" },
@@ -222,8 +222,8 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
             onClick={() => setActiveTab(tab.key)}
             className={`px-4 py-2 font-medium text-sm whitespace-nowrap transition-all rounded-xl ${
               activeTab === tab.key 
-                ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/50" 
-                : "text-slate-400 hover:text-slate-300 hover:bg-slate-700/50"
+                ? "bg-gray-900 text-white shadow-lg" 
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
             }`}
           >
             {tab.label}
@@ -236,18 +236,18 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
           <div className="space-y-6 max-w-4xl">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-3">Problem Title</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">Problem Title</label>
                 <input
-                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="e.g., Fibonacci Sequence"
                   value={title}
                   onChange={e => setTitle(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-3">Difficulty</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">Difficulty</label>
                 <select
-                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   value={difficulty}
                   onChange={e => setDifficulty(e.target.value)}
                 >
@@ -259,9 +259,9 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-3">Description</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">Description</label>
               <textarea
-                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="Describe the problem..."
                 rows={4}
                 value={description}
@@ -271,17 +271,17 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
 
             <div>
               <div className="flex items-center justify-between mb-3">
-                <label className="block text-sm font-semibold text-slate-300">Test Cases</label>
-                <span className="text-xs text-slate-500 bg-slate-800/50 px-3 py-1 rounded-full">{testCases.length} cases</span>
+                <label className="block text-sm font-semibold text-gray-700">Test Cases</label>
+                <span className="text-xs text-gray-600 bg-gray-100 px-3 py-1 rounded-full">{testCases.length} cases</span>
               </div>
-              <div className="space-y-3 max-h-72 overflow-y-auto border border-slate-700/50 rounded-xl p-4 bg-slate-800/20">
+              <div className="space-y-3 max-h-72 overflow-y-auto border border-gray-300 rounded-xl p-4 bg-gray-50">
                 {testCases.map((tc, i) => (
-                  <div key={i} className="border border-slate-700 rounded-xl p-4 bg-slate-800/50 hover:bg-slate-800/70 transition-all">
+                  <div key={i} className="border border-gray-300 rounded-xl p-4 bg-white hover:bg-gray-50 transition-all">
                     <div className="grid grid-cols-2 gap-3 mb-3">
                       <div>
-                        <label className="text-xs text-slate-400 font-semibold">Input #{i + 1}</label>
+                        <label className="text-xs text-gray-600 font-semibold">Input #{i + 1}</label>
                         <textarea
-                          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-xs mt-1.5 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                          className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-mono text-xs mt-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
                           placeholder="Input"
                           rows={2}
                           value={tc.input}
@@ -289,9 +289,9 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-slate-400 font-semibold">Output #{i + 1}</label>
+                        <label className="text-xs text-gray-600 font-semibold">Output #{i + 1}</label>
                         <textarea
-                          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-xs mt-1.5 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                          className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-mono text-xs mt-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
                           placeholder="Output"
                           rows={2}
                           value={tc.output}
@@ -300,7 +300,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
                       </div>
                     </div>
                     {testCases.length > 1 && (
-                      <button className="text-xs text-red-400 hover:text-red-300 transition-colors font-semibold" onClick={() => removeTestCase(i)}>
+                      <button className="text-xs text-red-600 hover:text-red-700 transition-colors font-semibold" onClick={() => removeTestCase(i)}>
                         ✕ Remove Case
                       </button>
                     )}
@@ -310,39 +310,39 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
 
               <button
                 onClick={addTestCase}
-                className="w-full px-4 py-3 mt-4 bg-slate-700/50 hover:bg-slate-700 text-slate-200 rounded-xl font-semibold text-sm transition-all border border-slate-700"
+                className="w-full px-4 py-3 mt-4 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-xl font-semibold text-sm transition-all border border-gray-300"
               >
                 + Add Test Case
               </button>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-3">Duration (seconds)</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">Duration (seconds)</label>
               <input
                 type="number"
                 min={10}
-                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 value={timerDuration}
                 onChange={e => setTimerDuration(Number(e.target.value))}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-3">Max Correct Answers</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">Max Correct Answers</label>
               <input
                 type="number"
                 min={1}
-                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 value={maxCorrectAnswers}
                 onChange={e => setMaxCorrectAnswers(Number(e.target.value))}
                 placeholder="Number of players who can solve"
               />
-              <p className="text-xs text-slate-400 mt-2">How many players can get correct answers for this problem</p>
+              <p className="text-xs text-gray-600 mt-2">How many players can get correct answers for this problem</p>
             </div>
 
             <div className="flex gap-3 pt-6">
               <button
-                className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-blue-500/50 transform hover:scale-105 text-sm"
+                className="flex-1 px-4 py-3 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-lg transform hover:scale-105 text-sm"
                 onClick={handlePost}
                 disabled={loading}
               >
@@ -362,7 +362,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
               />
             ) : (
               <div className="text-center py-12">
-                <p className="text-slate-500 text-sm">⏹️ No active problem. Post one to start!</p>
+                <p className="text-gray-500 text-sm">⏹️ No active problem. Post one to start!</p>
               </div>
             )}
           </div>
@@ -370,24 +370,24 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
 
         {activeTab === "settings" && (
           <div className="space-y-6 max-w-2xl">
-            <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-2 border-blue-500/50 rounded-3xl p-8">
-              <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-3xl p-8">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
                 <span>📌</span> Share Room
               </h3>
-              <p className="text-sm text-slate-400 mb-6">Share this code with players to join your competition</p>
+              <p className="text-sm text-gray-700 mb-6">Share this code with players to join your competition</p>
               
-              <div className="bg-slate-950/80 border border-blue-500/30 rounded-2xl p-6 mb-6">
-                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-3">Room Join Code</p>
+              <div className="bg-white border border-blue-300 rounded-2xl p-6 mb-6">
+                <p className="text-xs text-gray-600 font-semibold uppercase tracking-wider mb-3">Room Join Code</p>
                 <div className="flex items-center gap-3">
-                  <div className="flex-1 px-5 py-4 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border-2 border-blue-500/50 rounded-xl font-mono text-2xl font-bold text-cyan-400 text-center">
+                  <div className="flex-1 px-5 py-4 bg-blue-100 border-2 border-blue-300 rounded-xl font-mono text-2xl font-bold text-blue-700 text-center">
                     {roomCode}
                   </div>
                   <button
                     onClick={copyRoomCode}
                     className={`px-6 py-4 rounded-xl font-bold text-sm transition-all transform hover:scale-110 ${
                       copied
-                        ? "bg-gradient-to-r from-emerald-500/40 to-teal-500/40 text-emerald-300 border-2 border-emerald-500/50"
-                        : "bg-gradient-to-r from-blue-500/40 to-cyan-500/40 text-blue-300 border-2 border-blue-500/50 hover:from-blue-500/60 hover:to-cyan-500/60"
+                        ? "bg-green-100 text-green-700 border-2 border-green-300"
+                        : "bg-gray-900 text-white border-2 border-gray-900 hover:bg-gray-800"
                     }`}
                   >
                     {copied ? "✓ Copied!" : "📋 Copy"}
@@ -395,9 +395,9 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
                 </div>
               </div>
 
-              <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-4 text-sm text-slate-300">
+              <div className="bg-gray-50 border border-gray-300 rounded-xl p-4 text-sm text-gray-700">
                 <p className="font-semibold mb-2">💡 How to share:</p>
-                <ul className="space-y-1 text-xs text-slate-400">
+                <ul className="space-y-1 text-xs text-gray-600">
                   <li>• Copy the code above</li>
                   <li>• Share it with your players</li>
                   <li>• They can use it to join your room</li>
@@ -405,26 +405,26 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
               </div>
             </div>
 
-            <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <div className="bg-gray-50 border border-gray-300 rounded-2xl p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <span>⏱️</span> Problem Timer
               </h3>
               {isProblemActive ? (
                 <div className="text-center">
-                  <div className={`text-5xl font-mono font-bold mb-3 ${timeLeft <= 30 ? "text-red-400 animate-pulse" : "text-cyan-400"}`}>
+                  <div className={`text-5xl font-mono font-bold mb-3 ${timeLeft <= 30 ? "text-red-600 animate-pulse" : "text-blue-600"}`}>
                     {Math.floor(timeLeft / 60).toString().padStart(2, "0")}:
                     {(timeLeft % 60).toString().padStart(2, "0")}
                   </div>
-                  <p className="text-sm text-slate-400">Problem is active</p>
+                  <p className="text-sm text-gray-700">Problem is active</p>
                 </div>
               ) : (
-                <p className="text-center text-red-400 font-semibold py-6">⏹️ No active problem</p>
+                <p className="text-center text-red-600 font-semibold py-6">⏹️ No active problem</p>
               )}
             </div>
 
-            <div className="border-t border-slate-700/50 pt-6">
+            <div className="border-t border-gray-300 pt-6">
               <button
-                className="w-full px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:opacity-50 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-red-500/50 text-sm"
+                className="w-full px-4 py-3 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 text-white font-semibold rounded-lg transition-all shadow-lg text-sm"
                 onClick={handleDelete}
                 disabled={loading}
               >
@@ -436,19 +436,19 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
 
         {activeTab === "leaderboard" && (
           <div className="max-w-3xl">
-            <div className="mb-6 p-4 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/30 rounded-xl">
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <p className="text-xs text-slate-400 font-semibold mb-1">Total Players</p>
-                  <p className="text-2xl font-bold text-cyan-400">{players?.length || 0}</p>
+                  <p className="text-xs text-gray-700 font-semibold mb-1">Total Players</p>
+                  <p className="text-2xl font-bold text-blue-600">{players?.length || 0}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400 font-semibold mb-1">Max Answers</p>
-                  <p className="text-2xl font-bold text-emerald-400">{myRoom?.maxCorrectAnswers || 0}</p>
+                  <p className="text-xs text-gray-700 font-semibold mb-1">Max Answers</p>
+                  <p className="text-2xl font-bold text-emerald-600">{myRoom?.maxCorrectAnswers || 0}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400 font-semibold mb-1">Solved</p>
-                  <p className="text-2xl font-bold text-orange-400">{players?.filter(p => p.hasAnsweredCorrectly)?.length || 0}</p>
+                  <p className="text-xs text-gray-700 font-semibold mb-1">Solved</p>
+                  <p className="text-2xl font-bold text-orange-600">{players?.filter(p => p.hasAnsweredCorrectly)?.length || 0}</p>
                 </div>
               </div>
             </div>
@@ -459,25 +459,25 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
                   .map((player, idx) => (
                     <div
                       key={player.id}
-                      className="group flex items-center gap-4 bg-gradient-to-r from-slate-800/50 to-slate-800/30 border border-slate-700/50 rounded-xl p-4 hover:border-cyan-500/50 transition-all hover:shadow-lg hover:shadow-cyan-500/10"
+                      className="group flex items-center gap-4 bg-gray-50 border border-gray-300 rounded-xl p-4 hover:border-blue-500 transition-all hover:shadow-lg"
                     >
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 font-bold text-white text-sm">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-900 font-bold text-white text-sm">
                         {idx + 1}
                       </div>
                       <div className="flex-1">
-                        <p className="text-white font-semibold flex items-center gap-2">{player.username} {player.hasAnsweredCorrectly && "✅"}</p>
-                        <p className="text-xs text-slate-400">{player.id === myRoom.admin?.id ? "👑 Admin" : "Participant"}</p>
+                        <p className="text-gray-900 font-semibold flex items-center gap-2">{player.username} {player.hasAnsweredCorrectly && "✅"}</p>
+                        <p className="text-xs text-gray-600">{player.id === myRoom.admin?.id ? "👑 Admin" : "Participant"}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-cyan-400">{player.score ?? 0}</p>
-                        <p className="text-xs text-slate-500">/ {myRoom.maxCorrectAnswers}</p>
+                        <p className="text-2xl font-bold text-blue-600">{player.score ?? 0}</p>
+                        <p className="text-xs text-gray-600">/ {myRoom.maxCorrectAnswers}</p>
                       </div>
                     </div>
                   ))}
               </div>
             ) : (
               <div className="text-center py-12">
-                <p className="text-slate-500 text-sm">👥 No players yet</p>
+                <p className="text-gray-600 text-sm">👥 No players yet</p>
               </div>
             )}
           </div>
@@ -487,41 +487,41 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
           <div className="max-w-4xl">
             {!isProblemActive ? (
               <>
-                <div className="mb-4 p-3 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-lg">
-                  <p className="text-sm font-semibold text-slate-300">
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm font-semibold text-gray-900">
                     {topSubmissions?.length > 0 ? `📊 Top ${topSubmissions.length} Submissions` : "📊 No submissions yet"}
                   </p>
                   {topSubmissions?.length > 0 && myRoom?.currentProblem && (
-                    <p className="text-xs text-slate-400 mt-1">Problem: {myRoom.currentProblem.title}</p>
+                    <p className="text-xs text-gray-700 mt-1">Problem: {myRoom.currentProblem.title}</p>
                   )}
                 </div>
                 {topSubmissions?.length > 0 ? (
                   <div className="space-y-4">
                 {topSubmissions.map((sub, idx) => (
-                  <div key={sub.id} className="border border-slate-700 rounded-2xl overflow-hidden bg-slate-900/40 hover:border-cyan-500/70 transition-all hover:shadow-lg hover:shadow-cyan-500/10">
-                    <div className={`px-5 py-4 border-b border-slate-700 ${sub.passed ? "bg-emerald-500/10" : "bg-red-500/10"}`}>
+                  <div key={sub.id} className="border border-gray-300 rounded-2xl overflow-hidden bg-white hover:border-blue-500 transition-all hover:shadow-lg">
+                    <div className={`px-5 py-4 border-b border-gray-300 ${sub.passed ? "bg-green-50" : "bg-red-50"}`}>
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 font-bold text-white text-sm">
+                          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-900 font-bold text-white text-sm">
                             {idx + 1}
                           </div>
                           <div>
-                            <p className="text-white font-bold">{sub.player?.username || "Unknown"}</p>
-                            <p className="text-xs text-slate-400">{sub.language?.toUpperCase() || "N/A"} • {new Date(sub.submittedAt).toLocaleString()}</p>
+                            <p className="text-gray-900 font-bold">{sub.player?.username || "Unknown"}</p>
+                            <p className="text-xs text-gray-700">{sub.language?.toUpperCase() || "N/A"} • {new Date(sub.submittedAt).toLocaleString()}</p>
                           </div>
                         </div>
-                        <span className={`text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 ${sub.passed ? "bg-emerald-500/30 text-emerald-300 border border-emerald-500/50" : "bg-red-500/30 text-red-300 border border-red-500/50"}`}>
+                        <span className={`text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 ${sub.passed ? "bg-green-100 text-green-700 border border-green-300" : "bg-red-100 text-red-700 border border-red-300"}`}>
                           {sub.passed ? "✓ PASSED" : "✗ FAILED"}
                         </span>
                       </div>
                     </div>
                     <div className="p-5">
-                      <div className="bg-slate-950/60 rounded-xl border border-slate-700/50 overflow-hidden">
-                        <div className="flex items-center justify-between px-4 py-2 bg-slate-900/50 border-b border-slate-700/50">
-                          <span className="text-xs font-semibold text-slate-400">CODE</span>
-                          <span className="text-xs text-slate-500">{sub.code?.length || 0} characters</span>
+                      <div className="bg-gray-50 rounded-xl border border-gray-300 overflow-hidden">
+                        <div className="flex items-center justify-between px-4 py-2 bg-gray-100 border-b border-gray-300">
+                          <span className="text-xs font-semibold text-gray-700">CODE</span>
+                          <span className="text-xs text-gray-700">{sub.code?.length || 0} characters</span>
                         </div>
-                        <pre className="p-4 text-slate-300 font-mono text-sm whitespace-pre-wrap break-words leading-relaxed max-h-72 overflow-auto">{sub.code}</pre>
+                        <pre className="p-4 text-gray-900 font-mono text-sm whitespace-pre-wrap break-words leading-relaxed max-h-72 overflow-auto">{sub.code}</pre>
                       </div>
                     </div>
                   </div>
@@ -529,14 +529,14 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
               </div>
                 ) : (
                   <div className="text-center py-16">
-                    <p className="text-slate-500 text-sm font-medium">💤 Waiting for submissions...</p>
-                    <p className="text-slate-600 text-xs mt-2">Solutions will appear here after the timer ends</p>
+                    <p className="text-gray-600 text-sm font-medium">💤 Waiting for submissions...</p>
+                    <p className="text-gray-700 text-xs mt-2">Solutions will appear here after the timer ends</p>
                   </div>
                 )}
               </>
             ) : (
               <div className="text-center py-12">
-                <p className="text-slate-500 text-sm">⏱️ Solutions will be revealed after timer ends</p>
+                <p className="text-gray-600 text-sm">⏱️ Solutions will be revealed after timer ends</p>
               </div>
             )}
           </div>
