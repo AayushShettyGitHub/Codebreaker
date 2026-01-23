@@ -1,12 +1,16 @@
 import api from "../../config/client";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Navbar({ user }) {
   const navigate = useNavigate();
+  const { setUser, checkAuth } = useAuth();
 
   async function handleLogout() {
     try {
       await api.post("/auth/logout", {});
+      setUser(null);
+      await checkAuth();
       navigate("/auth");
     } catch (err) {
       console.error("Logout failed", err);
@@ -62,7 +66,7 @@ export default function Navbar({ user }) {
               </button>
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg font-medium text-sm transition-colors duration-200"
+                className="px-6 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-lg font-medium text-sm transition-colors duration-200"
               >
                 Logout
               </button>

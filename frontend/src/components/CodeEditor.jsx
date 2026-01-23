@@ -87,16 +87,16 @@ const CodeEditor = ({ value, onChange, language = "python", disabled = false }) 
   return (
     <div
       ref={containerRef}
-      className={`relative w-full transition-all duration-300 rounded-lg overflow-hidden shadow-2xl border border-slate-700 ${
+      className={`relative w-full transition-all duration-300 rounded-lg overflow-hidden shadow-lg border border-gray-300 ${
         isFullscreen ? "fixed inset-0 z-50 m-0 rounded-none" : "h-full min-h-[500px]"
       }`}
       style={{
-        backgroundColor: "#1a2332",
+        backgroundColor: "#f9fafb",
       }}
     >
-      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between bg-gradient-to-b from-slate-800/95 to-slate-800/40 px-4 py-1.5 border-b border-slate-700 backdrop-blur-md">
+      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between bg-gradient-to-b from-gray-100 to-gray-50 px-4 py-1.5 border-b border-gray-300 backdrop-blur-md">
         <div className="flex items-center gap-2">
-          <span className="px-2.5 py-0.5 bg-gradient-to-r from-slate-600 to-slate-500 text-white text-xs font-bold rounded shadow-md">
+          <span className="px-2.5 py-0.5 bg-gray-900 text-white text-xs font-bold rounded shadow-md">
             {getMonacoLanguage().toUpperCase()}
           </span>
           {disabled && (
@@ -108,7 +108,7 @@ const CodeEditor = ({ value, onChange, language = "python", disabled = false }) 
 
         <button
           onClick={handleFullscreen}
-          className="p-2 hover:bg-slate-700/70 rounded-lg transition-colors text-slate-300 hover:text-white"
+          className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-700 hover:text-gray-900"
           title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
         >
           {isFullscreen ? (
@@ -126,16 +126,16 @@ const CodeEditor = ({ value, onChange, language = "python", disabled = false }) 
           paddingTop: "20px",
         }}
       >
-        <Suspense fallback={<div className="flex items-center justify-center h-full text-slate-400">⚡ Loading editor...</div>}>
+        <Suspense fallback={<div className="flex items-center justify-center h-full text-gray-500">⚡ Loading editor...</div>}>
           <Editor
             ref={editorRef}
             height="100%"
             language={getMonacoLanguage()}
             value={value}
             onChange={(val) => onChange(val || "")}
-            theme="vs-dark"
+            theme="vs"
             options={editorOptions}
-            loading={<div className="flex items-center justify-center h-full text-slate-400">⚡ Loading editor...</div>}
+            loading={<div className="flex items-center justify-center h-full text-gray-500">⚡ Loading editor...</div>}
           />
         </Suspense>
       </div>

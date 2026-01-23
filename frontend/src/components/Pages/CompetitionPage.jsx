@@ -1,125 +1,128 @@
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
 import { useState } from "react";
+import JoinRoom from "../RoomComponents/JoinRoom";
+import CreateRoom from "../RoomComponents/CreateRoom";
+import RoomDisplay from "../RoomComponents/RoomDisplay";
+import AdminRoom from "../RoomComponents/AdminRoom";
+import Submit from "../RoomComponents/Submit";
+import { useAuth } from "../../context/AuthContext";
+import { useRoom } from "../../context/RoomContext";
+import api from "../../config/client";
 
-export default function CompetitonPage() {
-  const navigate = useNavigate();
+export default function CompetitionPage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("active");
-  const [loading, setLoading] = useState(false);
+  const { myRoom, setMyRoom } = useRoom();
+  const [activeTab, setActiveTab] = useState("join");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const competitions = {
-    active: [
-      { id: 1, name: "Weekend Challenge #45", participants: 284, status: "Live", startTime: "Started 2h ago", endTime: "Ends in 4h" },
-      { id: 2, name: "Algorithms Blitz", participants: 157, status: "Live", startTime: "Started 30m ago", endTime: "Ends in 29h" },
-    ],
-    upcoming: [
-      { id: 3, name: "Advanced Data Structures", participants: 0, status: "Upcoming", startTime: "Starts in 6h", endTime: "Duration: 3h" },
-      { id: 4, name: "Dynamic Programming Masters", participants: 0, status: "Upcoming", startTime: "Starts tomorrow", endTime: "Duration: 2h" },
-    ],
-    finished: [
-      { id: 5, name: "Beginner Friendly Contest", participants: 512, status: "Finished", startTime: "Finished 2 days ago", endTime: "" },
-      { id: 6, name: "String Manipulation Challenge", participants: 398, status: "Finished", startTime: "Finished 1 week ago", endTime: "" },
-    ],
-  };
+  async function handleLeave() {
+    if (!myRoom || !user?.id) return;
 
-  const handleJoin = (competitionId) => {
-    setLoading(true);
-    setTimeout(() => {
-      navigate("/home");
-      setLoading(false);
-    }, 300);
-  };
+    try {
+      await api.post(`/rooms/${myRoom.id}/leave`, {
+        playerId: user.id,
+      });
+      setMyRoom(null);
+    } catch (err) {
+      console.error("Error leaving room:", err);
+    }
+  }
 
-  return (
-    <main className="flex-1">
-      <div className="max-w-6xl mx-auto px-6 py-20">
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Competitions</h1>
-          <p className="text-lg text-gray-600">Join live coding contests and challenge yourself</p>
-        </div>
+  // If user is already in a room, show room display
+  if (myRoom) {
+    return (
+      <main className="flex-1 bg-white">
+        <div className="container max-w-7xl mx-auto py-8 px-6 w-full">
+          <div className="space-y-6">
+            <div className="md:hidden flex justify-between items-center">
+              <h2 className="text-lg font-bold text-gray-900">{myRoom.name}</h2>
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-lg text-gray-700 transition-all"
+              >
+                <span className="text-xl">{sidebarOpen ? "✕" : "☰"}</span>
+              </button>
+            </div>
 
-        <div className="flex gap-4 mb-8 border-b border-gray-200">
-          {["active", "upcoming", "finished"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-6 py-3 font-medium transition-colors border-b-2 ${
-                activeTab === tab
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              <span className="ml-2 text-sm">({competitions[tab].length})</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="grid gap-6">
-          {competitions[activeTab].map((comp) => (
-            <div
-              key={comp.id}
-              className="bg-white rounded-xl p-8 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start justify-between mb-6">
-                <div>
-                  <h3 className="text-2xl font-bold text-gray-900">{comp.name}</h3>
-                  <div className="flex gap-4 mt-3">
-                    <span className="text-sm text-gray-600">👥 {comp.participants} participants</span>
-                    <span className={`text-sm font-medium px-3 py-1 rounded-full ${
-                      comp.status === "Live"
-                        ? "bg-green-100 text-green-700"
-                        : comp.status === "Upcoming"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-gray-100 text-gray-700"
-                    }`}>
-                      {comp.status}
-                    </span>
-                  </div>
-                </div>
-                {comp.status !== "Finished" && (
-                  <button
-                    onClick={() => handleJoin(comp.id)}
-                    disabled={loading}
-                    className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                      comp.status === "Live"
-                        ? "bg-blue-600 hover:bg-blue-700 text-white"
-                        : "bg-gray-200 text-gray-500 cursor-not-allowed"
-                    }`}
-                  >
-                    {loading ? "Loading..." : comp.status === "Live" ? "Join" : "Coming Soon"}
-                  </button>
-                )}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 auto-rows-max">
+              <div className={`${
+                sidebarOpen ? "block" : "hidden md:block"
+              } lg:col-span-1 h-fit`}>
+                <RoomDisplay
+                  room={myRoom}
+                  currentUser={user}
+                  onLeave={handleLeave}
+                />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4 pt-6 border-t border-gray-200">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">⏱️ Timing</p>
-                  <p className="font-medium text-gray-900">{comp.startTime}</p>
-                </div>
-                {comp.endTime && (
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">⏳ Deadline</p>
-                    <p className="font-medium text-gray-900">{comp.endTime}</p>
+              <div className="lg:col-span-3 space-y-6">
+                {myRoom.admin?.id === user?.id && (
+                  <div className="h-fit">
+                    <AdminRoom
+                      roomId={myRoom.id}
+                      adminId={user?.id}
+                      playerId={user?.id}
+                      onDelete={() => setMyRoom(null)}
+                    />
+                  </div>
+                )}
+
+                {myRoom.admin?.id !== user?.id && (
+                  <div className="h-fit">
+                    <Submit
+                      roomId={myRoom.id}
+                      playerId={user?.id}
+                      problemId={myRoom.currentProblem?.id}
+                    />
                   </div>
                 )}
               </div>
             </div>
-          ))}
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // If no room, show join/create interface
+  return (
+    <main className="flex-1 bg-white">
+      <div className="max-w-4xl mx-auto px-6 py-20">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-3">Join or Create a Room</h1>
+          <p className="text-lg text-gray-600">Choose to join an existing competition or start a new one</p>
         </div>
 
-        {competitions[activeTab].length === 0 && (
-          <div className="text-center py-20">
-            <p className="text-xl text-gray-600 mb-4">No {activeTab} competitions</p>
-            <button
-              onClick={() => setActiveTab("active")}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
-            >
-              View Active
-            </button>
-          </div>
-        )}
+        <div className="flex gap-4 mb-8 border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab("join")}
+            className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+              activeTab === "join"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            🔗 Join Room
+          </button>
+          <button
+            onClick={() => setActiveTab("create")}
+            className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+              activeTab === "create"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            ➕ Create Room
+          </button>
+        </div>
+
+        <div className="max-w-md mx-auto">
+          {activeTab === "join" && (
+            <JoinRoom playerId={user?.id} onJoin={setMyRoom} />
+          )}
+          {activeTab === "create" && (
+            <CreateRoom playerId={user?.id} onCreate={setMyRoom} />
+          )}
+        </div>
       </div>
     </main>
   );

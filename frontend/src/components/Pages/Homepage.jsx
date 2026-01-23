@@ -48,7 +48,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-cyan-50 flex flex-col">
-      <Navbar user={user} />
 
       <main className="flex-1 container max-w-7xl mx-auto py-4 md:py-8 px-4 md:px-12 w-full">
         {!myRoom ? (

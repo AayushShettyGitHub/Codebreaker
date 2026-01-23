@@ -44,15 +44,15 @@ export default function JoinRoom({ playerId, onJoin }) {
   }
 
   return (
-    <form onSubmit={handleJoin} className="bg-slate-900 border border-slate-700 shadow-lg rounded-lg p-6">
-      <h3 className="text-xl font-bold mb-2 bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">Join Competition</h3>
-      <p className="text-sm text-slate-400 mb-4">
+    <form onSubmit={handleJoin} className="bg-white border border-gray-300 shadow-lg rounded-lg p-6">
+      <h3 className="text-xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Join Competition</h3>
+      <p className="text-sm text-gray-600 mb-4">
         Enter the room code to join an existing competition.
       </p>
 
       <div className="flex gap-2">
         <input
-          className="flex-1 p-3 border border-slate-600 rounded-lg bg-slate-800 text-white placeholder-slate-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
+          className="flex-1 p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
           type="text"
           placeholder="Enter Room Code"
           value={joinCode}
@@ -64,13 +64,13 @@ export default function JoinRoom({ playerId, onJoin }) {
         <button
           type="submit"
           disabled={loading}
-          className="px-6 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 disabled:opacity-50 text-white font-semibold rounded-lg transition-all text-sm"
+          className="px-6 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 text-white font-semibold rounded-lg transition-all text-sm"
         >
           {loading ? "Joining..." : "Join"}
         </button>
       </div>
 
-      {error && <p className="text-sm text-red-400 mt-3">{error}</p>}
+      {error && <p className="text-sm text-red-600 mt-3 font-medium">{error}</p>}
     </form>
   );
 }

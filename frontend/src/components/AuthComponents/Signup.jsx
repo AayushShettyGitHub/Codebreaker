@@ -44,7 +44,7 @@ export default function Signup() {
       
       await checkAuth();
       
-      navigate("/home", { replace: true });
+      navigate("/compete", { replace: true });
     } catch (err) {
       const msg = err.response?.data?.message || err.response?.data || "Signup failed";
       setError(msg);
@@ -55,87 +55,60 @@ export default function Signup() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-cyan-50 p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-600 mb-4">
-            <span className="text-white text-3xl font-bold">CB</span>
-          </div>
-          <h1 className="text-4xl font-bold text-gray-900">CodeBreaker</h1>
-          <p className="text-gray-600 mt-2">Join the competition</p>
-        </div>
+    <div className="w-full">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Sign Up</h2>
 
-        <div className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Account</h2>
-          <p className="text-gray-600 text-sm mb-8">Sign up to start competing</p>
-
-          <div className="space-y-5">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Username</label>
-              <input
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-white text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-0 transition-colors"
-                placeholder="Choose your username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
-              <input
-                type="password"
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-white text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-0 transition-colors"
-                placeholder="Create a password (min 6 characters)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm Password</label>
-              <input
-                type="password"
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-white text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-0 transition-colors"
-                placeholder="Confirm your password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-
-            <button 
-              onClick={handleSignup}
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Username</label>
+            <input
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              placeholder="Choose your username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-100"
-            >
-              {loading ? "Creating account..." : "Sign Up"}
-            </button>
+            />
           </div>
 
-          {error && (
-            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl">
-              <p className="text-red-700 text-sm font-medium">❌ {error}</p>
-            </div>
-          )}
-
-          <div className="mt-6 text-center">
-            <p className="text-gray-600 text-sm">
-              Already have an account?{" "}
-              <button 
-                onClick={() => navigate("/auth?tab=login")}
-                className="text-blue-600 font-semibold hover:text-blue-700 transition-colors"
-              >
-                Sign in
-              </button>
-            </p>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+            <input
+              type="password"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              placeholder="Create a password (min 6 characters)"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+            />
           </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm Password</label>
+            <input
+              type="password"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              placeholder="Confirm your password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+
+          <button 
+            onClick={handleSignup}
+            disabled={loading}
+            className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all"
+          >
+            {loading ? "Creating account..." : "Sign Up"}
+          </button>
         </div>
 
-        <p className="text-center text-gray-500 text-xs mt-6">
-          Secure authentication with JWT • Your data is protected
-        </p>
+        {error && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-700 text-sm font-medium">❌ {error}</p>
+          </div>
+        )}
       </div>
     </div>
   );

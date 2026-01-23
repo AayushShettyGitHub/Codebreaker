@@ -144,6 +144,7 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
           { key: "leaderboard", label: "🏆 Leaderboard" },
           { key: "players", label: "👥 Players" },
           { key: "problem", label: "📝 Problem" },
+          { key: "solutions", label: "💡 Top Solutions" },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -278,6 +279,15 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
                 <p className="text-gray-500 text-xs md:text-sm">📋 No active problem yet</p>
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === "solutions" && (
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-gray-700 mb-3">💡 Top Solutions</p>
+            <div className="text-center py-8">
+              <p className="text-gray-600 text-sm">Solutions will appear here after the problem ends.</p>
+            </div>
           </div>
         )}
       </div>

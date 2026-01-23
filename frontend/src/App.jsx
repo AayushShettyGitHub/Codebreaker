@@ -9,9 +9,11 @@ import ProfilePage from "./components/Pages/ProfilePage";
 import LeaderboardPage from "./components/Pages/LeaderboardPage";
 import CompetitionPage from "./components/Pages/CompetitionPage";
 import Footer from "./components/Footer";
+import Navbar from "./components/MainComponents/Navbar";
 import { AuthProvider } from "./context/AuthContext";
 import { RoomProvider } from "./context/RoomContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { useAuth } from "./context/AuthContext";
 
 export default function App() {
   return (
@@ -30,36 +32,55 @@ export default function App() {
             pauseOnHover
             theme="light"
           />
-          <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 via-blue-50 to-cyan-50">
-            <div className="flex-1">
-              <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/auth" element={<AuthPage />} />
-                <Route path="/about" element={<AboutPage />} />
-                <Route path="/compete" element={<CompetitionPage />} />
-                <Route path="/leaderboard" element={<LeaderboardPage />} />
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute>
-                      <ProfilePage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/home"
-                  element={
-                    <ProtectedRoute>
-                      <HomePage />
-                    </ProtectedRoute>
-                  }
-                />
-              </Routes>
-            </div>
-            <Footer />
+          <div className="min-h-screen flex flex-col bg-white">
+            <AppContent />
           </div>
         </BrowserRouter>
       </RoomProvider>
     </AuthProvider>
+  );
+}
+
+function AppContent() {
+  const { user } = useAuth();
+  
+  return (
+    <>
+      {user && <Navbar user={user} />}
+      <div className="flex-1">
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/compete" element={
+            <ProtectedRoute>
+              <CompetitionPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/leaderboard" element={
+            <ProtectedRoute>
+              <LeaderboardPage />
+            </ProtectedRoute>
+          } />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/home"
+            element={
+              <ProtectedRoute>
+                <HomePage />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </div>
+      <Footer />
+    </>
   );
 }
