@@ -6,34 +6,64 @@ export default function LandingPage() {
   const { user } = useAuth();
 
   return (
-    <main className="flex-1 bg-white">
+    <main className="min-h-screen bg-slate-50">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-50 via-white to-cyan-50 py-24">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
+      <section className="min-h-[90vh] flex items-center justify-center px-6 py-20">
+        <div className="w-full max-w-6xl">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h1 className="text-6xl font-bold text-gray-900 mb-6 leading-tight">Master Competitive Programming</h1>
-              <p className="text-xl text-gray-600 mb-10 leading-relaxed">
-                Real-time coding competitions with instant feedback, leaderboards, and community challenges. Level up your coding skills today.
+              <span className="inline-block mb-4 px-3 py-1 text-sm font-medium text-blue-600 bg-blue-50 rounded-full">
+                Real-time coding battles
+              </span>
+
+              <h1 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight">
+                Competitive coding, made live.
+              </h1>
+
+              <p className="text-slate-600 text-lg mb-10 leading-relaxed max-w-lg">
+                Join live rooms, solve challenging problems in real-time, compete with programmers worldwide, and climb the rankings.
               </p>
+
               <div className="flex gap-4">
                 <button
                   onClick={() => navigate(user ? "/compete" : "/auth")}
-                  className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200"
+                  className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors"
                 >
                   {user ? "Start Competing" : "Get Started"}
                 </button>
                 <button
                   onClick={() => navigate("/about")}
-                  className="px-8 py-3 border-2 border-gray-300 hover:border-blue-600 text-gray-900 hover:text-blue-600 font-semibold rounded-lg transition-colors duration-200"
+                  className="px-8 py-3 bg-white border border-slate-300 text-slate-900 hover:bg-slate-50 rounded-xl font-medium transition-colors"
                 >
                   Learn More
                 </button>
               </div>
             </div>
-            <div className="flex items-center justify-center">
-              <div className="w-full h-96 bg-gradient-to-br from-blue-200 to-cyan-200 rounded-2xl flex items-center justify-center shadow-lg">
-                <div className="text-7xl">🚀</div>
+
+            {/* Hero Visual */}
+            <div className="hidden md:block">
+              <div className="bg-gradient-to-br from-blue-100 to-slate-100 rounded-2xl p-8 min-h-96 flex flex-col items-center justify-center">
+                <div className="w-full space-y-4">
+                  <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-sm font-semibold text-slate-900">Live Room: Algorithm Battle</span>
+                      <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    </div>
+                    <div className="space-y-2 text-sm text-slate-600">
+                      <p>Players: 12 active</p>
+                      <p>Problem: Dynamic Programming</p>
+                      <p>Time: 2:34 remaining</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    {['2,150', '847', '#12'].map((stat, i) => (
+                      <div key={i} className="bg-white rounded-lg p-4 text-center shadow-sm border border-slate-200">
+                        <p className="text-lg font-bold text-slate-900">{stat}</p>
+                        <p className="text-xs text-slate-600 mt-1">{['Points', 'Solved', 'Rank'][i]}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -41,39 +71,22 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Why CodeBreaker?</h2>
-            <p className="text-lg text-gray-600">Everything you need to compete and improve</p>
-          </div>
+      <section className="bg-white py-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-4xl font-bold text-slate-900 text-center mb-16">Why CodeBreaker?</h2>
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { icon: "⚡", title: "Lightning Fast", desc: "Real-time updates keep everyone in sync with instant feedback" },
-              { icon: "🏆", title: "Competitive", desc: "Live leaderboards and instant rankings to track your progress" },
-              { icon: "🔐", title: "Secure", desc: "Enterprise-grade security for your code and data" },
+              { title: 'Real-Time Sync', desc: 'Instant synchronization across all competitors' },
+              { title: 'Live Rankings', desc: 'See your position update as you code' },
+              { title: 'Community', desc: 'Compete with programmers worldwide' },
             ].map((feature, i) => (
-              <div key={i} className="bg-white border border-gray-200 rounded-xl p-8 hover:shadow-lg transition-shadow duration-200">
-                <div className="text-5xl mb-4">{feature.icon}</div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">{feature.title}</h3>
-                <p className="text-gray-600 text-lg leading-relaxed">{feature.desc}</p>
+              <div key={i} className="bg-slate-50 rounded-xl p-8 border border-slate-200">
+                <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold mb-4">●</div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">{feature.title}</h3>
+                <p className="text-slate-600">{feature.desc}</p>
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-cyan-600 py-20">
-        <div className="max-w-6xl mx-auto px-6 text-center">
-          <h2 className="text-4xl font-bold text-white mb-6">Ready to compete?</h2>
-          <p className="text-xl text-blue-100 mb-10">Join thousands of programmers solving problems in real-time</p>
-          <button
-            onClick={() => navigate(user ? "/compete" : "/auth")}
-            className="px-10 py-4 bg-white text-blue-600 hover:bg-gray-100 font-bold text-lg rounded-lg transition-colors duration-200"
-          >
-            {user ? "Start Now" : "Create Account"}
-          </button>
         </div>
       </section>
     </main>

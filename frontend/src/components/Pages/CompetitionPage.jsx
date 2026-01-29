@@ -30,14 +30,14 @@ export default function CompetitionPage() {
   // If user is already in a room, show room display
   if (myRoom) {
     return (
-      <main className="flex-1 bg-white">
+      <main className="flex-1">
         <div className="container max-w-7xl mx-auto py-8 px-6 w-full">
           <div className="space-y-6">
             <div className="md:hidden flex justify-between items-center">
-              <h2 className="text-lg font-bold text-gray-900">{myRoom.name}</h2>
+              <h2 className="text-lg font-bold text-slate-900">{myRoom.name}</h2>
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-lg text-gray-700 transition-all"
+                className="p-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg text-slate-700 transition-all"
               >
                 <span className="text-xl">{sidebarOpen ? "✕" : "☰"}</span>
               </button>
@@ -85,43 +85,52 @@ export default function CompetitionPage() {
 
   // If no room, show join/create interface
   return (
-    <main className="flex-1 bg-white">
-      <div className="max-w-4xl mx-auto px-6 py-20">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">Join or Create a Room</h1>
-          <p className="text-lg text-gray-600">Choose to join an existing competition or start a new one</p>
+    <main className="flex-1">
+      <div className="max-w-6xl mx-auto px-6 py-20">
+        <div className="text-center mb-16">
+          <h1 className="text-4xl font-bold text-slate-900 mb-4">Start Competing</h1>
+          <p className="text-lg text-slate-600">Join an existing room or create your own competition</p>
         </div>
 
-        <div className="flex gap-4 mb-8 border-b border-gray-200">
+        {/* Tab Navigation */}
+        <div className="flex gap-4 mb-12 border-b border-slate-200 max-w-md mx-auto">
           <button
             onClick={() => setActiveTab("join")}
-            className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+            className={`flex-1 px-6 py-3 font-medium transition-colors border-b-2 ${
               activeTab === "join"
                 ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-600 hover:text-gray-900"
+                : "border-transparent text-slate-600 hover:text-slate-900"
             }`}
           >
-            🔗 Join Room
+            Join Room
           </button>
           <button
             onClick={() => setActiveTab("create")}
-            className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+            className={`flex-1 px-6 py-3 font-medium transition-colors border-b-2 ${
               activeTab === "create"
                 ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-600 hover:text-gray-900"
+                : "border-transparent text-slate-600 hover:text-slate-900"
             }`}
           >
-            ➕ Create Room
+            Create Room
           </button>
         </div>
 
-        <div className="max-w-md mx-auto">
-          {activeTab === "join" && (
+        {/* Forms Grid */}
+        <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto">
+          <div className={activeTab === "join" ? "" : "hidden md:block opacity-30 pointer-events-none"}>
             <JoinRoom playerId={user?.id} onJoin={setMyRoom} />
-          )}
-          {activeTab === "create" && (
+          </div>
+          <div className={activeTab === "create" ? "" : "hidden md:block opacity-30 pointer-events-none"}>
             <CreateRoom playerId={user?.id} onCreate={setMyRoom} />
-          )}
+          </div>
+          <div className="md:hidden">
+            {activeTab === "join" ? (
+              <JoinRoom playerId={user?.id} onJoin={setMyRoom} />
+            ) : (
+              <CreateRoom playerId={user?.id} onCreate={setMyRoom} />
+            )}
+          </div>
         </div>
       </div>
     </main>

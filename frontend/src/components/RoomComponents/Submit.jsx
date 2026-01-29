@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import api from "../../config/client";
 import websocketService from "../../services/websocketService";
 import SubmissionResult from "./SubmissionResult";
-import CodeEditor from "../CodeEditor";
+import CodeEditor from "./CodeEditor";
 import { useRoom } from "../../context/RoomContext";
 
 export default function Submit({ playerId }) {

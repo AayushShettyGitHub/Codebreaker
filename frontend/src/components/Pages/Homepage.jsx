@@ -40,18 +40,18 @@ export default function HomePage() {
   if (authLoading || roomLoading) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
-        <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading...</p>
+        <div className="w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-slate-600">Loading...</p>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-cyan-50 flex flex-col">
+    <div className="min-h-screen flex flex-col">
 
-      <main className="flex-1 container max-w-7xl mx-auto py-4 md:py-8 px-4 md:px-12 w-full">
+      <main className="flex-1 container max-w-7xl mx-auto py-8 px-6 w-full">
         {!myRoom ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-2xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
             <div className="transform hover:scale-105 transition-all">
               <CreateRoom playerId={user?.id} onCreate={setMyRoom} />
             </div>
@@ -62,10 +62,10 @@ export default function HomePage() {
         ) : (
           <div className="space-y-6 md:space-y-8">
             <div className="md:hidden flex justify-between items-center">
-              <h2 className="text-lg font-bold text-white">{myRoom.name}</h2>
+              <h2 className="text-lg font-bold text-slate-900">{myRoom.name}</h2>
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/50 rounded-lg text-blue-400 transition-all"
+                className="p-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg text-slate-700 transition-all"
               >
                 <span className="text-xl">{sidebarOpen ? "✕" : "☰"}</span>
               </button>

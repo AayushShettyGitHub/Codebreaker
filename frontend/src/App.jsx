@@ -2,13 +2,11 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AuthPage from "./components/Pages/AuthPage";
-import HomePage from "./components/Pages/Homepage";
 import LandingPage from "./components/Pages/LandingPage";
 import AboutPage from "./components/Pages/AboutPage";
 import ProfilePage from "./components/Pages/ProfilePage";
-import LeaderboardPage from "./components/Pages/LeaderboardPage";
 import CompetitionPage from "./components/Pages/CompetitionPage";
-import Footer from "./components/Footer";
+import Footer from "./components/MainComponents/Footer";
 import Navbar from "./components/MainComponents/Navbar";
 import { AuthProvider } from "./context/AuthContext";
 import { RoomProvider } from "./context/RoomContext";
@@ -32,7 +30,7 @@ export default function App() {
             pauseOnHover
             theme="light"
           />
-          <div className="min-h-screen flex flex-col bg-white">
+          <div className="min-h-screen flex flex-col bg-slate-50">
             <AppContent />
           </div>
         </BrowserRouter>
@@ -57,11 +55,7 @@ function AppContent() {
               <CompetitionPage />
             </ProtectedRoute>
           } />
-          <Route path="/leaderboard" element={
-            <ProtectedRoute>
-              <LeaderboardPage />
-            </ProtectedRoute>
-          } />
+          <Route path="/home" element={<Navigate to="/compete" replace />} />
           <Route
             path="/profile"
             element={
@@ -70,17 +64,9 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/home"
-            element={
-              <ProtectedRoute>
-                <HomePage />
-              </ProtectedRoute>
-            }
-          />
         </Routes>
       </div>
-      <Footer />
+      {user && <Footer />}
     </>
   );
 }

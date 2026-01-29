@@ -2,42 +2,54 @@ export default function AboutPage() {
   return (
     <main className="flex-1">
       <div className="max-w-4xl mx-auto px-6 py-20">
-        <h1 className="text-4xl font-bold text-gray-900 mb-8">About CodeBreaker</h1>
+        {/* Header */}
+        <div className="text-center mb-16">
+          <h1 className="text-5xl font-bold text-slate-900 mb-4">About CodeBreaker</h1>
+          <p className="text-xl text-slate-600">Real-time competitive programming platform</p>
+        </div>
 
-        <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-200 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Our Mission</h2>
-          <p className="text-lg text-gray-600 mb-6">
-            CodeBreaker is dedicated to empowering programmers worldwide through real-time competitive coding challenges. We believe in making competitive programming accessible, engaging, and rewarding.
-          </p>
-          <p className="text-lg text-gray-600">
-            Our platform combines cutting-edge technology with educational excellence to create an environment where developers can test their skills, learn from peers, and grow together as a community.
+        {/* Mission */}
+        <div className="bg-white rounded-xl p-8 shadow-sm border border-slate-200 mb-12">
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">Our Mission</h2>
+          <p className="text-slate-600 leading-relaxed">
+            We empower programmers to test their skills in real-time competitions. CodeBreaker brings competitive coding to life with instant synchronization, live rankings, and a global community of developers.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 mb-8">
+        {/* Core Features */}
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
           {[
-            { title: "Community First", desc: "Built by programmers, for programmers. Our community is at the heart of everything we do." },
-            { title: "Real-Time Sync", desc: "Seamless synchronization ensures every competitor sees the same challenges at the same time." },
-            { title: "Fair Competition", desc: "Transparent scoring, instant feedback, and equal opportunity for all participants." },
-            { title: "Continuous Growth", desc: "From beginners to experts, our problems scale with your skill level." },
+            { title: "Real-Time", desc: "Instant synchronization for fair competition" },
+            { title: "Live Rankings", desc: "See your position update live" },
+            { title: "Community", desc: "Connect with programmers worldwide" },
           ].map((item, i) => (
-            <div key={i} className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <h3 className="text-xl font-bold text-gray-900 mb-3">{item.title}</h3>
-              <p className="text-gray-600">{item.desc}</p>
+            <div key={i} className="bg-gradient-to-br from-blue-50 to-slate-50 rounded-xl p-6 border border-slate-200">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold mb-4">●</div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">{item.title}</h3>
+              <p className="text-slate-600 text-sm">{item.desc}</p>
             </div>
           ))}
         </div>
 
-        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-8 border border-blue-200">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Technology Stack</h2>
-          <div className="grid md:grid-cols-2 gap-6 text-gray-600">
+        {/* Tech Stack */}
+        <div className="bg-white rounded-xl p-8 border border-slate-200">
+          <h2 className="text-2xl font-bold text-slate-900 mb-6">Built With</h2>
+          <div className="grid md:grid-cols-2 gap-8">
             <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Backend</h3>
-              <p>Spring Boot, WebSocket (STOMP), PostgreSQL</p>
+              <h3 className="font-semibold text-slate-900 mb-3">Backend</h3>
+              <div className="flex flex-wrap gap-2">
+                {['Spring Boot', 'WebSocket', 'PostgreSQL'].map((tech) => (
+                  <span key={tech} className="px-3 py-1 bg-blue-50 text-blue-600 text-sm rounded-lg border border-blue-200">{tech}</span>
+                ))}
+              </div>
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Frontend</h3>
-              <p>React, Vite, TailwindCSS, Real-time Updates</p>
+              <h3 className="font-semibold text-slate-900 mb-3">Frontend</h3>
+              <div className="flex flex-wrap gap-2">
+                {['React', 'Vite', 'TailwindCSS'].map((tech) => (
+                  <span key={tech} className="px-3 py-1 bg-blue-50 text-blue-600 text-sm rounded-lg border border-blue-200">{tech}</span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
