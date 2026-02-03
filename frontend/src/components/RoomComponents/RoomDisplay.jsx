@@ -62,6 +62,84 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
     };
   }, [room?.id, fetchPlayers]);
 
+  // Solutions / Top submissions state
+  const [groupedProblems, setGroupedProblems] = useState([]);
+  const [openProblems, setOpenProblems] = useState(() => JSON.parse(localStorage.getItem(`openProblems_${room?.id}`) || "{}"));
+  const [expandedCodes, setExpandedCodes] = useState({});
+  const [codeModalVisible, setCodeModalVisible] = useState(false);
+  const [modalContent, setModalContent] = useState(null);
+  const [panelCollapsed, setPanelCollapsed] = useState(() => JSON.parse(localStorage.getItem(`solutionsPanelCollapsed_${room?.id}`) || "false"));
+  const [showOnlyTopN, setShowOnlyTopN] = useState(2);
+
+  const fetchSubmissions = async () => {
+    if (!room?.id) return;
+    try {
+      const res = await api.get(`/rooms/${room.id}/submissions`);
+      const subs = res.data || [];
+      // group by problem id
+      const groups = {};
+      subs.forEach(s => {
+        const pid = s.problem?.id || "unknown";
+        if (!groups[pid]) groups[pid] = { problemId: pid, problemTitle: s.problem?.title || `Problem ${pid}`, submissions: [] };
+        groups[pid].submissions.push(s);
+      });
+
+      const grouped = Object.values(groups).map(g => {
+        // sort: passed first, then by submittedAt asc
+        const sorted = g.submissions.sort((a,b) => {
+          if ((b.passed ? 1 : 0) !== (a.passed ? 1 : 0)) return (b.passed ? 1 : 0) - (a.passed ? 1 : 0);
+          return new Date(a.submittedAt) - new Date(b.submittedAt);
+        });
+        const topSubmissions = sorted.slice(0, Math.max(2, showOnlyTopN));
+        return { ...g, submissions: sorted, topSubmissions };
+      }).sort((a,b) => a.problemTitle.localeCompare(b.problemTitle));
+
+      setGroupedProblems(grouped);
+    } catch (err) {
+      console.error("Failed to fetch submissions:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (!room?.id) return;
+    fetchSubmissions();
+
+    if (websocketService.isReady()) {
+      const handler = (message) => {
+        if (message.type === "SUBMISSION_RESULT" || message.type === "SUBMISSION_RECEIVED" || message.type === "PROBLEM_ENDED") {
+          fetchSubmissions();
+        }
+      };
+      websocketService.subscribe(`/topic/room/${room.id}`, handler);
+      return () => websocketService.unsubscribe(`/topic/room/${room.id}`);
+    }
+  }, [room?.id, showOnlyTopN]);
+
+  useEffect(() => {
+    localStorage.setItem(`openProblems_${room?.id}`, JSON.stringify(openProblems));
+  }, [openProblems, room?.id]);
+
+  useEffect(() => {
+    localStorage.setItem(`solutionsPanelCollapsed_${room?.id}`, JSON.stringify(panelCollapsed));
+  }, [panelCollapsed, room?.id]);
+
+  const toggleProblemOpen = (problemId) => {
+    setOpenProblems(prev => ({ ...prev, [problemId]: !prev[problemId] }));
+  };
+
+  const expandAllGroup = (problemId) => {
+    setOpenProblems(prev => ({ ...prev, [problemId]: true }));
+  };
+
+  const toggleCodeExpanded = (submissionId) => {
+    setExpandedCodes(prev => ({ ...prev, [submissionId]: !prev[submissionId] }));
+  };
+
+  const openCodeModal = (submission) => {
+    setModalContent(submission);
+    setCodeModalVisible(true);
+  };
+
   const leaderboard = useMemo(() => {
     if (!players) return [];
     return [...players].sort((a, b) => {
@@ -284,10 +362,134 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
 
         {activeTab === "solutions" && (
           <div className="space-y-3">
-            <p className="text-sm font-semibold text-gray-700 mb-3">💡 Top Solutions</p>
-            <div className="text-center py-8">
-              <p className="text-gray-600 text-sm">Solutions will appear here after the problem ends.</p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-gray-700 mb-3">💡 Top Solutions</p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    const key = `solutionsPanelCollapsed_${room.id}`;
+                    const newVal = !JSON.parse(localStorage.getItem(key) || "false");
+                    localStorage.setItem(key, JSON.stringify(newVal));
+                    setPanelCollapsed(newVal);
+                  }}
+                  className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg"
+                >
+                  {panelCollapsed ? "Expand" : "Collapse"}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowOnlyTopN(prev => prev === 2 ? 5 : 2);
+                  }}
+                  title="Toggle top N (2/5)"
+                  className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg"
+                >
+                  Top {showOnlyTopN}
+                </button>
+              </div>
             </div>
+
+            {panelCollapsed ? (
+              <div className="text-center py-6 text-sm text-gray-600">Solutions panel is collapsed. Click Expand to view.</div>
+            ) : (
+              <div>
+                {groupedProblems.length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600 text-sm">Solutions will appear here after the problem ends.</p>
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  {groupedProblems.map((group) => (
+                    <div key={group.problemId} className="border border-gray-200 rounded-lg p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => toggleProblemOpen(group.problemId)}
+                            className="text-left text-sm font-semibold text-gray-900"
+                          >
+                            {group.problemTitle}
+                          </button>
+                          <span className="text-xs text-gray-500">• {group.submissions.length} submissions</span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => expandAllGroup(group.problemId)}
+                            className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg"
+                          >
+                            {openProblems[group.problemId] ? "Collapse" : "Expand"}
+                          </button>
+                        </div>
+                      </div>
+
+                      {openProblems[group.problemId] && (
+                        <div className="mt-3 space-y-3">
+                          {group.topSubmissions.slice(0, showOnlyTopN).map(sub => (
+                            <div key={sub.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-sm font-semibold text-gray-900 truncate">{sub.player?.player?.username || sub.player?.username || "Unknown"}</p>
+                                    {sub.passed ? (
+                                      <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded">Passed</span>
+                                    ) : (
+                                      <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">Failed</span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-gray-500 mt-1">Submitted: {new Date(sub.submittedAt).toLocaleString()}</p>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => toggleCodeExpanded(sub.id)}
+                                    className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg"
+                                  >
+                                    {expandedCodes[sub.id] ? "Hide Code" : "View Code"}
+                                  </button>
+
+                                  <button
+                                    onClick={() => openCodeModal(sub)}
+                                    className="text-xs px-2 py-1 bg-gray-900 text-white rounded-lg"
+                                  >
+                                    Expand
+                                  </button>
+                                </div>
+                              </div>
+
+                              {expandedCodes[sub.id] && (
+                                <div className="mt-3 bg-gray-100 p-3 rounded text-sm overflow-auto max-h-60">
+                                  <pre className="whitespace-pre-wrap break-words text-xs font-mono">{sub.code}</pre>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {codeModalVisible && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                <div className="bg-white rounded-lg w-11/12 md:w-3/4 lg:w-1/2 max-h-[90vh] overflow-auto p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold">{modalContent?.problem?.title || "Solution"}</h3>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => {
+                        navigator.clipboard.writeText(modalContent?.code || "");
+                        toastSuccess("Code copied to clipboard");
+                      }} className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg">Copy</button>
+                      <button onClick={() => setCodeModalVisible(false)} className="text-xs px-2 py-1 bg-red-100 hover:bg-red-200 rounded-lg">Close</button>
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 rounded p-3 text-sm font-mono overflow-auto">
+                    <pre className="whitespace-pre-wrap break-words">{modalContent?.code}</pre>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

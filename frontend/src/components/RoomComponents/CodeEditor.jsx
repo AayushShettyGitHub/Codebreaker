@@ -91,7 +91,7 @@ const CodeEditor = ({ value, onChange, language = "python", disabled = false }) 
         isFullscreen ? "fixed inset-0 z-50 m-0 rounded-none" : "h-full min-h-[500px]"
       }`}
       style={{
-        backgroundColor: "#f9fafb",
+        backgroundColor: "#ffffff",
       }}
     >
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between bg-gradient-to-b from-gray-100 to-gray-50 px-4 py-1.5 border-b border-gray-300 backdrop-blur-md">
@@ -133,7 +133,7 @@ const CodeEditor = ({ value, onChange, language = "python", disabled = false }) 
             language={getMonacoLanguage()}
             value={value}
             onChange={(val) => onChange(val || "")}
-            theme="vs"
+            theme="vs-light"
             options={editorOptions}
             loading={<div className="flex items-center justify-center h-full text-gray-500">⚡ Loading editor...</div>}
           />

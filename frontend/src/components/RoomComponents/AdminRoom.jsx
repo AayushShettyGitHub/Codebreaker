@@ -3,6 +3,7 @@ import api from "../../config/client";
 import { useRoom } from "../../context/RoomContext";
 import websocketService from "../../services/websocketService";
 import Submit from "./Submit";
+import { toastError, toastSuccess } from "../../utils/toast";
 
 export default function AdminRoom({ adminId, playerId, onDelete }) {
   const { myRoom, players, setMyRoom } = useRoom();
@@ -141,10 +142,13 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
       setDifficulty("EASY");
       setTestCases([{ input: "", output: "" }]);
       setMessage("✅ New round started successfully!");
+      toastSuccess("New round started!");
       setTimeout(() => setMessage(""), 3000);
     } catch (err) {
       console.error(err);
-      setMessage("❌ Failed to post problem");
+      const serverMsg = err?.response?.data?.error || err?.response?.data?.message || err?.message || "Failed to post problem";
+      setMessage(`❌ ${serverMsg}`);
+      toastError(serverMsg);
     } finally {
       setLoading(false);
     }

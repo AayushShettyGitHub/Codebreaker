@@ -1,5 +1,7 @@
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import api from "../../config/client";
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -20,6 +22,20 @@ export default function ProfilePage() {
       </main>
     );
   }
+
+  const [badges, setBadges] = useState([]);
+
+  useEffect(() => {
+    if (!user) return;
+    (async function(){
+      try {
+        const res = await api.get('/players/me/badges');
+        setBadges(res.data || []);
+      } catch (err) {
+        console.error('Failed to load badges', err);
+      }
+    })();
+  }, [user]);
 
   return (
     <main className="flex-1">
@@ -65,7 +81,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-slate-200">
+            <div className="bg-white rounded-xl p-8 shadow-sm border border-slate-200 mb-6">
               <h3 className="text-2xl font-bold text-slate-900 mb-6">Recent Activity</h3>
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
@@ -76,6 +92,20 @@ export default function ProfilePage() {
                       <p className="text-sm text-slate-600">Completed in competition</p>
                       <p className="text-xs text-slate-500 mt-1">2 hours ago</p>
                     </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-8 shadow-sm border border-slate-200">
+              <h3 className="text-2xl font-bold text-slate-900 mb-6">Badges</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {badges.length === 0 && <p className="text-slate-600">No badges yet. Play public rooms to earn badges!</p>}
+                {badges.map((b) => (
+                  <div key={b.key} className="flex flex-col items-center p-3 border border-slate-100 rounded-lg">
+                    <div className="w-12 h-12 rounded-full bg-amber-400 flex items-center justify-center font-bold text-white mb-2">🏅</div>
+                    <p className="text-sm font-semibold">{b.name}</p>
+                    <p className="text-xs text-slate-500 text-center">{b.description}</p>
                   </div>
                 ))}
               </div>

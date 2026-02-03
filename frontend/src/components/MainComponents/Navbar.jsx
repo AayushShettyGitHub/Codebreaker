@@ -45,6 +45,18 @@ export default function Navbar({ user }) {
             >
               Compete
             </button>
+            <button 
+              onClick={() => navigate("/public-rooms")}
+              className="text-slate-700 hover:text-blue-600 font-medium transition-colors"
+            >
+              Rooms
+            </button>
+            <button 
+              onClick={() => navigate("/achievements")}
+              className="text-slate-700 hover:text-blue-600 font-medium transition-colors"
+            >
+              Achievements
+            </button>
           </nav>
 
           {user ? (

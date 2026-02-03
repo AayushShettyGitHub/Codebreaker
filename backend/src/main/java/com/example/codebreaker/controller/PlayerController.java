@@ -16,9 +16,11 @@ import java.util.stream.Collectors;
 public class PlayerController {
 
     private final PlayerService service;
+    private final com.example.codebreaker.services.BadgeService badgeService;
 
-    public PlayerController(PlayerService service) {
+    public PlayerController(PlayerService service, com.example.codebreaker.services.BadgeService badgeService) {
         this.service = service;
+        this.badgeService = badgeService;
     }
 
     @PostMapping("/join/{roomId}")
@@ -70,4 +72,18 @@ public List<Map<String, Object>> listPlayers(@PathVariable Long roomId) {
             ))
             .collect(Collectors.toList());
 }
+
+    @GetMapping("/me/badges")
+    public List<Map<String, Object>> getMyBadges() {
+        Player me = service.getAuthenticatedPlayer().orElseThrow(() -> new RuntimeException("Not logged in"));
+        return badgeService.getBadgesForPlayer(me).stream()
+                .map(pb -> Map.<String, Object>of(
+                        "key", pb.getBadge().getKey(),
+                        "name", pb.getBadge().getName(),
+                        "description", pb.getBadge().getDescription(),
+                        "awardedAt", pb.getAwardedAt()
+                ))
+                .collect(Collectors.toList());
+    }
 }
+

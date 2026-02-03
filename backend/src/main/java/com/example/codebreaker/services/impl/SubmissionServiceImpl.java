@@ -30,19 +30,25 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final SubmissionRepository submissionRepo;
     private final ScoringService scoringService;
     private final RoomSocketController roomSocketController;
+    private final com.example.codebreaker.services.BadgeService badgeService;
+    private int speedsterSeconds = 120;
 
     public SubmissionServiceImpl(
             ProblemRepository problemRepo,
             RoomPlayerRepository roomPlayerRepo,
             SubmissionRepository submissionRepo,
             ScoringService scoringService,
-            RoomSocketController roomSocketController
+            RoomSocketController roomSocketController,
+            com.example.codebreaker.services.BadgeService badgeService,
+            @org.springframework.beans.factory.annotation.Value("${rooms.badges.speedsterSeconds:120}") int speedsterSeconds
     ) {
         this.problemRepo = problemRepo;
         this.roomPlayerRepo = roomPlayerRepo;
         this.submissionRepo = submissionRepo;
         this.scoringService = scoringService;
         this.roomSocketController = roomSocketController;
+        this.badgeService = badgeService;
+        this.speedsterSeconds = speedsterSeconds;
     }
 
     @Override
@@ -126,6 +132,7 @@ public class SubmissionServiceImpl implements SubmissionService {
         int scoreGained = 0;
 
         if (allPassed) {
+            int prevCorrect = room.getCorrectAnswerCount();
             scoreGained = scoringService.applyScore(submission);
 
             roomPlayer.setHasAnsweredCorrectly(true);
@@ -139,6 +146,28 @@ public class SubmissionServiceImpl implements SubmissionService {
                     roomPlayer.getScore(),
                     true
             );
+
+            if (prevCorrect == 0 && !room.isPrivateRoom()) {
+                badgeService.awardBadge(
+                        roomPlayer.getPlayer(),
+                        "FIRST_BLOOD",
+                        "First Blood",
+                        "First correct submission in the room",
+                        com.example.codebreaker.model.BadgeCategory.ROOM_PERFORMANCE
+                );
+            }
+
+            java.time.Duration dur = java.time.Duration.between(room.getProblemStartTime(), submission.getSubmittedAt());
+            long seconds = dur.getSeconds();
+            if (!room.isPrivateRoom() && seconds <= speedsterSeconds) {
+                badgeService.awardBadge(
+                        roomPlayer.getPlayer(),
+                        "SPEEDSTER",
+                        "Speedster",
+                        "Solved a problem under " + speedsterSeconds + " seconds",
+                        com.example.codebreaker.model.BadgeCategory.SPEED_ACCURACY
+                );
+            }
         }
 
         SubmissionResult result = SubmissionResult.builder()

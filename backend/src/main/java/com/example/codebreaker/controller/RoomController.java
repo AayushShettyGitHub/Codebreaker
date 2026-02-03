@@ -29,15 +29,28 @@ public class RoomController {
     }
 
     @PostMapping
-    public Room createRoom(@RequestBody Map<String, String> payload) {
+    public Room createRoom(@RequestBody Map<String, Object> payload) {
         Long playerId = extractPlayerId(payload);
-        String roomName = payload.get("name");
-        return roomService.createRoom(playerId, roomName);
+        String roomName = (String) payload.get("name");
+        Boolean privateRoom = payload.get("privateRoom") == null ? null : (Boolean) payload.get("privateRoom");
+        return roomService.createRoom(playerId, roomName, privateRoom);
     }
 
     @GetMapping
     public List<Room> listRooms() {
         return roomService.listRooms();
+    }
+
+    @GetMapping("/public")
+    public List<Map<String, Object>> listPublicRoomsMapped() {
+        List<Room> rooms = roomService.listPublicRooms();
+        return rooms.stream().map(r -> Map.<String, Object>of(
+                "id", r.getId(),
+                "name", r.getName(),
+                "playersCount", r.getPlayers() == null ? 0 : r.getPlayers().size(),
+                "minPlayersToStart", r.getMinPlayersToStart(),
+                "privateRoom", r.isPrivateRoom()
+        )).toList();
     }
 
     @GetMapping("/{roomId}")
@@ -159,20 +172,25 @@ public String leaveRoom(@PathVariable Long roomId, @RequestBody Map<String, Stri
 }
 
 
-    private Long extractPlayerId(Map<String, String> payload) {
+    private Long extractPlayerId(Map<String, ?> payload) {
         if (payload == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body required");
 
-        String idStr = payload.get("playerId");
-        if (idStr != null) {
-            try {
-                return Long.valueOf(idStr);
-            } catch (NumberFormatException ex) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "playerId must be a number");
+        Object idObj = payload.get("playerId");
+        if (idObj != null) {
+            if (idObj instanceof Number) return ((Number) idObj).longValue();
+            if (idObj instanceof String) {
+                try {
+                    return Long.valueOf((String) idObj);
+                } catch (NumberFormatException ex) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "playerId must be a number");
+                }
             }
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "playerId must be a number");
         }
 
-        String username = payload.get("username");
-        if (username != null) {
+        Object usernameObj = payload.get("username");
+        if (usernameObj != null) {
+            String username = usernameObj.toString();
             return playerService.findByUsername(username)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Player not found"))
                     .getId();

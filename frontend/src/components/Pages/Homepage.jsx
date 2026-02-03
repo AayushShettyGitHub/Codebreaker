@@ -7,6 +7,7 @@ import RoomDisplay from "../RoomComponents/RoomDisplay";
 import AdminRoom from "../RoomComponents/AdminRoom";
 import Submit from "../RoomComponents/Submit";
 import Navbar from "../MainComponents/Navbar";
+import AvailableRooms from "../RoomComponents/AvailableRooms";
 
 import api from "../../config/client";
 import { useAuth } from "../../context/AuthContext";
@@ -57,6 +58,17 @@ export default function HomePage() {
             </div>
             <div className="transform hover:scale-105 transition-all">
               <JoinRoom playerId={user?.id} onJoin={setMyRoom} />
+            </div>
+
+            <div className="md:col-span-2 mt-6">
+              <div className="max-w-3xl mx-auto">
+                <h2 className="text-lg font-bold text-slate-900 mb-4">Public Rooms</h2>
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <AvailableRooms onJoin={setMyRoom} />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         ) : (

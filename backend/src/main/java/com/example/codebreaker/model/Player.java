@@ -29,4 +29,17 @@ public class Player {
     @JoinColumn(name = "room_id")
     @JsonIgnore
     private Room room;
+
+    @Builder.Default
+    private Integer publicRoomsPlayedCount = 0;
+
+    @Builder.Default
+    private Integer totalWins = 0;
+
+    @Builder.Default
+    private Integer currentWinStreak = 0;
+
+    @OneToMany(mappedBy = "player", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private java.util.List<PlayerBadge> badges = new java.util.ArrayList<>();
 }

@@ -6,6 +6,8 @@ import LandingPage from "./components/Pages/LandingPage";
 import AboutPage from "./components/Pages/AboutPage";
 import ProfilePage from "./components/Pages/ProfilePage";
 import CompetitionPage from "./components/Pages/CompetitionPage";
+import PublicRoomsPage from "./components/Pages/PublicRoomsPage";
+import AchievementsPage from "./components/Pages/AchievementsPage";
 import Footer from "./components/MainComponents/Footer";
 import Navbar from "./components/MainComponents/Navbar";
 import { AuthProvider } from "./context/AuthContext";
@@ -50,6 +52,16 @@ function AppContent() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/public-rooms" element={
+            <ProtectedRoute>
+              <PublicRoomsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/achievements" element={
+            <ProtectedRoute>
+              <AchievementsPage />
+            </ProtectedRoute>
+          } />
           <Route path="/compete" element={
             <ProtectedRoute>
               <CompetitionPage />

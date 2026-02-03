@@ -19,4 +19,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     List<Submission> findTop3ByRoomId(@Param("roomId") Long roomId);
     
     void deleteByPlayer(RoomPlayer player);
+
+    long countByRoomAndPlayer(Room room, RoomPlayer player);
+    long countByRoomAndPlayerAndPassedTrue(Room room, RoomPlayer player);
+
+    List<Submission> findByRoomOrderBySubmittedAtAsc(Room room);
 }

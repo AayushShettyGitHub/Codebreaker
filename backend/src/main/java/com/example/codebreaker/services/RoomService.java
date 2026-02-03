@@ -10,6 +10,8 @@ import com.example.codebreaker.repo.SubmissionRepository;
 import com.example.codebreaker.websockets.RoomSocketController;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.codebreaker.services.BadgeService;
+import com.example.codebreaker.services.ScoringService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -25,21 +27,35 @@ public class RoomService {
     private final PlayerService playerService;
     private final RoomSocketController roomSocketController;
 
+    private int defaultMinPlayers;
+    private final BadgeService badgeService;
+    private final ScoringService scoringService;
+
     public RoomService(
             RoomRepository roomRepo,
             RoomPlayerRepository roomPlayerRepo,
             SubmissionRepository submissionRepo,
             PlayerService playerService,
-            RoomSocketController roomSocketController
+            RoomSocketController roomSocketController,
+            BadgeService badgeService,
+            ScoringService scoringService
     ) {
         this.roomRepo = roomRepo;
         this.roomPlayerRepo = roomPlayerRepo;
         this.submissionRepo = submissionRepo;
         this.playerService = playerService;
         this.roomSocketController = roomSocketController;
+        this.badgeService = badgeService;
+        this.scoringService = scoringService;
     }
 
-    public Room createRoom(Long playerId, String name) {
+    @org.springframework.beans.factory.annotation.Value("${rooms.public.minPlayers:5}")
+    public void setDefaultMinPlayers(int defaultMinPlayers) {
+        this.defaultMinPlayers = defaultMinPlayers;
+    }
+
+
+    public Room createRoom(Long playerId, String name, Boolean privateRoom) {
         Player creator = playerService.findById(playerId)
                 .orElseThrow(() -> new RuntimeException("Player not found"));
 
@@ -49,13 +65,17 @@ public class RoomService {
 
         creator.setRole(com.example.codebreaker.model.Role.ADMIN);
 
-        Room room = Room.builder()
+        Room.RoomBuilder rb = Room.builder()
                 .name(name)
                 .joinCode(generateCode())
                 .players(new ArrayList<>())
                 .maxCorrectAnswers(1)
                 .correctAnswerCount(0)
-                .build();
+                .minPlayersToStart(defaultMinPlayers);
+
+        if (privateRoom != null && privateRoom) rb.privateRoom(true);
+
+        Room room = rb.build();
 
         room = roomRepo.save(room);
 
@@ -77,11 +97,15 @@ public class RoomService {
     }
 
     private String generateCode() {
-        return "RM-" + (int) (Math.random() * 90000 + 10000);
+        return  ""+(int) (Math.random() * 90000 + 10000);
     }
 
     public List<Room> listRooms() {
         return roomRepo.findAll();
+    }
+
+    public List<Room> listPublicRooms() {
+        return roomRepo.findByPrivateRoomFalse();
     }
 
     public Room joinRoomByCode(String joinCode, Long playerId) {
@@ -198,6 +222,82 @@ public class RoomService {
             room.setCurrentProblem(null);
             roomRepo.save(room);
 
+            if (!room.isPrivateRoom()) {
+                List<RoomPlayer> finalPlayers = roomPlayerRepo.findByRoom(room);
+                finalPlayers.sort((a, b) -> Integer.compare(b.getScore(), a.getScore()));
+
+                List<com.example.codebreaker.model.Submission> allSubmissions = submissionRepo.findByRoomOrderBySubmittedAtAsc(room);
+                java.util.Map<Long, Integer> simulatedScores = new java.util.HashMap<>();
+                java.util.Set<Long> wasLastAtSomePoint = new java.util.HashSet<>();
+
+                for (RoomPlayer rp : finalPlayers) simulatedScores.put(rp.getId(), 0);
+
+                for (com.example.codebreaker.model.Submission s : allSubmissions) {
+                    if (s.isPassed()) {
+                        com.example.codebreaker.model.Room fakeRoom = Room.builder().id(room.getId()).problemStartTime(room.getProblemStartTime()).correctAnswerCount(0).build();
+                        com.example.codebreaker.model.RoomPlayer fakeRp = new com.example.codebreaker.model.RoomPlayer();
+                        fakeRp.setId(s.getPlayer().getId());
+                        fakeRp.setPlayer(s.getPlayer().getPlayer());
+                        fakeRp.setScore(simulatedScores.getOrDefault(s.getPlayer().getId(), 0));
+
+                        com.example.codebreaker.model.Submission fakeSub = com.example.codebreaker.model.Submission.builder()
+                                .room(fakeRoom)
+                                .player(fakeRp)
+                                .problem(s.getProblem())
+                                .submittedAt(s.getSubmittedAt())
+                                .passed(true)
+                                .build();
+
+                        int gained = scoringService.applyScore(fakeSub);
+                        int newScore = fakeRp.getScore();
+                        simulatedScores.put(fakeRp.getId(), newScore);
+                    }
+
+                    int min = Integer.MAX_VALUE;
+                    for (Integer sc : simulatedScores.values()) if (sc < min) min = sc;
+                    for (java.util.Map.Entry<Long, Integer> e : simulatedScores.entrySet()) {
+                        if (e.getValue() == min) wasLastAtSomePoint.add(e.getKey());
+                    }
+                }
+
+                for (int i = 0; i < finalPlayers.size(); i++) {
+                    RoomPlayer rp = finalPlayers.get(i);
+                    Player p = rp.getPlayer();
+                    int rank = i + 1;
+
+                    if (rank == 1) {
+                        badgeService.awardBadge(p, "ROOM_WINNER", "Room Winner", "Finished Rank 1 in a public room", com.example.codebreaker.model.BadgeCategory.ROOM_PERFORMANCE);
+                        int newWins = (p.getTotalWins() == null ? 0 : p.getTotalWins()) + 1;
+                        p.setTotalWins(newWins);
+                        int newStreak = (p.getCurrentWinStreak() == null ? 0 : p.getCurrentWinStreak()) + 1;
+                        p.setCurrentWinStreak(newStreak);
+                        playerService.save(p);
+
+                        if (newWins == 5) {
+                            badgeService.awardBadge(p, "5_WINS", "5 Wins", "Won 5 public rooms", com.example.codebreaker.model.BadgeCategory.PARTICIPATION);
+                        }
+
+                        if (newStreak == 3) {
+                            badgeService.awardBadge(p, "3_WIN_STREAK", "3 Win Streak", "Won 3 public rooms in a row", com.example.codebreaker.model.BadgeCategory.PARTICIPATION);
+                        }
+
+                        if (wasLastAtSomePoint.contains(rp.getId())) {
+                            badgeService.awardBadge(p, "COMEBACK", "Comeback", "Solved last problem after being last at some point", com.example.codebreaker.model.BadgeCategory.ROOM_PERFORMANCE);
+                        }
+                    }
+
+                    if (rank <= 3) {
+                        badgeService.awardBadge(p, "PODIUM_FINISH", "Podium Finish", "Finished in top 3 in a public room", com.example.codebreaker.model.BadgeCategory.ROOM_PERFORMANCE);
+                    }
+
+                    long totalCorrect = submissionRepo.countByRoomAndPlayerAndPassedTrue(room, rp);
+                    long totalSubmissions = submissionRepo.countByRoomAndPlayer(room, rp);
+                    if (totalCorrect > 0 && totalSubmissions == totalCorrect) {
+                        badgeService.awardBadge(p, "FLAWLESS", "Flawless", "Solved problems with zero wrong submissions in the room", com.example.codebreaker.model.BadgeCategory.ROOM_PERFORMANCE);
+                    }
+                }
+            }
+
             roomRepo.delete(room);
             roomSocketController.roomDeleted(roomId);
             return "Room deleted.";
@@ -273,6 +373,20 @@ public class RoomService {
         rp.setScore(0);
         rp.setHasAnsweredCorrectly(false);
         roomPlayerRepo.save(rp);
+
+        if (!room.isPrivateRoom()) {
+            int newCount = (player.getPublicRoomsPlayedCount() == null ? 0 : player.getPublicRoomsPlayedCount()) + 1;
+            player.setPublicRoomsPlayedCount(newCount);
+            playerService.save(player);
+
+            if (newCount == 1) {
+                badgeService.awardBadge(player, "FIRST_PUBLIC_ROOM", "First Public Room", "Joined your first public room", com.example.codebreaker.model.BadgeCategory.PARTICIPATION);
+            } else if (newCount == 5) {
+                badgeService.awardBadge(player, "5_PUBLIC_ROOMS", "5 Public Rooms Played", "Played 5 public rooms", com.example.codebreaker.model.BadgeCategory.PARTICIPATION);
+            } else if (newCount == 10) {
+                badgeService.awardBadge(player, "10_PUBLIC_ROOMS", "10 Public Rooms Played", "Played 10 public rooms", com.example.codebreaker.model.BadgeCategory.PARTICIPATION);
+            }
+        }
 
         player.setRoom(room);
         playerService.save(player);

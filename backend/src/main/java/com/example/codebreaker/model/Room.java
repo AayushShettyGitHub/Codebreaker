@@ -54,6 +54,9 @@ public class Room {
     @JsonIgnore
     private List<RoomPlayer> players = new ArrayList<>();
 
+    @Builder.Default
+    private Integer minPlayersToStart = 1;
+
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     @JsonIgnore

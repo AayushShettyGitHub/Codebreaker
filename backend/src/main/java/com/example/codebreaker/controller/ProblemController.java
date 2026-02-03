@@ -45,6 +45,17 @@ public class ProblemController {
                 .orElseThrow(() -> new RuntimeException("Room not found"));
 
         Integer duration = body.get("duration");
+
+        if (!room.isPrivateRoom()) {
+            int currentPlayers = room.getPlayers() == null ? 0 : room.getPlayers().size();
+            int minNeeded = room.getMinPlayersToStart() == null ? 1 : room.getMinPlayersToStart();
+            if (currentPlayers < minNeeded) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "error", "Not enough players to start public room. Minimum required: " + minNeeded
+                ));
+            }
+        }
+
         room.setProblemStartTime(LocalDateTime.now());
         room.setProblemDuration(duration);
         roomRepo.save(room);
