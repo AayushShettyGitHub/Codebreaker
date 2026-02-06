@@ -26,8 +26,13 @@ public class PlayerBadge {
 
     private LocalDateTime awardedAt;
 
+    private Integer count = 1;
+    private String rank = "BRONZE";
+
     @PrePersist
     public void prePersist() {
         if (awardedAt == null) awardedAt = LocalDateTime.now();
+        if (count == null) count = 1;
+        if (rank == null) rank = "BRONZE";
     }
 }

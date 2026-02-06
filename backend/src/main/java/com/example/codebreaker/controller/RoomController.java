@@ -64,7 +64,46 @@ public class RoomController {
         if (room == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Room not found");
         }
-        return submissionRepository.findByRoomOrderBySubmittedAtDesc(room);
+        java.util.List<Submission> subs = submissionRepository.findByRoomOrderBySubmittedAtDesc(room);
+
+        // If a problem has been started (problemStartTime set) and the room hasn't yet
+        // reached its max correct answers, do not expose submissions that were submitted
+        // during the active problem period (from problemStartTime until end). This is a
+        // defensive check that hides current-problem solutions even if problem IDs are
+        // inconsistent or missing on the submission objects.
+        if (room.getProblemStartTime() != null && room.getCorrectAnswerCount() < room.getMaxCorrectAnswers()) {
+            java.time.LocalDateTime start = room.getProblemStartTime();
+            java.time.LocalDateTime end = null;
+            if (room.getProblemDuration() != null) {
+                end = start.plusSeconds(room.getProblemDuration());
+            }
+
+            Long currentProblemId = room.getCurrentProblem() != null ? room.getCurrentProblem().getId() : null;
+
+            java.util.List<Submission> filtered = new java.util.ArrayList<>();
+            for (Submission s : subs) {
+                boolean isCurrentProblemSubmission = false;
+                if (s.getProblem() != null && s.getProblem().getId() != null && currentProblemId != null) {
+                    isCurrentProblemSubmission = currentProblemId.equals(s.getProblem().getId());
+                }
+
+                java.time.LocalDateTime when = s.getSubmittedAt();
+                boolean submittedDuringActive = false;
+                if (when != null) {
+                    if (end != null) {
+                        submittedDuringActive = (when.isEqual(start) || when.isAfter(start)) && when.isBefore(end);
+                    } else {
+                        submittedDuringActive = (when.isEqual(start) || when.isAfter(start));
+                    }
+                }
+
+                // Exclude if it's explicitly for the current problem OR was submitted during the active window
+                if (!isCurrentProblemSubmission && !submittedDuringActive) filtered.add(s);
+            }
+            subs = filtered;
+        }
+
+        return subs;
     }
 
 

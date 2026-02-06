@@ -38,7 +38,12 @@ export default function CreateRoom({ playerId, onCreate }) {
         }, 100);
       }
     } catch (err) {
-      toastError(err.response?.data?.message || "Error creating room");
+      try {
+        const { getErrorMessage } = await import("../../utils/errors");
+        toastError(getErrorMessage(err));
+      } catch (e) {
+        toastError("Error creating room");
+      }
     }
   }
 

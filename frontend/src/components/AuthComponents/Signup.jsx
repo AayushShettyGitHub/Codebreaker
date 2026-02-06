@@ -46,9 +46,15 @@ export default function Signup() {
       
       navigate("/compete", { replace: true });
     } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data || "Signup failed";
-      setError(msg);
-      toastError(msg);
+      try {
+        const { getErrorMessage } = await import("../../utils/errors");
+        const msg = getErrorMessage(err);
+        setError(msg);
+        toastError(msg);
+      } catch (e) {
+        setError("Signup failed");
+        toastError("Signup failed");
+      }
     } finally {
       setLoading(false);
     }

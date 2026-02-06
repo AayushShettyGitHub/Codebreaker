@@ -2,20 +2,26 @@ import { useEffect, useState } from "react";
 import api from "../../config/client";
 import websocketService from "../../services/websocketService";
 import { useAuth } from "../../context/AuthContext";
-import { toastSuccess } from "../../utils/toast";
+import { toastSuccess, toastError } from "../../utils/toast";
 
 export default function AchievementsPage() {
   const { user } = useAuth();
   const [badges, setBadges] = useState([]);
+  const [featured, setFeatured] = useState([]);
   const [loading, setLoading] = useState(true);
 
   async function fetchBadges() {
     setLoading(true);
     try {
-      const res = await api.get("/badges/me");
-      setBadges(res.data || []);
+      const [badgesRes, meRes] = await Promise.all([
+        api.get("/badges/me"),
+        api.get("/players/me")
+      ]);
+      setBadges(badgesRes.data || []);
+      setFeatured(meRes.data?.featuredBadges || []);
     } catch (err) {
       console.error("Failed to fetch badges", err);
+      toastError("Failed to load badges. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -25,9 +31,9 @@ export default function AchievementsPage() {
     fetchBadges();
 
     const handleBadgeMsg = (msg) => {
-      if (!msg || msg.type !== "BADGE_AWARDED") return;
-      if (msg.playerId === user?.id) {
-        toastSuccess(`New badge: ${msg.badge?.name}`);
+      if (!msg) return;
+      if ((msg.type === "BADGE_AWARDED" || msg.type === "BADGE_UPDATED") && msg.playerId === user?.id) {
+        toastSuccess(`New badge activity: ${msg.badge?.name}`);
         fetchBadges();
       }
     };
@@ -66,19 +72,54 @@ export default function AchievementsPage() {
                 <h2 className="text-lg font-semibold text-slate-900 mb-3">{cat.replaceAll('_', ' ')}</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {list.map(b => (
-                    <div key={b.key} className={`p-4 rounded-xl border ${b.earned ? 'bg-white border-blue-200 shadow-md' : 'bg-gray-50 border-gray-200 opacity-80'}`}>
+                    <div key={b.key} className={`p-4 rounded-xl border ${b.earned ? 'bg-white border-blue-200 shadow-md' : 'bg-gray-50 border-gray-200 opacity-75 filter grayscale'}`}>
                       <div className="flex items-center justify-between mb-2">
                         <div>
-                          <p className="text-sm font-semibold text-slate-900">{b.name}</p>
-                          <p className="text-xs text-slate-500 mt-1">{b.description}</p>
+                          <p className="text-sm font-semibold text-black">{b.name} <span className="text-xs ml-2 text-gray-500">{b.rank || 'NONE'}</span></p>
+                          <p className="text-xs text-gray-700 mt-1">{b.description}</p>
                         </div>
                         <div className={`px-3 py-1 rounded-full text-xs font-bold ${b.earned ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                          {b.earned ? 'Earned' : 'Locked'}
+                          {b.earned ? `Earned${b.count && b.count > 1 ? ` (x${b.count})` : ''}` : 'Locked'}
                         </div>
                       </div>
-                      {b.earned && b.awardedAt && (
-                        <div className="text-xs text-slate-500 mt-2">Awarded: {new Date(b.awardedAt).toLocaleString()}</div>
-                      )}
+
+                      {/* progress bar */}
+                      <div className="mt-3">
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+                          <div className={`h-3 rounded-full ${b.rank === 'PLATINUM' ? 'bg-purple-500' : b.rank === 'DIAMOND' ? 'bg-sky-400' : b.rank === 'GOLD' ? 'bg-yellow-400' : b.rank === 'SILVER' ? 'bg-gray-400' : 'bg-amber-400'}`} style={{ width: `${b.progressPercent ?? 0}%` }}></div>
+                        </div>
+                        <div className="flex items-center justify-between text-xs mt-2 text-gray-600">
+                          <div>{b.count ?? 0} / {b.nextThreshold ?? 1} ({b.nextRank ?? 'BRONZE'})</div>
+                          <div>{b.progressPercent ?? 0}%</div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-between">
+                        <div className="text-xs text-gray-500">{b.earned && b.awardedAt ? `Awarded: ${new Date(b.awardedAt).toLocaleString()}` : 'Not earned yet'}</div>
+                        <div>
+                          {b.earned && (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const newFeatured = featured.includes(b.key) ? featured.filter(x => x !== b.key) : (featured.length < 3 ? [...featured, b.key] : featured);
+                                  if (!featured.includes(b.key) && featured.length >= 3) {
+                                    toastError('You can feature at most 3 badges');
+                                    return;
+                                  }
+                                  await api.post('/players/me/featured', { badges: newFeatured });
+                                  setFeatured(newFeatured);
+                                  toastSuccess('Featured badges updated');
+                                } catch (err) {
+                                  console.error('Failed to update featured badges', err);
+                                  toastError('Failed to update featured badges');
+                                }
+                              }}
+                              className={`text-xs px-3 py-1 rounded-lg font-semibold ${featured.includes(b.key) ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
+                              {featured.includes(b.key) ? '★ Featured' : 'Feature'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>

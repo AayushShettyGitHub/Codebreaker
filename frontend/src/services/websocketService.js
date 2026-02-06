@@ -13,7 +13,7 @@ class WebSocketService {
   }
 
   connect(onConnected, onError) {
-    const socket = new SockJS("http://localhost:8081/ws");
+    const socket = new SockJS("http://localhost:8080/ws");
     this.stompClient = new StompJs.Client({
       webSocketFactory: () => socket,
       reconnectDelay: this.reconnectDelay,

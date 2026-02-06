@@ -137,6 +137,13 @@ public class SubmissionServiceImpl implements SubmissionService {
 
             roomPlayer.setHasAnsweredCorrectly(true);
             roomPlayer.setCorrectAnswerTimestamp(System.currentTimeMillis());
+            
+            // Update player stats
+            com.example.codebreaker.model.Player player = roomPlayer.getPlayer();
+            player.setTotalCorrectSubmissions((player.getTotalCorrectSubmissions() == null ? 0 : player.getTotalCorrectSubmissions()) + 1);
+            player.setTotalSubmissions((player.getTotalSubmissions() == null ? 0 : player.getTotalSubmissions()) + 1);
+            player.setTotalProblemsSolved((player.getTotalProblemsSolved() == null ? 0 : player.getTotalProblemsSolved()) + 1);
+            
             roomPlayerRepo.save(roomPlayer);
             
             roomSocketController.scoreUpdated(
@@ -168,6 +175,48 @@ public class SubmissionServiceImpl implements SubmissionService {
                         com.example.codebreaker.model.BadgeCategory.SPEED_ACCURACY
                 );
             }
+
+            // Check for Solver badges (public rooms only)
+            if (!room.isPrivateRoom()) {
+                if (player.getTotalProblemsSolved() == 10) {
+                    badgeService.awardBadge(
+                            player,
+                            "SOLVER_10",
+                            "Solver — 10",
+                            "Solve 10 problems",
+                            com.example.codebreaker.model.BadgeCategory.SKILL
+                    );
+                }
+
+                if (player.getTotalProblemsSolved() == 50) {
+                    badgeService.awardBadge(
+                            player,
+                            "SOLVER_50",
+                            "Solver — 50",
+                            "Solve 50 problems",
+                            com.example.codebreaker.model.BadgeCategory.SKILL
+                    );
+                }
+
+                // Check for Accuracy 90% badge
+                if (player.getTotalSubmissions() >= 10) {
+                    double accuracy = (double) player.getTotalCorrectSubmissions() / player.getTotalSubmissions();
+                    if (accuracy >= 0.9) {
+                        badgeService.awardBadge(
+                                player,
+                                "ACCURACY_90",
+                                "Accuracy 90%",
+                                "Maintain >= 90% pass rate",
+                                com.example.codebreaker.model.BadgeCategory.SPEED_ACCURACY
+                        );
+                    }
+                }
+            }
+        } else {
+            // Update total submissions on incorrect submission too
+            com.example.codebreaker.model.Player player = roomPlayer.getPlayer();
+            player.setTotalSubmissions((player.getTotalSubmissions() == null ? 0 : player.getTotalSubmissions()) + 1);
+            roomPlayerRepo.save(roomPlayer);
         }
 
         SubmissionResult result = SubmissionResult.builder()

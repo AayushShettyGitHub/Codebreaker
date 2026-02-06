@@ -209,12 +209,18 @@ public class RoomService {
 
         try {
             List<RoomPlayer> rps = roomPlayerRepo.findByRoom(room);
+            // delete submissions for the room first to avoid FK constraint when deleting players
+            try {
+                submissionRepo.deleteByRoom(room);
+            } catch (Exception ignored) { }
+
             for (RoomPlayer rp : rps) {
                 Player p = rp.getPlayer();
                 if (p != null) {
                     p.setRoom(null);
                     playerService.save(p);
                 }
+           try { submissionRepo.deleteByPlayer(rp); } catch (Exception ignored) {}
                 roomPlayerRepo.delete(rp);
             }
 
@@ -277,8 +283,14 @@ public class RoomService {
                             badgeService.awardBadge(p, "5_WINS", "5 Wins", "Won 5 public rooms", com.example.codebreaker.model.BadgeCategory.PARTICIPATION);
                         }
 
-                        if (newStreak == 3) {
+                        // Award/increment 3-win streak badge whenever streak >= 3
+                        if (newStreak >= 3) {
                             badgeService.awardBadge(p, "3_WIN_STREAK", "3 Win Streak", "Won 3 public rooms in a row", com.example.codebreaker.model.BadgeCategory.PARTICIPATION);
+                        }
+
+                        // Award/increment 7-win streak badge whenever streak >= 7
+                        if (newStreak >= 7) {
+                            badgeService.awardBadge(p, "7_WIN_STREAK", "7 Win Streak", "Won 7 public rooms in a row", com.example.codebreaker.model.BadgeCategory.PARTICIPATION);
                         }
 
                         if (wasLastAtSomePoint.contains(rp.getId())) {

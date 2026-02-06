@@ -24,18 +24,39 @@ export default function ProfilePage() {
   }
 
   const [badges, setBadges] = useState([]);
+  const [featured, setFeatured] = useState([]);
 
   useEffect(() => {
     if (!user) return;
     (async function(){
       try {
-        const res = await api.get('/players/me/badges');
-        setBadges(res.data || []);
+        const [badgesRes, meRes] = await Promise.all([
+          api.get('/badges/me'),
+          api.get('/players/me')
+        ]);
+        setBadges(badgesRes.data || []);
+        setFeatured(meRes.data?.featuredBadges || []);
       } catch (err) {
-        console.error('Failed to load badges', err);
+        console.error('Failed to load profile', err);
+        alert('Failed to load profile.');
       }
     })();
   }, [user]);
+
+  const toggleFeatured = async (badgeKey) => {
+    try {
+      const newFeatured = featured.includes(badgeKey) ? featured.filter(x => x !== badgeKey) : (featured.length < 3 ? [...featured, badgeKey] : featured);
+      if (!featured.includes(badgeKey) && featured.length >= 3) {
+        alert('You can feature at most 3 badges');
+        return;
+      }
+      await api.post('/players/me/featured', { badges: newFeatured });
+      setFeatured(newFeatured);
+    } catch (err) {
+      console.error('Failed to update featured badges', err);
+      alert('Failed to update featured badges');
+    }
+  };
 
   return (
     <main className="flex-1">
@@ -101,13 +122,35 @@ export default function ProfilePage() {
               <h3 className="text-2xl font-bold text-slate-900 mb-6">Badges</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {badges.length === 0 && <p className="text-slate-600">No badges yet. Play public rooms to earn badges!</p>}
-                {badges.map((b) => (
-                  <div key={b.key} className="flex flex-col items-center p-3 border border-slate-100 rounded-lg">
-                    <div className="w-12 h-12 rounded-full bg-amber-400 flex items-center justify-center font-bold text-white mb-2">🏅</div>
-                    <p className="text-sm font-semibold">{b.name}</p>
-                    <p className="text-xs text-slate-500 text-center">{b.description}</p>
-                  </div>
-                ))}
+                {badges.map((b) => {
+                  const rank = (b.rank || '').toUpperCase();
+                  const earned = !!b.earned;
+                  const getColors = (r) => {
+                    switch (r) {
+                      case 'GOLD': return { bg: 'bg-yellow-50', dot: 'bg-yellow-200', text: 'text-amber-900' };
+                      case 'DIAMOND': return { bg: 'bg-indigo-50', dot: 'bg-indigo-200', text: 'text-indigo-900' };
+                      case 'PLATINUM': return { bg: 'bg-slate-50', dot: 'bg-slate-200', text: 'text-slate-900' };
+                      case 'SILVER': return { bg: 'bg-slate-50', dot: 'bg-slate-200', text: 'text-slate-900' };
+                      case 'BRONZE': default: return { bg: 'bg-amber-50', dot: 'bg-amber-200', text: 'text-amber-900' };
+                    }
+                  };
+
+                  const cols = getColors(rank);
+
+                  return (
+                    <div key={b.key} className={`flex flex-col items-center p-3 border rounded-lg ${earned ? 'border-slate-100' : 'border-gray-200 bg-gray-50 opacity-80 filter grayscale'}`}>
+                      <div className={`w-12 h-12 rounded-full ${cols.dot} flex items-center justify-center font-bold ${cols.text} mb-2`}>🏅</div>
+                      <p className={`text-sm font-semibold ${cols.text}`}>{b.name} <span className="text-xs text-gray-500 ml-1">{b.rank}</span></p>
+                      <p className="text-xs text-gray-700 text-center">{b.description}</p>
+                      <div className="text-xs text-gray-600 mt-2">Progress: {b.progressPercent ?? 0}%</div>
+                      <div className="mt-2">
+                        <button disabled={!earned} onClick={() => toggleFeatured(b.key)} className={`text-xs px-3 py-1 rounded ${featured.includes(b.key) ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'} ${!earned ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                          {featured.includes(b.key) ? '★ Featured' : 'Feature'}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

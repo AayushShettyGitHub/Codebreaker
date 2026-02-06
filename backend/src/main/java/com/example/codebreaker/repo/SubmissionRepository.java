@@ -5,23 +5,18 @@ import com.example.codebreaker.model.Problem;
 import com.example.codebreaker.model.RoomPlayer;
 import com.example.codebreaker.model.Room;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
-    boolean existsByPlayerAndProblemAndPassedTrue(RoomPlayer player, Problem problem);
-    
-    List<Submission> findByRoomOrderBySubmittedAtDesc(Room room);
-    
-    @Query("SELECT s FROM Submission s WHERE s.room.id = :roomId ORDER BY s.id DESC LIMIT 3")
-    List<Submission> findTop3ByRoomId(@Param("roomId") Long roomId);
-    
-    void deleteByPlayer(RoomPlayer player);
 
+    boolean existsByPlayerAndProblemAndPassedTrue(RoomPlayer player, Problem problem);
+    List<Submission> findByRoomOrderBySubmittedAtDesc(Room room);
+    List<Submission> findTop3ByRoomIdOrderByIdDesc(Long roomId);
+    List<Submission> findByProblemIdAndPassedTrueOrderBySubmittedAtAsc(Long problemId, org.springframework.data.domain.Pageable pageable);
+    void deleteByPlayer(RoomPlayer player);  
+    void deleteByRoom(Room room);
     long countByRoomAndPlayer(Room room, RoomPlayer player);
     long countByRoomAndPlayerAndPassedTrue(Room room, RoomPlayer player);
-
     List<Submission> findByRoomOrderBySubmittedAtAsc(Room room);
 }

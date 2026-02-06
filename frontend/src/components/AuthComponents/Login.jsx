@@ -30,9 +30,15 @@ export default function Login() {
       
       navigate("/compete", { replace: true });
     } catch (err) {
-      const msg = err.response?.data?.message || "Login failed";
-      setError(msg);
-      toastError(msg);
+      try {
+        const { getErrorMessage } = await import("../../utils/errors");
+        const msg = getErrorMessage(err);
+        setError(msg);
+        toastError(msg);
+      } catch (e) {
+        setError("Login failed");
+        toastError("Login failed");
+      }
     } finally {
       setLoading(false);
     }

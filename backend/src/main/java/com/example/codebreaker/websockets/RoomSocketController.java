@@ -4,21 +4,27 @@ import com.example.codebreaker.Dto.SubmissionResult;
 import com.example.codebreaker.model.Player;
 import com.example.codebreaker.model.Problem;
 import com.example.codebreaker.model.Room;
+import com.example.codebreaker.model.Submission;
+import com.example.codebreaker.repo.SubmissionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
 public class RoomSocketController {
 
     private final SimpMessagingTemplate messagingTemplate;
+    private final SubmissionRepository submissionRepository;
 
     private String roomTopic(Long roomId) {
         return "/topic/room/" + roomId;
@@ -108,6 +114,25 @@ public class RoomSocketController {
         payload.put("type", "PROBLEM_ENDED");
         payload.put("problemId", problemId);
         payload.put("timestamp", LocalDateTime.now());
+        // fetch top successful submissions for this problem and include them as part of the reveal
+        try {
+            java.util.List<Submission> sols = submissionRepository.findByProblemIdAndPassedTrueOrderBySubmittedAtAsc(problemId, PageRequest.of(0, 5));
+            java.util.List<java.util.Map<String, Object>> mapped = sols.stream().map(s -> {
+                java.util.Map<String, Object> m = new java.util.HashMap<>();
+                m.put("id", s.getId());
+                m.put("playerUsername", s.getPlayer() != null && s.getPlayer().getPlayer() != null ? s.getPlayer().getPlayer().getUsername() : null);
+                m.put("code", s.getCode());
+                m.put("language", s.getLanguage());
+                m.put("submittedAt", s.getSubmittedAt() != null ? s.getSubmittedAt().toString() : null);
+                m.put("passed", s.isPassed());
+                m.put("problemId", s.getProblem() != null ? s.getProblem().getId() : null);
+                return m;
+            }).collect(Collectors.toList());
+            payload.put("solutions", mapped);
+        } catch (Exception e) {
+            // swallow errors here to avoid disrupting the event; frontend will still receive PROBLEM_ENDED
+            System.err.println("Failed to fetch solutions for reveal: " + e.getMessage());
+        }
 
         messagingTemplate.convertAndSend(roomTopic(roomId), payload);
     }
@@ -136,6 +161,7 @@ public class RoomSocketController {
         payload.put("type", "SUBMISSION_RESULT");
         payload.put("result", result);
         payload.put("playerUsername", playerUsername);
+        payload.put("reveal", false);
         payload.put("timestamp", LocalDateTime.now());
 
         messagingTemplate.convertAndSend(roomTopic(roomId), payload);

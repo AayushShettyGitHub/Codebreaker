@@ -18,12 +18,30 @@ export default function Submit({ playerId }) {
   const [loading, setLoading] = useState(false);
   const [maxSubmissionsReached, setMaxSubmissionsReached] = useState(false);
 
+  // load saved code for this room/problem to avoid losing it on refresh
   useEffect(() => {
-    setCode("# write your solution here\n");
     setResult(null);
     setError("");
     setMaxSubmissionsReached(false);
-  }, [problemId]);
+
+    const key = `code:${roomId}:${problemId}`;
+    const saved = localStorage.getItem(key);
+    if (saved !== null) {
+      setCode(saved);
+    } else {
+      setCode("# write your solution here\n");
+    }
+  }, [roomId, problemId]);
+
+  // persist code to localStorage so a refresh doesn't lose it
+  useEffect(() => {
+    const key = `code:${roomId}:${problemId}`;
+    if (problemId && roomId) {
+      localStorage.setItem(key, code);
+    }
+  }, [code, roomId, problemId]);
+
+
 
   useEffect(() => {
     if (!roomId || !websocketService.isReady()) return;
@@ -74,13 +92,18 @@ export default function Submit({ playerId }) {
         setMaxSubmissionsReached(true);
       }
     } catch (err) {
-      const errorMessage = err.response?.data?.error || "Submission failed";
+      try {
+        const { getErrorMessage } = await import("../../utils/errors");
+        const errorMessage = getErrorMessage(err);
 
-      if (errorMessage.includes("Maximum correct answers")) {
-        setMaxSubmissionsReached(true);
-        setError("Maximum submissions reached. No more solutions can be accepted.");
-      } else {
-        setError(errorMessage);
+        if (errorMessage.includes("Maximum correct answers")) {
+          setMaxSubmissionsReached(true);
+          setError("Maximum submissions reached. No more solutions can be accepted.");
+        } else {
+          setError(errorMessage);
+        }
+      } catch (e) {
+        setError("Submission failed");
       }
     } finally {
       setLoading(false);
@@ -169,7 +192,11 @@ export default function Submit({ playerId }) {
 
         <button
           className="flex-1 px-4 py-3 md:py-4 bg-slate-600/30 hover:bg-slate-600/40 disabled:opacity-50 text-slate-100 font-bold rounded-lg md:rounded-xl transition-all text-sm md:text-base border border-slate-600/40"
-          onClick={() => setCode("# write your solution here\n")}
+          onClick={() => {
+            setCode("# write your solution here\n");
+            const key = `code:${roomId}:${problemId}`;
+            localStorage.removeItem(key);
+          }}
           disabled={isDisabled}
         >
           Reset

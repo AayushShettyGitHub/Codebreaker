@@ -34,10 +34,12 @@ export default function JoinRoom({ playerId, onJoin }) {
       }
     } catch (err) {
       console.error(err);
-      setError(
-        err.response?.data?.error ||
-        "Invalid join code or error joining room."
-      );
+      try {
+        const { getErrorMessage } = await import("../../utils/errors");
+        setError(getErrorMessage(err));
+      } catch (e) {
+        setError("Invalid join code or error joining room.");
+      }
     } finally {
       setLoading(false);
     }

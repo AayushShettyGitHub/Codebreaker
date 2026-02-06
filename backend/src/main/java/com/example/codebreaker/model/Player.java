@@ -39,6 +39,23 @@ public class Player {
     @Builder.Default
     private Integer currentWinStreak = 0;
 
+    @Builder.Default
+    private Integer totalProblemsSolved = 0;
+
+    @Builder.Default
+    private Integer totalProblemsContributed = 0;
+
+    @Builder.Default
+    private Integer totalCorrectSubmissions = 0;
+
+    @Builder.Default
+    private Integer totalSubmissions = 0;
+
+    @ElementCollection
+    @CollectionTable(name = "player_featured_badges", joinColumns = @JoinColumn(name = "player_id"))
+    @Column(name = "badge_key")
+    private java.util.List<String> featuredBadges = new java.util.ArrayList<>();
+
     @OneToMany(mappedBy = "player", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private java.util.List<PlayerBadge> badges = new java.util.ArrayList<>();

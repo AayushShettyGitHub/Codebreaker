@@ -59,7 +59,12 @@ export default function AvailableRooms({ onJoin }) {
       if (onJoin) onJoin(res.data);
       navigate("/compete");
     } catch (err) {
-      toastError(err.response?.data?.message || "Failed to join room");
+      try {
+        const { getErrorMessage } = await import("../../utils/errors");
+        toastError(getErrorMessage(err));
+      } catch (e) {
+        toastError("Failed to join room");
+      }
       console.error("Failed to join room", err);
     }
   }

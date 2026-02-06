@@ -32,6 +32,11 @@ public class Problem {
     @JsonIgnore
     private Room room;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", nullable = true)
+    @JsonIgnore
+    private Player createdBy;
+
     @OneToMany(
         mappedBy = "problem",
         cascade = CascadeType.ALL

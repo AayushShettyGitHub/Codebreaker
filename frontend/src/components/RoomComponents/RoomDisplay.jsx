@@ -62,7 +62,6 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
     };
   }, [room?.id, fetchPlayers]);
 
-  // Solutions / Top submissions state
   const [groupedProblems, setGroupedProblems] = useState([]);
   const [openProblems, setOpenProblems] = useState(() => JSON.parse(localStorage.getItem(`openProblems_${room?.id}`) || "{}"));
   const [expandedCodes, setExpandedCodes] = useState({});
@@ -71,12 +70,37 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
   const [panelCollapsed, setPanelCollapsed] = useState(() => JSON.parse(localStorage.getItem(`solutionsPanelCollapsed_${room?.id}`) || "false"));
   const [showOnlyTopN, setShowOnlyTopN] = useState(2);
 
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
+  const [profilePlayer, setProfilePlayer] = useState(null);
+
+  const openProfile = async (playerId) => {
+    try {
+      const res = await api.get(`/players/${playerId}`);
+      setProfilePlayer(res.data || null);
+      setProfileModalVisible(true);
+    } catch (err) {
+      console.error('Failed to load player profile', err);
+      toastError('Failed to load profile');
+    }
+  };
+
+  const closeProfile = () => {
+    setProfileModalVisible(false);
+    setProfilePlayer(null);
+  };
+
   const fetchSubmissions = async () => {
     if (!room?.id) return;
     try {
       const res = await api.get(`/rooms/${room.id}/submissions`);
-      const subs = res.data || [];
-      // group by problem id
+      let subs = res.data || [];
+
+      // Client-side safety: if a problem is currently active, remove any submissions
+      // that belong to the active problem so solutions don't appear prematurely.
+      if (isProblemActive && room?.currentProblem?.id) {
+        const curId = room.currentProblem.id;
+        subs = subs.filter(s => !(s.problem && s.problem.id === curId));
+      }
       const groups = {};
       subs.forEach(s => {
         const pid = s.problem?.id || "unknown";
@@ -85,7 +109,6 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
       });
 
       const grouped = Object.values(groups).map(g => {
-        // sort: passed first, then by submittedAt asc
         const sorted = g.submissions.sort((a,b) => {
           if ((b.passed ? 1 : 0) !== (a.passed ? 1 : 0)) return (b.passed ? 1 : 0) - (a.passed ? 1 : 0);
           return new Date(a.submittedAt) - new Date(b.submittedAt);
@@ -106,8 +129,12 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
 
     if (websocketService.isReady()) {
       const handler = (message) => {
-        if (message.type === "SUBMISSION_RESULT" || message.type === "SUBMISSION_RECEIVED" || message.type === "PROBLEM_ENDED") {
+        // Only refresh solutions when the problem ends to avoid showing partial solutions early
+        if (message.type === "PROBLEM_ENDED") {
           fetchSubmissions();
+        } else if (message.type === "SUBMISSION_RESULT") {
+          // keep logging or notify users, but do not append solutions yet
+          console.log("📊 Submission result received (hidden until reveal):", message.result);
         }
       };
       websocketService.subscribe(`/topic/room/${room.id}`, handler);
@@ -150,6 +177,17 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
     });
   }, [players]);
 
+  const getBadgeColors = (rank) => {
+    const r = (rank || '').toUpperCase();
+    switch (r) {
+      case 'GOLD': return { dot: 'bg-yellow-200', text: 'text-amber-900' };
+      case 'DIAMOND': return { dot: 'bg-indigo-200', text: 'text-indigo-900' };
+      case 'PLATINUM': return { dot: 'bg-slate-200', text: 'text-slate-900' };
+      case 'SILVER': return { dot: 'bg-slate-200', text: 'text-slate-900' };
+      case 'BRONZE': default: return { dot: 'bg-amber-200', text: 'text-amber-900' };
+    }
+  };
+
   const handleLeavePlayer = async (playerId) => {
     if (!room) return;
 
@@ -165,19 +203,13 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
     } catch (err) {
       console.error("Failed to leave/remove player:", err);
       
-      let errorMsg = "Failed to remove player";
-      
-      if (err.response?.status === 409) {
-        errorMsg = "Room is locked or has active competition. Try again after the problem ends.";
-      } else if (err.response?.status === 403) {
-        errorMsg = "You don't have permission to remove this player";
-      } else if (err.response?.data?.message) {
-        errorMsg = err.response.data.message;
-      } else if (err.message) {
-        errorMsg = err.message;
+      // Prefer a clean, user-readable message (no HTTP status codes)
+      try {
+        const { getErrorMessage } = await import("../../utils/errors");
+        toastError(getErrorMessage(err));
+      } catch (e) {
+        toastError("Failed to remove player");
       }
-      
-      toastError(errorMsg);
     }
   };
 
@@ -213,7 +245,17 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
         <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-2">{room.name}</h2>
         <div className="flex items-center justify-between text-xs md:text-sm gap-2">
           <p className="text-gray-600">Admin: <span className="text-gray-900 font-semibold">{room.admin?.username}</span></p>
-          <span className="text-xs text-gray-600 bg-gray-100 px-2 md:px-3 py-1 rounded-lg border border-gray-300">ID: {room.id}</span>
+          <div className="flex items-center gap-2">
+            {isProblemActive && (
+              <div className={`text-center px-2 py-1 rounded-lg font-mono font-bold whitespace-nowrap ${timeLeft <= 30 ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>
+                <div className="text-sm md:text-base">
+                  {Math.floor(timeLeft / 60).toString().padStart(2, "0")}:
+                  {(timeLeft % 60).toString().padStart(2, "0")}
+                </div>
+              </div>
+            )}
+            <span className="text-xs text-gray-600 bg-gray-100 px-2 md:px-3 py-1 rounded-lg border border-gray-300">ID: {room.id}</span>
+          </div>
         </div>
       </div>
 
@@ -276,7 +318,7 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
                   <div className="flex-1 min-w-0">
                     <p className="text-gray-900 font-bold text-xs md:text-base truncate">
                       {player.username}
-                      {player.id === room.admin?.id && " 👑"}
+                      {player.id === room.admin?.id && " (admin)"}
                       {isCurrentUser && " (You)"}
                     </p>
                   </div>
@@ -303,11 +345,29 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
                 >
                   <div className="min-w-0 flex-1">
                     <p className="text-gray-900 font-bold flex items-center gap-1 text-xs md:text-base truncate">
-                      {player.username}
+                      <button onClick={() => openProfile(player.id)} className="text-left truncate font-semibold text-gray-900 hover:underline">
+                        {player.username}
+                      </button>
                       {player.id === room.admin?.id && "👑"}
                       {isCurrentUser && " (You)"}
                     </p>
                     <p className="text-xs text-gray-600 mt-1">{player.role ?? "Participant"}</p>
+
+                    {/* badges under name (up to 3) */}
+                    {player.badges && player.badges.length > 0 && (
+                      <div className="flex items-center gap-2 mt-2">
+                        {player.badges.slice(0,3).map((b, i) => {
+                          const cols = getBadgeColors(b.rank);
+                          return (
+                            <div key={i} className="px-2 py-1 rounded-lg text-xs flex items-center gap-2 border border-gray-200 bg-gray-50">
+                              <div className={`w-6 h-6 rounded-full ${cols.dot} flex items-center justify-center font-bold ${cols.text} text-xs`}>🏅</div>
+                              <span className="font-semibold text-gray-900">{b.name}</span>
+                              {b.count > 1 && <span className="ml-1 text-xs text-gray-500">x{b.count}</span>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   {(isCurrentUser || isAdmin) && (
@@ -363,7 +423,7 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
         {activeTab === "solutions" && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-gray-700 mb-3">💡 Top Solutions</p>
+              <p className="text-sm font-semibold text-black mb-3">💡 Top Solutions</p>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
@@ -394,7 +454,7 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
               <div>
                 {groupedProblems.length === 0 && (
                   <div className="text-center py-8">
-                    <p className="text-gray-600 text-sm">Solutions will appear here after the problem ends.</p>
+                    <p className="text-black text-sm">Solutions will appear here after the problem ends.</p>
                   </div>
                 )}
 
@@ -436,7 +496,7 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
                                       <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">Failed</span>
                                     )}
                                   </div>
-                                  <p className="text-xs text-gray-500 mt-1">Submitted: {new Date(sub.submittedAt).toLocaleString()}</p>
+                                  <p className="text-xs text-black mt-1">Submitted: {new Date(sub.submittedAt).toLocaleString()}</p>
                                 </div>
 
                                 <div className="flex items-center gap-2">
@@ -486,6 +546,49 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
                   </div>
                   <div className="bg-gray-50 rounded p-3 text-sm font-mono overflow-auto">
                     <pre className="whitespace-pre-wrap break-words">{modalContent?.code}</pre>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {profileModalVisible && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                <div className="bg-white rounded-lg w-11/12 md:w-2/3 lg:w-1/2 max-h-[90vh] overflow-auto p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold">{profilePlayer?.username || 'Profile'}</h3>
+                    <div className="flex items-center gap-2">
+                      <button onClick={closeProfile} className="text-xs px-2 py-1 bg-red-100 hover:bg-red-200 rounded-lg">Close</button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="md:col-span-1 text-center">
+                      <div className="w-24 h-24 bg-blue-600 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl font-bold text-white">
+                        {profilePlayer?.username?.[0]?.toUpperCase()}
+                      </div>
+                      <h4 className="text-xl font-bold text-gray-900">{profilePlayer?.username}</h4>
+                      <p className="text-sm text-gray-600 mt-2">{profilePlayer?.role || 'Participant'}</p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <h5 className="text-lg font-semibold mb-3">Badges</h5>
+                      {(!profilePlayer?.badges || profilePlayer.badges.length === 0) && (
+                        <p className="text-gray-600">No badges yet.</p>
+                      )}
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {profilePlayer?.badges?.map((b) => {
+                          const cols = getBadgeColors(b.rank);
+                          return (
+                            <div key={b.key} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg bg-white">
+                              <div className={`w-12 h-12 rounded-full ${cols.dot} flex items-center justify-center font-bold ${cols.text}`}>🏅</div>
+                              <div>
+                                <p className="text-sm font-semibold text-gray-900">{b.name} <span className="text-xs text-gray-500">{b.rank}</span></p>
+                                <p className="text-xs text-gray-600">{b.description}</p>
+                                {b.count > 1 && <p className="text-xs text-gray-500 mt-1">Activity count: {b.count}</p>}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
