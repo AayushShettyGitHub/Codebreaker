@@ -26,7 +26,9 @@ public class PlayerBadge {
 
     private LocalDateTime awardedAt;
 
+    @Builder.Default
     private Integer count = 1;
+    @Builder.Default
     private String rank = "BRONZE";
 
     @PrePersist

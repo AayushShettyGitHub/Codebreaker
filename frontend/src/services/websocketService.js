@@ -1,5 +1,6 @@
 import SockJS from "sockjs-client";
 import * as StompJs from "@stomp/stompjs";
+import { WS_URL } from "../config/client";
 
 class WebSocketService {
   constructor() {
@@ -13,7 +14,7 @@ class WebSocketService {
   }
 
   connect(onConnected, onError) {
-    const socket = new SockJS("http://localhost:8080/ws");
+    const socket = new SockJS(WS_URL);
     this.stompClient = new StompJs.Client({
       webSocketFactory: () => socket,
       reconnectDelay: this.reconnectDelay,
@@ -22,7 +23,7 @@ class WebSocketService {
       onConnect: () => {
         this.isConnected = true;
         this.reconnectAttempts = 0;
-        console.log("WebSocket connected");
+        console.log("WebSocket connected to", WS_URL);
         if (onConnected) onConnected();
       },
       onDisconnect: () => {

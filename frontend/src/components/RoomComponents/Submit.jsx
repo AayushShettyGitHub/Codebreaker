@@ -92,18 +92,39 @@ export default function Submit({ playerId }) {
         setMaxSubmissionsReached(true);
       }
     } catch (err) {
+      console.error("Submission error:", err);
+      console.error("Error response:", err.response);
+      console.error("Error data:", err.response?.data);
+      console.error("Error stack:", err.stack);
+
       try {
         const { getErrorMessage } = await import("../../utils/errors");
         const errorMessage = getErrorMessage(err);
+
+        // Log detailed error information
+        const detailedError = {
+          message: errorMessage,
+          status: err.response?.status,
+          statusText: err.response?.statusText,
+          data: err.response?.data,
+          headers: err.response?.headers
+        };
+        console.error("Detailed error:", detailedError);
 
         if (errorMessage.includes("Maximum correct answers")) {
           setMaxSubmissionsReached(true);
           setError("Maximum submissions reached. No more solutions can be accepted.");
         } else {
-          setError(errorMessage);
+          // Show more detailed error to user
+          const displayError = err.response?.data?.error
+            || err.response?.data?.message
+            || errorMessage
+            || "An unexpected error occurred";
+          setError(`${displayError}${err.response?.status ? ` (Status: ${err.response.status})` : ''}`);
         }
       } catch (e) {
-        setError("Submission failed");
+        console.error("Error processing error:", e);
+        setError(`Submission failed: ${err.message || 'Unknown error'}`);
       }
     } finally {
       setLoading(false);
@@ -116,7 +137,7 @@ export default function Submit({ playerId }) {
   return (
     <div className="bg-gradient-to-br from-slate-500/30 to-slate-600/30 backdrop-blur-md border border-slate-500/40 p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-lg flex flex-col h-full">
       <div className="flex items-center gap-2 mb-4 md:mb-6">
-        <span className="text-xl md:text-2xl">💻</span>
+        <span className="text-xl md:text-2xl"></span>
         <h3 className="text-lg md:text-xl font-bold text-slate-900">
           Code Submission
         </h3>
@@ -179,11 +200,10 @@ export default function Submit({ playerId }) {
 
       <div className="flex flex-col sm:flex-row gap-2 md:gap-3 pt-4">
         <button
-          className={`flex-1 px-4 py-3 md:py-4 text-slate-100 font-bold rounded-lg md:rounded-xl transition-all shadow-md text-sm md:text-base ${
-            isDisabled
+          className={`flex-1 px-4 py-3 md:py-4 text-slate-100 font-bold rounded-lg md:rounded-xl transition-all shadow-md text-sm md:text-base ${isDisabled
               ? "bg-slate-500 opacity-50 cursor-not-allowed"
               : "bg-gradient-to-r from-slate-500 to-slate-400 hover:from-slate-600 hover:to-slate-500"
-          }`}
+            }`}
           onClick={handleSubmit}
           disabled={isDisabled}
         >

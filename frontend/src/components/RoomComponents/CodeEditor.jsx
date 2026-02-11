@@ -1,7 +1,6 @@
-import React, { useState, useRef, Suspense } from "react";
+import React, { useState, useRef } from "react";
 import { Maximize2, Minimize2 } from "lucide-react";
-
-const Editor = React.lazy(() => import("@monaco-editor/react").then(mod => ({ default: mod.default })));
+import Editor from "@monaco-editor/react";
 
 const CodeEditor = ({ value, onChange, language = "python", disabled = false }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -126,21 +125,20 @@ const CodeEditor = ({ value, onChange, language = "python", disabled = false }) 
           paddingTop: "20px",
         }}
       >
-        <Suspense fallback={<div className="flex items-center justify-center h-full text-gray-500">⚡ Loading editor...</div>}>
-          <Editor
-            ref={editorRef}
-            height="100%"
-            language={getMonacoLanguage()}
-            value={value}
-            onChange={(val) => onChange(val || "")}
-            theme="vs-light"
-            options={editorOptions}
-            loading={<div className="flex items-center justify-center h-full text-gray-500">⚡ Loading editor...</div>}
-          />
-        </Suspense>
+        <Editor
+          ref={editorRef}
+          height="100%"
+          language={getMonacoLanguage()}
+          value={value}
+          onChange={(val) => onChange(val || "")}
+          theme="vs-light"
+          options={editorOptions}
+          loading={<div className="flex items-center justify-center h-full text-gray-500">Loading editor...</div>}
+        />
       </div>
     </div>
   );
-};
+}
+;
 
 export default CodeEditor;

@@ -1,5 +1,6 @@
 package com.example.codebreaker.services;
-
+import java.time.Duration;
+import java.time.Instant;
 import com.example.codebreaker.model.Player;
 import com.example.codebreaker.model.Problem;
 import com.example.codebreaker.model.Room;
@@ -8,12 +9,11 @@ import com.example.codebreaker.repo.RoomPlayerRepository;
 import com.example.codebreaker.repo.RoomRepository;
 import com.example.codebreaker.repo.SubmissionRepository;
 import com.example.codebreaker.websockets.RoomSocketController;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.example.codebreaker.services.BadgeService;
-import com.example.codebreaker.services.ScoringService;
 
-import java.time.LocalDateTime;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -141,7 +141,8 @@ public class RoomService {
 
         room.setCurrentProblem(problem);
         room.setCorrectAnswerCount(0);
-        room.setProblemStartTime(LocalDateTime.now());
+        room.setProblemStartTime(null);
+        room.setProblemDuration(null);
 
         room.getPlayers().forEach(rp -> {
             rp.setHasAnsweredCorrectly(false);
@@ -194,8 +195,8 @@ public class RoomService {
         player.setRoom(null);
         playerService.save(player);
 
-        roomSocketController.playerKicked(roomId, player);
-        return "Player kicked from the room.";
+        roomSocketController.playerLeft(roomId, player);
+        return "Player has left the room.";
     }
 
     @Transactional
@@ -254,7 +255,7 @@ public class RoomService {
                                 .passed(true)
                                 .build();
 
-                        int gained = scoringService.applyScore(fakeSub);
+                        scoringService.applyScore(fakeSub);
                         int newScore = fakeRp.getScore();
                         simulatedScores.put(fakeRp.getId(), newScore);
                     }
@@ -343,15 +344,12 @@ public class RoomService {
         if (room.getCurrentProblem() != null &&
                 Objects.equals(room.getCurrentProblem().getAnswer(), answer)) {
 
-            long now = System.currentTimeMillis();
+            Instant now = Instant.now();
             rp.setHasAnsweredCorrectly(true);
             rp.setCorrectAnswerTimestamp(now);
+            
+            long seconds = Duration.between(room.getProblemStartTime(), now).getSeconds();
 
-            long seconds =
-                    java.time.Duration.between(
-                            room.getProblemStartTime(),
-                            LocalDateTime.now()
-                    ).toSeconds();
 
             int score = Math.max(10, 100 - (int) seconds);
             rp.setScore(rp.getScore() + score);

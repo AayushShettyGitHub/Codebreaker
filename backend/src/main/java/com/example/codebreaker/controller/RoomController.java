@@ -1,5 +1,6 @@
 package com.example.codebreaker.controller;
 
+import com.example.codebreaker.Dto.CreateRoomRequest;
 import com.example.codebreaker.model.Player;
 import com.example.codebreaker.model.Problem;
 import com.example.codebreaker.model.Room;
@@ -7,10 +8,13 @@ import com.example.codebreaker.model.Submission;
 import com.example.codebreaker.repo.SubmissionRepository;
 import com.example.codebreaker.services.RoomService;
 import com.example.codebreaker.services.PlayerService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -29,11 +33,8 @@ public class RoomController {
     }
 
     @PostMapping
-    public Room createRoom(@RequestBody Map<String, Object> payload) {
-        Long playerId = extractPlayerId(payload);
-        String roomName = (String) payload.get("name");
-        Boolean privateRoom = payload.get("privateRoom") == null ? null : (Boolean) payload.get("privateRoom");
-        return roomService.createRoom(playerId, roomName, privateRoom);
+    public Room createRoom(@Valid @RequestBody CreateRoomRequest request) {
+        return roomService.createRoom(request.getPlayerId(), request.getName(), request.getPrivateRoom());
     }
 
     @GetMapping
@@ -60,52 +61,57 @@ public class RoomController {
 
     @GetMapping("/{roomId}/submissions")
     public List<Submission> getTopSubmissions(@PathVariable Long roomId) {
+
         Room room = roomService.getRoom(roomId);
         if (room == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Room not found");
         }
-        java.util.List<Submission> subs = submissionRepository.findByRoomOrderBySubmittedAtDesc(room);
 
-        // If a problem has been started (problemStartTime set) and the room hasn't yet
-        // reached its max correct answers, do not expose submissions that were submitted
-        // during the active problem period (from problemStartTime until end). This is a
-        // defensive check that hides current-problem solutions even if problem IDs are
-        // inconsistent or missing on the submission objects.
-        if (room.getProblemStartTime() != null && room.getCorrectAnswerCount() < room.getMaxCorrectAnswers()) {
-            java.time.LocalDateTime start = room.getProblemStartTime();
-            java.time.LocalDateTime end = null;
-            if (room.getProblemDuration() != null) {
-                end = start.plusSeconds(room.getProblemDuration());
-            }
+        List<Submission> submissions = submissionRepository.findByRoomOrderBySubmittedAtDesc(room);
 
-            Long currentProblemId = room.getCurrentProblem() != null ? room.getCurrentProblem().getId() : null;
-
-            java.util.List<Submission> filtered = new java.util.ArrayList<>();
-            for (Submission s : subs) {
-                boolean isCurrentProblemSubmission = false;
-                if (s.getProblem() != null && s.getProblem().getId() != null && currentProblemId != null) {
-                    isCurrentProblemSubmission = currentProblemId.equals(s.getProblem().getId());
-                }
-
-                java.time.LocalDateTime when = s.getSubmittedAt();
-                boolean submittedDuringActive = false;
-                if (when != null) {
-                    if (end != null) {
-                        submittedDuringActive = (when.isEqual(start) || when.isAfter(start)) && when.isBefore(end);
-                    } else {
-                        submittedDuringActive = (when.isEqual(start) || when.isAfter(start));
-                    }
-                }
-
-                // Exclude if it's explicitly for the current problem OR was submitted during the active window
-                if (!isCurrentProblemSubmission && !submittedDuringActive) filtered.add(s);
-            }
-            subs = filtered;
+        // If no active problem or max answers reached → return everything
+        if (room.getProblemStartTime() == null || room.getCorrectAnswerCount() >= room.getMaxCorrectAnswers()) {
+            return submissions;
         }
 
-        return subs;
-    }
+        Instant startTime = room.getProblemStartTime();
+        Instant endTime = room.getProblemDuration() != null
+                ? startTime.plusSeconds(room.getProblemDuration())
+                : null;
 
+        Long currentProblemId = room.getCurrentProblem() != null
+                ? room.getCurrentProblem().getId()
+                : null;
+
+        List<Submission> filtered = new ArrayList<>();
+
+        for (Submission submission : submissions) {
+
+            // Check if submission belongs to current problem
+            boolean isCurrentProblem = currentProblemId != null &&
+                    submission.getProblem() != null &&
+                    currentProblemId.equals(submission.getProblem().getId());
+
+            Instant submittedAt = submission.getSubmittedAt();
+
+            boolean duringActiveWindow = false;
+
+            if (submittedAt != null) {
+                if (endTime != null) {
+                    duringActiveWindow = !submittedAt.isBefore(startTime) && submittedAt.isBefore(endTime);
+                } else {
+                    duringActiveWindow = !submittedAt.isBefore(startTime);
+                }
+            }
+
+            // Exclude submissions related to active problem
+            if (!isCurrentProblem && !duringActiveWindow) {
+                filtered.add(submission);
+            }
+        }
+
+        return filtered;
+    }
 
     @GetMapping("/me")
     public Room getMyRoom() {
@@ -134,19 +140,16 @@ public class RoomController {
     }
 
     @PostMapping("/join")
-public Room joinRoomByCode(@RequestBody Map<String, String> payload) {
-    Long playerId = extractPlayerId(payload);
+    public Room joinRoomByCode(@RequestBody Map<String, String> payload) {
+        Long playerId = extractPlayerId(payload);
         String joinCode = payload.get("joinCode");
         if (joinCode == null || joinCode.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "joinCode is required");
         }
 
         Room room = roomService.joinRoomByCode(joinCode, playerId);
-
-
-    return room;
-}
-
+        return room;
+    }
 
     @PostMapping("/{roomId}/problem")
     public Room setProblem(@PathVariable Long roomId, @RequestBody Problem problem) {
@@ -181,7 +184,6 @@ public Room joinRoomByCode(@RequestBody Map<String, String> payload) {
         }
 
         String answer = payload.get("answer");
-
         return roomService.submitAnswer(roomId, playerId, answer);
     }
 
@@ -191,25 +193,24 @@ public Room joinRoomByCode(@RequestBody Map<String, String> payload) {
         return roomService.deleteRoom(roomId, playerId);
     }
 
-@PostMapping("/me/leave")
-public String leaveMyRoom() {
-    Player player = playerService.getAuthenticatedPlayer()
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not logged in"));
+    @PostMapping("/me/leave")
+    public String leaveMyRoom() {
+        Player player = playerService.getAuthenticatedPlayer()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not logged in"));
 
-    Room room = player.getRoom();
-    if (room == null) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Player is not in any room");
+        Room room = player.getRoom();
+        if (room == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Player is not in any room");
+        }
+
+        return roomService.leaveRoom(room.getId(), player.getId());
     }
 
-    return roomService.leaveRoom(room.getId(), player.getId());
-}
-
-@PostMapping("/{roomId}/leave")
-public String leaveRoom(@PathVariable Long roomId, @RequestBody Map<String, String> payload) {
-    Long playerId = extractPlayerId(payload);
-    return roomService.leaveRoom(roomId, playerId);
-}
-
+    @PostMapping("/{roomId}/leave")
+    public String leaveRoom(@PathVariable Long roomId, @RequestBody Map<String, String> payload) {
+        Long playerId = extractPlayerId(payload);
+        return roomService.leaveRoom(roomId, playerId);
+    }
 
     private Long extractPlayerId(Map<String, ?> payload) {
         if (payload == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body required");

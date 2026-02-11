@@ -30,7 +30,7 @@ export default function SubmissionResult({ result }) {
       </div>
 
       <div className="border-t border-slate-700">
-        <p className="text-black font-bold mt-5 mb-4">📋 Test Results</p>
+        <p className="text-black font-bold mt-5 mb-4">Test Results</p>
 
         {results.length === 0 ? (
           <div className="text-sm text-gray-600 bg-gray-100 p-4 rounded-lg border border-gray-200">
@@ -97,7 +97,7 @@ export default function SubmissionResult({ result }) {
 
                 {r.error && (
                   <div className="mt-3">
-                    <p className="text-xs font-semibold text-gray-800 mb-2">❌ Error:</p>
+                    <p className="text-xs font-semibold text-gray-800 mb-2">Error:</p>
                     <pre className="text-xs text-black font-mono bg-white p-3 rounded border border-red-100 overflow-auto max-h-32">
                       {r.error}
                     </pre>

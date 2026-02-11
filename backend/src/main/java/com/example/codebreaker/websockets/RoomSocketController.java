@@ -13,11 +13,10 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.data.domain.PageRequest;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -38,7 +37,7 @@ public class RoomSocketController {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "ROOM_CREATED");
         payload.put("room", room);
-        payload.put("timestamp", LocalDateTime.now());
+        payload.put("timestamp", Instant.now());
 
         messagingTemplate.convertAndSend(roomsTopic(), payload);
     }
@@ -47,7 +46,7 @@ public class RoomSocketController {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "ROOM_DELETED");
         payload.put("roomId", roomId);
-        payload.put("timestamp", LocalDateTime.now());
+        payload.put("timestamp", Instant.now());
 
         messagingTemplate.convertAndSend(roomsTopic(), payload);
         messagingTemplate.convertAndSend(roomTopic(roomId), payload);
@@ -57,7 +56,7 @@ public class RoomSocketController {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "ROOM_UPDATED");
         payload.put("room", room);
-        payload.put("timestamp", LocalDateTime.now());
+        payload.put("timestamp", Instant.now());
 
         messagingTemplate.convertAndSend(roomTopic(room.getId()), payload);
     }
@@ -66,7 +65,7 @@ public class RoomSocketController {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "PLAYER_JOINED");
         payload.put("player", player);
-        payload.put("timestamp", LocalDateTime.now());
+        payload.put("timestamp", Instant.now());
 
         messagingTemplate.convertAndSend(roomTopic(roomId), payload);
     }
@@ -75,7 +74,7 @@ public class RoomSocketController {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "PLAYER_LEFT");
         payload.put("player", player);
-        payload.put("timestamp", LocalDateTime.now());
+        payload.put("timestamp", Instant.now());
 
         messagingTemplate.convertAndSend(roomTopic(roomId), payload);
     }
@@ -84,7 +83,7 @@ public class RoomSocketController {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "PLAYERS_UPDATED");
         payload.put("players", players);
-        payload.put("timestamp", LocalDateTime.now());
+        payload.put("timestamp", Instant.now());
 
         messagingTemplate.convertAndSend(roomTopic(roomId), payload);
     }
@@ -93,7 +92,7 @@ public class RoomSocketController {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "PROBLEM_SET");
         payload.put("problem", problem);
-        payload.put("timestamp", LocalDateTime.now());
+        payload.put("timestamp", Instant.now());
 
         messagingTemplate.convertAndSend(roomTopic(roomId), payload);
     }
@@ -104,7 +103,7 @@ public class RoomSocketController {
         payload.put("problem", problem);
         payload.put("startTime", startTime);
         payload.put("durationSeconds", durationSeconds);
-        payload.put("timestamp", LocalDateTime.now());
+        payload.put("timestamp", Instant.now());
 
         messagingTemplate.convertAndSend(roomTopic(roomId), payload);
     }
@@ -113,7 +112,7 @@ public class RoomSocketController {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "PROBLEM_ENDED");
         payload.put("problemId", problemId);
-        payload.put("timestamp", LocalDateTime.now());
+        payload.put("timestamp", Instant.now());
         // fetch top successful submissions for this problem and include them as part of the reveal
         try {
             java.util.List<Submission> sols = submissionRepository.findByProblemIdAndPassedTrueOrderBySubmittedAtAsc(problemId, PageRequest.of(0, 5));
@@ -141,7 +140,7 @@ public class RoomSocketController {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "MAX_CORRECT_SET");
         payload.put("maxCorrectAnswers", maxCorrectAnswers);
-        payload.put("timestamp", LocalDateTime.now());
+        payload.put("timestamp", Instant.now());
 
         messagingTemplate.convertAndSend(roomTopic(roomId), payload);
     }
@@ -151,7 +150,7 @@ public class RoomSocketController {
         payload.put("type", "SUBMISSION_RECEIVED");
         payload.put("playerId", playerId);
         payload.put("playerUsername", playerUsername);
-        payload.put("timestamp", LocalDateTime.now());
+        payload.put("timestamp", Instant.now());
 
         messagingTemplate.convertAndSend(roomTopic(roomId), payload);
     }
@@ -162,7 +161,7 @@ public class RoomSocketController {
         payload.put("result", result);
         payload.put("playerUsername", playerUsername);
         payload.put("reveal", false);
-        payload.put("timestamp", LocalDateTime.now());
+        payload.put("timestamp", Instant.now());
 
         messagingTemplate.convertAndSend(roomTopic(roomId), payload);
     }
@@ -174,7 +173,7 @@ public class RoomSocketController {
         payload.put("playerUsername", playerUsername);
         payload.put("score", score);
         payload.put("correct", correct);
-        payload.put("timestamp", LocalDateTime.now());
+        payload.put("timestamp", Instant.now());
 
         messagingTemplate.convertAndSend(roomTopic(roomId), payload);
     }
@@ -184,7 +183,7 @@ public class RoomSocketController {
         payload.put("type", "PLAYER_KICKED");
         payload.put("playerId", player.getId());
         payload.put("playerUsername", player.getUsername());
-        payload.put("timestamp", LocalDateTime.now());
+        payload.put("timestamp", Instant.now());
 
         messagingTemplate.convertAndSend(roomTopic(roomId), payload);
     }

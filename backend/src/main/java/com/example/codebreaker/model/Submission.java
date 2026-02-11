@@ -2,8 +2,7 @@ package com.example.codebreaker.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "submissions")
@@ -37,7 +36,7 @@ public class Submission {
 
     private boolean passed;
 
+    @Column(name = "submitted_at")
     @Builder.Default
-    private LocalDateTime submittedAt = LocalDateTime.now();
+    private Instant submittedAt = Instant.now();
 }
-

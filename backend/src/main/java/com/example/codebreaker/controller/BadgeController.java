@@ -1,6 +1,5 @@
 package com.example.codebreaker.controller;
 
-import com.example.codebreaker.model.Badge;
 import com.example.codebreaker.model.Player;
 import com.example.codebreaker.services.BadgeService;
 import com.example.codebreaker.services.PlayerService;
@@ -47,9 +46,9 @@ public class BadgeController {
         List<com.example.codebreaker.model.PlayerBadge> myBadges = badgeService.getBadgesForPlayer(me);
         java.util.Map<String, Map<String, Object>> pbMap = myBadges.stream()
                 .collect(Collectors.toMap(pb -> pb.getBadge().getKey(), pb -> {
-                    Integer count = (pb instanceof com.example.codebreaker.model.PlayerBadge) ? ((com.example.codebreaker.model.PlayerBadge) pb).getCount() : 0;
+                    Integer count = ((com.example.codebreaker.model.PlayerBadge) pb).getCount();
                     if (count == null) count = 0;
-                    String rank = (pb instanceof com.example.codebreaker.model.PlayerBadge) ? ((com.example.codebreaker.model.PlayerBadge) pb).getRank() : "NONE";
+                    String rank = ((com.example.codebreaker.model.PlayerBadge) pb).getRank();
                     if (rank == null) rank = "NONE";
                     Integer nextThreshold = badgeService.getNextThreshold(count);
                     int progress = nextThreshold == null || nextThreshold == 0 ? 100 : (int) Math.min(100, Math.floor((count * 100.0) / nextThreshold));

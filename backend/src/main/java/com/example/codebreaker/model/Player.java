@@ -54,9 +54,11 @@ public class Player {
     @ElementCollection
     @CollectionTable(name = "player_featured_badges", joinColumns = @JoinColumn(name = "player_id"))
     @Column(name = "badge_key")
+    @Builder.Default
     private java.util.List<String> featuredBadges = new java.util.ArrayList<>();
 
     @OneToMany(mappedBy = "player", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
+    @Builder.Default
     private java.util.List<PlayerBadge> badges = new java.util.ArrayList<>();
 }

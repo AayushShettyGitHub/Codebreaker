@@ -4,7 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,7 +47,7 @@ public class Room {
     @Builder.Default
     private Integer correctAnswerCount = 0;
 
-    private LocalDateTime problemStartTime;
+       private Instant problemStartTime;
     private Integer problemDuration;
 
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -62,11 +63,19 @@ public class Room {
     @JsonIgnore
     private List<Submission> submissions = new ArrayList<>();
 
+
+
+
     public boolean isProblemActive() {
+
         if (problemStartTime == null || problemDuration == null) {
             return false;
         }
-        LocalDateTime end = problemStartTime.plusSeconds(problemDuration);
-        return LocalDateTime.now().isBefore(end);
+
+        long elapsedSeconds = Duration.between(problemStartTime, Instant.now()).getSeconds();
+
+        return elapsedSeconds < problemDuration;
     }
+
+
 }

@@ -4,9 +4,10 @@ import api from "../../config/client";
 import { useRoom } from "../../context/RoomContext";
 import websocketService from "../../services/websocketService";
 import { toastError, toastSuccess } from "../../utils/toast";
+import { parseAsUTC } from "../../utils/dateUtils";
 
 export default function RoomDisplay({ currentUser, onLeave = null }) {
-  const { myRoom, players, setMyRoom, fetchPlayers, kickedOut, setKickedOut } = useRoom();
+  const { myRoom, players, setMyRoom, fetchPlayers, fetchMyRoom, kickedOut, setKickedOut } = useRoom();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("leaderboard");
   const [timeLeft, setTimeLeft] = useState(0);
@@ -24,10 +25,42 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
     }
   }, [kickedOut, setKickedOut, navigate]);
 
+  // Ensure we have timer data when problem starts
+  useEffect(() => {
+    if (room?.currentProblem && !room?.problemStartTime) {
+      // Problem exists but missing timer data - fetch fresh room data
+      fetchMyRoom();
+    }
+  }, [room?.currentProblem?.id, room?.problemStartTime, fetchMyRoom]);
+
   const isProblemActive = useMemo(() => {
-    if (!room?.problemStartTime || !room?.problemDuration) return false;
-    const endTime = new Date(room.problemStartTime).getTime() + room.problemDuration * 1000;
-    return Date.now() < endTime;
+    if (!room?.problemStartTime || !room?.problemDuration) {
+      console.log("Timer check: Missing timer data", {
+        problemStartTime: room?.problemStartTime,
+        problemDuration: room?.problemDuration
+      });
+      return false;
+    }
+
+    // Backend now returns Instant (ISO 8601 string) which already contains timezone info (Z).
+    // e.g., "2023-10-27T10:00:00Z"
+    // Backend now returns Instant. Ensure it is treated as UTC.
+    // robustly append Z if missing, just in case.
+    const startEpoch = parseAsUTC(room.problemStartTime);
+    const endTime = startEpoch + room.problemDuration * 1000;
+    const now = Date.now();
+    const isActive = now < endTime;
+
+    console.log("TIMER_DEBUG_V3:", {
+      rawString: room?.problemStartTime,
+      parsedStart: new Date(startEpoch).toLocaleString(), // Local representation of the Start Time
+      computedEnd: new Date(endTime).toLocaleString(),
+      clientNow: new Date(now).toLocaleString(), // Local representation of Client Time
+      diffSeconds: Math.floor((endTime - now) / 1000),
+      isActive
+    });
+
+    return isActive;
   }, [room?.problemStartTime, room?.problemDuration]);
 
   useEffect(() => {
@@ -35,7 +68,8 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
       setTimeLeft(0);
       return;
     }
-    const endTime = new Date(room.problemStartTime).getTime() + room.problemDuration * 1000;
+    const startEpoch = parseAsUTC(room.problemStartTime);
+    const endTime = startEpoch + room.problemDuration * 1000;
     const interval = setInterval(() => {
       const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
       setTimeLeft(remaining);
@@ -109,13 +143,13 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
       });
 
       const grouped = Object.values(groups).map(g => {
-        const sorted = g.submissions.sort((a,b) => {
+        const sorted = g.submissions.sort((a, b) => {
           if ((b.passed ? 1 : 0) !== (a.passed ? 1 : 0)) return (b.passed ? 1 : 0) - (a.passed ? 1 : 0);
           return new Date(a.submittedAt) - new Date(b.submittedAt);
         });
         const topSubmissions = sorted.slice(0, Math.max(2, showOnlyTopN));
         return { ...g, submissions: sorted, topSubmissions };
-      }).sort((a,b) => a.problemTitle.localeCompare(b.problemTitle));
+      }).sort((a, b) => a.problemTitle.localeCompare(b.problemTitle));
 
       setGroupedProblems(grouped);
     } catch (err) {
@@ -134,13 +168,20 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
           fetchSubmissions();
         } else if (message.type === "SUBMISSION_RESULT") {
           // keep logging or notify users, but do not append solutions yet
-          console.log("📊 Submission result received (hidden until reveal):", message.result);
+          console.log("Submission result received (hidden until reveal):", message.result);
         }
       };
       websocketService.subscribe(`/topic/room/${room.id}`, handler);
       return () => websocketService.unsubscribe(`/topic/room/${room.id}`);
     }
-  }, [room?.id, showOnlyTopN]);
+  }, [room?.id, showOnlyTopN, isProblemActive]);
+
+  // Refetch submissions when problem ends
+  useEffect(() => {
+    if (!isProblemActive && room?.id) {
+      fetchSubmissions();
+    }
+  }, [isProblemActive, room?.id]);
 
   useEffect(() => {
     localStorage.setItem(`openProblems_${room?.id}`, JSON.stringify(openProblems));
@@ -202,7 +243,7 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
       }
     } catch (err) {
       console.error("Failed to leave/remove player:", err);
-      
+
       // Prefer a clean, user-readable message (no HTTP status codes)
       try {
         const { getErrorMessage } = await import("../../utils/errors");
@@ -214,14 +255,13 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
   };
 
   if (!room) {
-    return <div className="text-center p-4 font-semibold text-red-400 text-sm md:text-base">❌ Room no longer exists</div>;
+    return <div className="text-center p-4 font-semibold text-red-400 text-sm md:text-base">Room no longer exists</div>;
   }
 
   if (kickedOut) {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
         <div className="bg-white border-2 border-red-500 rounded-lg p-8 max-w-sm text-center shadow-xl">
-          <div className="text-4xl mb-4">👢</div>
           <h2 className="text-2xl font-bold text-red-600 mb-4">You have been kicked!</h2>
           <p className="text-gray-700 mb-6">You have been removed from the room.</p>
           <button
@@ -261,19 +301,18 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
 
       <div className="flex gap-1 border-b border-gray-200 bg-gray-50 px-3 md:px-4 py-2 md:py-3 overflow-x-auto">
         {[
-          { key: "leaderboard", label: "🏆 Leaderboard" },
-          { key: "players", label: "👥 Players" },
-          { key: "problem", label: "📝 Problem" },
-          { key: "solutions", label: "💡 Top Solutions" },
+          { key: "leaderboard", label: "Leaderboard" },
+          { key: "players", label: "Players" },
+          { key: "problem", label: "Problem" },
+          { key: "solutions", label: "Top Solutions" },
         ].map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-3 md:px-4 py-2 font-medium text-xs md:text-sm whitespace-nowrap transition-all rounded-lg ${
-              activeTab === tab.key 
-                ? "bg-gray-900 text-white shadow-lg" 
-                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-            }`}
+            className={`px-3 md:px-4 py-2 font-medium text-xs md:text-sm whitespace-nowrap transition-all rounded-lg ${activeTab === tab.key
+              ? "bg-gray-900 text-white shadow-lg"
+              : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              }`}
           >
             {tab.label}
           </button>
@@ -299,18 +338,17 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
                 </div>
               </div>
             </div>
-            <div className="text-xs md:text-sm text-gray-700 font-semibold mb-3 md:mb-4">🏆 Rankings</div>
-            {leaderboard.length === 0 && <div className="text-gray-500 text-center py-8 text-sm">👥 No players yet</div>}
+            <div className="text-xs md:text-sm text-gray-700 font-semibold mb-3 md:mb-4">Rankings</div>
+            {leaderboard.length === 0 && <div className="text-gray-500 text-center py-8 text-sm">No players yet</div>}
             {leaderboard.map((player, index) => {
               const isCurrentUser = currentUser?.id === player.id;
               return (
                 <div
                   key={player.id}
-                  className={`group flex items-center gap-3 px-3 md:px-4 py-3 rounded-lg md:rounded-xl border-2 transition-all mb-2 md:mb-3 ${
-                    isCurrentUser 
-                      ? "bg-blue-50 border-blue-300 hover:border-blue-400" 
-                      : "bg-gray-100 border-gray-300 hover:border-gray-400"
-                  }`}
+                  className={`group flex items-center gap-3 px-3 md:px-4 py-3 rounded-lg md:rounded-xl border-2 transition-all mb-2 md:mb-3 ${isCurrentUser
+                    ? "bg-blue-50 border-blue-300 hover:border-blue-400"
+                    : "bg-gray-100 border-gray-300 hover:border-gray-400"
+                    }`}
                 >
                   <div className="flex items-center justify-center w-8 md:w-10 h-8 md:h-10 rounded-full bg-gray-900 font-bold text-white text-xs md:text-sm group-hover:scale-110 transition-transform flex-shrink-0">
                     {index + 1}
@@ -335,7 +373,7 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
         {activeTab === "players" && (
           <div>
             <div className="text-xs md:text-sm text-gray-700 font-semibold mb-3 md:mb-4">Participants ({players?.length || 0})</div>
-            {players?.length === 0 && <div className="text-gray-500 text-center py-8 text-sm">👥 No players in room</div>}
+            {players?.length === 0 && <div className="text-gray-500 text-center py-8 text-sm">No players in room</div>}
             {players?.map((player) => {
               const isCurrentUser = currentUser?.id === player.id;
               return (
@@ -348,7 +386,7 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
                       <button onClick={() => openProfile(player.id)} className="text-left truncate font-semibold text-gray-900 hover:underline">
                         {player.username}
                       </button>
-                      {player.id === room.admin?.id && "👑"}
+                      {player.id === room.admin?.id && "Admin"}
                       {isCurrentUser && " (You)"}
                     </p>
                     <p className="text-xs text-gray-600 mt-1">{player.role ?? "Participant"}</p>
@@ -356,7 +394,7 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
                     {/* badges under name (up to 3) */}
                     {player.badges && player.badges.length > 0 && (
                       <div className="flex items-center gap-2 mt-2">
-                        {player.badges.slice(0,3).map((b, i) => {
+                        {player.badges.slice(0, 3).map((b, i) => {
                           const cols = getBadgeColors(b.rank);
                           return (
                             <div key={i} className="px-2 py-1 rounded-lg text-xs flex items-center gap-2 border border-gray-200 bg-gray-50">
@@ -376,7 +414,7 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
                       onClick={() => handleLeavePlayer(player.id)}
                       title={isCurrentUser ? "Leave room" : "Kick player"}
                     >
-                      {isCurrentUser ? "🚪 Leave" : "👢 Kick"}
+                      {isCurrentUser ? "Leave" : "Kick"}
                     </button>
                   )}
                 </div>
@@ -408,13 +446,13 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
                 </div>
                 {!isProblemActive && room.problemStartTime && (
                   <div className="text-xs md:text-sm text-amber-700 font-bold bg-amber-100 px-3 md:px-4 py-2 md:py-3 rounded-lg border border-amber-300 flex items-center gap-2">
-                    <span>⏹️</span> Problem ended. Waiting for next round.
+                    Problem ended. Waiting for next round.
                   </div>
                 )}
               </>
             ) : (
               <div className="text-center py-8 md:py-12">
-                <p className="text-gray-500 text-xs md:text-sm">📋 No active problem yet</p>
+                <p className="text-gray-500 text-xs md:text-sm">No active problem yet</p>
               </div>
             )}
           </div>
@@ -423,7 +461,7 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
         {activeTab === "solutions" && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-black mb-3">💡 Top Solutions</p>
+              <p className="text-sm font-semibold text-black mb-3">Top Solutions</p>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {

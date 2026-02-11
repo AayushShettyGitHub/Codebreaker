@@ -10,15 +10,19 @@ import com.example.codebreaker.model.Submission;
 import com.example.codebreaker.repo.ProblemRepository;
 import com.example.codebreaker.repo.RoomPlayerRepository;
 import com.example.codebreaker.repo.SubmissionRepository;
+import com.example.codebreaker.services.BadgeService;
 import com.example.codebreaker.services.ScoringService;
 import com.example.codebreaker.services.SubmissionService;
 import com.example.codebreaker.util.DockerExecutor;
 import com.example.codebreaker.websockets.RoomSocketController;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,8 +34,8 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final SubmissionRepository submissionRepo;
     private final ScoringService scoringService;
     private final RoomSocketController roomSocketController;
-    private final com.example.codebreaker.services.BadgeService badgeService;
-    private int speedsterSeconds = 120;
+    private final BadgeService badgeService;
+    private final int speedsterSeconds;
 
     public SubmissionServiceImpl(
             ProblemRepository problemRepo,
@@ -39,8 +43,8 @@ public class SubmissionServiceImpl implements SubmissionService {
             SubmissionRepository submissionRepo,
             ScoringService scoringService,
             RoomSocketController roomSocketController,
-            com.example.codebreaker.services.BadgeService badgeService,
-            @org.springframework.beans.factory.annotation.Value("${rooms.badges.speedsterSeconds:120}") int speedsterSeconds
+            BadgeService badgeService,
+            @Value("${rooms.badges.speedsterSeconds:120}") int speedsterSeconds
     ) {
         this.problemRepo = problemRepo;
         this.roomPlayerRepo = roomPlayerRepo;
@@ -89,7 +93,11 @@ public class SubmissionServiceImpl implements SubmissionService {
             throw new RuntimeException("Problem has no test cases");
         }
 
-        roomSocketController.submissionReceived(room.getId(), request.getPlayerId(), roomPlayer.getPlayer().getUsername());
+        roomSocketController.submissionReceived(
+                room.getId(),
+                request.getPlayerId(),
+                roomPlayer.getPlayer().getUsername()
+        );
 
         List<TestCaseResult> results = new ArrayList<>();
         boolean allPassed = true;
@@ -115,8 +123,12 @@ public class SubmissionServiceImpl implements SubmissionService {
                     .actualOutput(exec.success ? exec.output : "")
                     .build());
 
-            if (!passed) allPassed = false;
+            if (!passed) {
+                allPassed = false;
+            }
         }
+
+        Instant now = Instant.now();
 
         Submission submission = Submission.builder()
                 .room(room)
@@ -125,6 +137,7 @@ public class SubmissionServiceImpl implements SubmissionService {
                 .code(request.getCode())
                 .language(request.getLanguage())
                 .passed(allPassed)
+                .submittedAt(now)
                 .build();
 
         submissionRepo.save(submission);
@@ -132,31 +145,39 @@ public class SubmissionServiceImpl implements SubmissionService {
         int scoreGained = 0;
 
         if (allPassed) {
+
             int prevCorrect = room.getCorrectAnswerCount();
             scoreGained = scoringService.applyScore(submission);
 
             roomPlayer.setHasAnsweredCorrectly(true);
-            roomPlayer.setCorrectAnswerTimestamp(System.currentTimeMillis());
-            
-            // Update player stats
-            com.example.codebreaker.model.Player player = roomPlayer.getPlayer();
-            player.setTotalCorrectSubmissions((player.getTotalCorrectSubmissions() == null ? 0 : player.getTotalCorrectSubmissions()) + 1);
-            player.setTotalSubmissions((player.getTotalSubmissions() == null ? 0 : player.getTotalSubmissions()) + 1);
-            player.setTotalProblemsSolved((player.getTotalProblemsSolved() == null ? 0 : player.getTotalProblemsSolved()) + 1);
-            
+            roomPlayer.setCorrectAnswerTimestamp(now);
+
+            // Player stats
+            var player = roomPlayer.getPlayer();
+            player.setTotalCorrectSubmissions(
+                    (player.getTotalCorrectSubmissions() == null ? 0 : player.getTotalCorrectSubmissions()) + 1
+            );
+            player.setTotalSubmissions(
+                    (player.getTotalSubmissions() == null ? 0 : player.getTotalSubmissions()) + 1
+            );
+            player.setTotalProblemsSolved(
+                    (player.getTotalProblemsSolved() == null ? 0 : player.getTotalProblemsSolved()) + 1
+            );
+
             roomPlayerRepo.save(roomPlayer);
-            
+
             roomSocketController.scoreUpdated(
                     room.getId(),
                     request.getPlayerId(),
-                    roomPlayer.getPlayer().getUsername(),
+                    player.getUsername(),
                     roomPlayer.getScore(),
                     true
             );
 
+            // FIRST BLOOD
             if (prevCorrect == 0 && !room.isPrivateRoom()) {
                 badgeService.awardBadge(
-                        roomPlayer.getPlayer(),
+                        player,
                         "FIRST_BLOOD",
                         "First Blood",
                         "First correct submission in the room",
@@ -164,11 +185,16 @@ public class SubmissionServiceImpl implements SubmissionService {
                 );
             }
 
-            java.time.Duration dur = java.time.Duration.between(room.getProblemStartTime(), submission.getSubmittedAt());
-            long seconds = dur.getSeconds();
-            if (!room.isPrivateRoom() && seconds <= speedsterSeconds) {
+            // SPEEDSTER
+            long elapsedSeconds = 0;
+            Instant problemStart = room.getProblemStartTime();
+            if (problemStart != null) {
+                elapsedSeconds = Duration.between(problemStart, now).getSeconds();
+            }
+
+            if (!room.isPrivateRoom() && elapsedSeconds <= speedsterSeconds) {
                 badgeService.awardBadge(
-                        roomPlayer.getPlayer(),
+                        player,
                         "SPEEDSTER",
                         "Speedster",
                         "Solved a problem under " + speedsterSeconds + " seconds",
@@ -176,8 +202,9 @@ public class SubmissionServiceImpl implements SubmissionService {
                 );
             }
 
-            // Check for Solver badges (public rooms only)
+            // SOLVER + ACCURACY badges (public rooms only)
             if (!room.isPrivateRoom()) {
+
                 if (player.getTotalProblemsSolved() == 10) {
                     badgeService.awardBadge(
                             player,
@@ -198,9 +225,11 @@ public class SubmissionServiceImpl implements SubmissionService {
                     );
                 }
 
-                // Check for Accuracy 90% badge
                 if (player.getTotalSubmissions() >= 10) {
-                    double accuracy = (double) player.getTotalCorrectSubmissions() / player.getTotalSubmissions();
+                    double accuracy =
+                            (double) player.getTotalCorrectSubmissions() /
+                            player.getTotalSubmissions();
+
                     if (accuracy >= 0.9) {
                         badgeService.awardBadge(
                                 player,
@@ -212,10 +241,13 @@ public class SubmissionServiceImpl implements SubmissionService {
                     }
                 }
             }
+
         } else {
-            // Update total submissions on incorrect submission too
-            com.example.codebreaker.model.Player player = roomPlayer.getPlayer();
-            player.setTotalSubmissions((player.getTotalSubmissions() == null ? 0 : player.getTotalSubmissions()) + 1);
+            // Incorrect submission → still count total submissions
+            var player = roomPlayer.getPlayer();
+            player.setTotalSubmissions(
+                    (player.getTotalSubmissions() == null ? 0 : player.getTotalSubmissions()) + 1
+            );
             roomPlayerRepo.save(roomPlayer);
         }
 
@@ -229,7 +261,11 @@ public class SubmissionServiceImpl implements SubmissionService {
                 .correctAnswerCount(room.getCorrectAnswerCount())
                 .build();
 
-        roomSocketController.submissionResult(room.getId(), result, roomPlayer.getPlayer().getUsername());
+        roomSocketController.submissionResult(
+                room.getId(),
+                result,
+                roomPlayer.getPlayer().getUsername()
+        );
 
         return result;
     }

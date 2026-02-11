@@ -27,14 +27,14 @@ export default function CreateRoom({ playerId, onCreate }) {
       });
       toastSuccess("Room created successfully!");
       const roomData = res.data;
-      console.log("✅ Successfully created room:", roomData);
+      console.log("Successfully created room:", roomData);
       onCreate(roomData);
       
       if (roomData?.id) {
         console.log("📥 Fetching players for room:", roomData.id);
         setTimeout(() => {
           fetchPlayers(roomData.id);
-          console.log("✅ Players fetch triggered for room:", roomData.id);
+          console.log("Players fetch triggered for room:", roomData.id);
         }, 100);
       }
     } catch (err) {

@@ -4,6 +4,7 @@ import { useRoom } from "../../context/RoomContext";
 import websocketService from "../../services/websocketService";
 import Submit from "./Submit";
 import { toastError, toastSuccess } from "../../utils/toast";
+import { parseAsUTC } from "../../utils/dateUtils";
 
 export default function AdminRoom({ adminId, playerId, onDelete }) {
   const { myRoom, players, setMyRoom } = useRoom();
@@ -25,9 +26,8 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
 
   const isProblemActive = useMemo(() => {
     if (!myRoom?.problemStartTime || !myRoom?.problemDuration) return false;
-    const end =
-      new Date(myRoom.problemStartTime).getTime() +
-      myRoom.problemDuration * 1000;
+    const startEpoch = parseAsUTC(myRoom.problemStartTime);
+    const end = startEpoch + myRoom.problemDuration * 1000;
     return Date.now() < end;
   }, [myRoom?.problemStartTime, myRoom?.problemDuration]);
 
@@ -41,7 +41,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
           setMyRoom(res.data);
           setRoomCode(res.data.joinCode || res.data.id);
         }
-      } catch {}
+      } catch { }
     };
     fetchRoom();
     const interval = setInterval(fetchRoom, isProblemActive ? 5000 : 30000);
@@ -65,7 +65,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
       }
     };
     fetchTopSubmissions();
-    
+
     if (websocketService.isReady()) {
       const handleSubmissionResult = (message) => {
         if (message.type === "SUBMISSION_RESULT") {
@@ -73,9 +73,9 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
           fetchTopSubmissions();
         }
       };
-      
+
       websocketService.subscribe(`/topic/room/${roomId}`, handleSubmissionResult);
-      
+
       return () => {
         websocketService.unsubscribe(`/topic/room/${roomId}`);
       };
@@ -90,12 +90,12 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
 
   useEffect(() => {
     if (!isProblemActive) {
+      console.log("No active problem, timer stopped");
       setTimeLeft(0);
       return;
     }
-    const endTime =
-      new Date(myRoom.problemStartTime).getTime() +
-      myRoom.problemDuration * 1000;
+    const startEpoch = parseAsUTC(myRoom.problemStartTime);
+    const endTime = startEpoch + myRoom.problemDuration * 1000;
     const interval = setInterval(() => {
       const diff = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
       setTimeLeft(diff);
@@ -133,7 +133,14 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
 
       await api.post(`/rooms/${roomId}/problem`, problemRes.data);
 
-      await api.post(`/problems/rooms/${roomId}/start-problem`, { duration: timerDuration });
+      // Refetch room to ensure problem is persisted before starting
+      const refreshedRoom = await api.get(`/rooms/${roomId}`);
+
+      const startRes = await api.post(`/problems/rooms/${roomId}/start-problem`, { duration: timerDuration });
+
+      // Fetch the fresh room data immediately to ensure timer is properly set
+      const roomRes = await api.get(`/rooms/${roomId}`);
+      setMyRoom(roomRes.data);
 
       await api.post(`/rooms/${roomId}/maxCorrectAnswers`, { maxCorrectAnswers });
 
@@ -141,13 +148,14 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
       setDescription("");
       setDifficulty("EASY");
       setTestCases([{ input: "", output: "" }]);
-      setMessage("✅ New round started successfully!");
+      setMessage("New round started successfully!");
       toastSuccess("New round started!");
       setTimeout(() => setMessage(""), 3000);
     } catch (err) {
-      console.error(err);
+      console.error("Error during problem posting:", err);
       const serverMsg = err?.response?.data?.error || err?.response?.data?.message || err?.message || "Failed to post problem";
-      setMessage(`❌ ${serverMsg}`);
+      console.error("Server error details:", serverMsg);
+      setMessage(`${serverMsg}`);
       toastError(serverMsg);
     } finally {
       setLoading(false);
@@ -159,10 +167,10 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
     setLoading(true);
     try {
       await api.post(`/rooms/${roomId}/maxCorrectAnswers`, { maxCorrectAnswers });
-      setMessage("✅ Max answers updated");
+      setMessage("Max answers updated");
       setTimeout(() => setMessage(""), 3000);
     } catch {
-      setMessage("❌ Failed to update");
+      setMessage("Failed to update");
     } finally {
       setLoading(false);
     }
@@ -215,20 +223,19 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
 
       <div className="flex gap-2 border-b border-gray-200 bg-gray-50 px-6 py-3 overflow-x-auto">
         {[
-          { key: "problem", label: "📝 Post Problem" },
-          { key: "submit", label: "💻 Submit Code" },
-          { key: "settings", label: "⚙️ Settings" },
-          { key: "leaderboard", label: "🏆 Leaderboard" },
-          { key: "solutions", label: "💡 Top Solutions" }
+          { key: "problem", label: "Post Problem" },
+          { key: "submit", label: "Submit Code" },
+          { key: "settings", label: "Settings" },
+          { key: "leaderboard", label: "Leaderboard" },
+          { key: "solutions", label: "Top Solutions" }
         ].map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 font-medium text-sm whitespace-nowrap transition-all rounded-xl ${
-              activeTab === tab.key 
-                ? "bg-gray-900 text-white shadow-lg" 
-                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-            }`}
+            className={`px-4 py-2 font-medium text-sm whitespace-nowrap transition-all rounded-xl ${activeTab === tab.key
+              ? "bg-gray-900 text-white shadow-lg"
+              : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              }`}
           >
             {tab.label}
           </button>
@@ -350,7 +357,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
                 onClick={handlePost}
                 disabled={loading}
               >
-                {loading ? "⏳ Starting..." : "🚀 Start New Round"}
+                {loading ? "Starting..." : "Start New Round"}
               </button>
             </div>
           </div>
@@ -366,7 +373,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
               />
             ) : (
               <div className="text-center py-12">
-                <p className="text-gray-500 text-sm">⏹️ No active problem. Post one to start!</p>
+                <p className="text-gray-500 text-sm">No active problem. Post one to start!</p>
               </div>
             )}
           </div>
@@ -376,10 +383,10 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
           <div className="space-y-6 max-w-2xl">
             <div className="bg-blue-50 border-2 border-blue-200 rounded-3xl p-8">
               <h3 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-                <span>📌</span> Share Room
+                <span></span> Share Room
               </h3>
               <p className="text-sm text-gray-700 mb-6">Share this code with players to join your competition</p>
-              
+
               <div className="bg-white border border-blue-300 rounded-2xl p-6 mb-6">
                 <p className="text-xs text-gray-600 font-semibold uppercase tracking-wider mb-3">Room Join Code</p>
                 <div className="flex items-center gap-3">
@@ -388,19 +395,18 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
                   </div>
                   <button
                     onClick={copyRoomCode}
-                    className={`px-6 py-4 rounded-xl font-bold text-sm transition-all transform hover:scale-110 ${
-                      copied
-                        ? "bg-green-100 text-green-700 border-2 border-green-300"
-                        : "bg-gray-900 text-white border-2 border-gray-900 hover:bg-gray-800"
-                    }`}
+                    className={`px-6 py-4 rounded-xl font-bold text-sm transition-all transform hover:scale-110 ${copied
+                      ? "bg-green-100 text-green-700 border-2 border-green-300"
+                      : "bg-gray-900 text-white border-2 border-gray-900 hover:bg-gray-800"
+                      }`}
                   >
-                    {copied ? "✓ Copied!" : "📋 Copy"}
+                    {copied ? "✓ Copied!" : "Copy"}
                   </button>
                 </div>
               </div>
 
               <div className="bg-gray-50 border border-gray-300 rounded-xl p-4 text-sm text-gray-700">
-                <p className="font-semibold mb-2">💡 How to share:</p>
+                <p className="font-semibold mb-2">How to share:</p>
                 <ul className="space-y-1 text-xs text-gray-600">
                   <li>• Copy the code above</li>
                   <li>• Share it with your players</li>
@@ -411,7 +417,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
 
             <div className="bg-gray-50 border border-gray-300 rounded-2xl p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <span>⏱️</span> Problem Timer
+                <span></span> Problem Timer
               </h3>
               {isProblemActive ? (
                 <div className="text-center">
@@ -422,7 +428,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
                   <p className="text-sm text-gray-700">Problem is active</p>
                 </div>
               ) : (
-                <p className="text-center text-red-600 font-semibold py-6">⏹️ No active problem</p>
+                <p className="text-center text-red-600 font-semibold py-6">No active problem</p>
               )}
             </div>
 
@@ -432,7 +438,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
                 onClick={handleDelete}
                 disabled={loading}
               >
-                🗑️ Delete Room
+                Delete Room
               </button>
             </div>
           </div>
@@ -469,8 +475,8 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
                         {idx + 1}
                       </div>
                       <div className="flex-1">
-                        <p className="text-gray-900 font-semibold flex items-center gap-2">{player.username} {player.hasAnsweredCorrectly && "✅"}</p>
-                        <p className="text-xs text-gray-600">{player.id === myRoom.admin?.id ? "👑 Admin" : "Participant"}</p>
+                        <p className="text-gray-900 font-semibold flex items-center gap-2">{player.username}</p>
+                        <p className="text-xs text-gray-600">{player.id === myRoom.admin?.id ? "Admin" : "Participant"}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold text-blue-600">{player.score ?? 0}</p>
@@ -481,7 +487,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
               </div>
             ) : (
               <div className="text-center py-12">
-                <p className="text-gray-600 text-sm">👥 No players yet</p>
+                <p className="text-gray-600 text-sm">No players yet</p>
               </div>
             )}
           </div>
@@ -493,7 +499,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
               <>
                 <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-sm font-semibold text-gray-900">
-                    {topSubmissions?.length > 0 ? `📊 Top ${topSubmissions.length} Submissions` : "📊 No submissions yet"}
+                    {topSubmissions?.length > 0 ? `Top ${topSubmissions.length} Submissions` : "No submissions yet"}
                   </p>
                   {topSubmissions?.length > 0 && myRoom?.currentProblem && (
                     <p className="text-xs text-gray-700 mt-1">Problem: {myRoom.currentProblem.title}</p>
@@ -501,36 +507,36 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
                 </div>
                 {topSubmissions?.length > 0 ? (
                   <div className="space-y-4">
-                {topSubmissions.map((sub, idx) => (
-                  <div key={sub.id} className="border border-gray-300 rounded-2xl overflow-hidden bg-white hover:border-blue-500 transition-all hover:shadow-lg">
-                    <div className={`px-5 py-4 border-b border-gray-300 ${sub.passed ? "bg-green-50" : "bg-red-50"}`}>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-900 font-bold text-white text-sm">
-                            {idx + 1}
-                          </div>
-                          <div>
-                            <p className="text-gray-900 font-bold">{sub.player?.username || "Unknown"}</p>
-                            <p className="text-xs text-gray-700">{sub.language?.toUpperCase() || "N/A"} • {new Date(sub.submittedAt).toLocaleString()}</p>
+                    {topSubmissions.map((sub, idx) => (
+                      <div key={sub.id} className="border border-gray-300 rounded-2xl overflow-hidden bg-white hover:border-blue-500 transition-all hover:shadow-lg">
+                        <div className={`px-5 py-4 border-b border-gray-300 ${sub.passed ? "bg-green-50" : "bg-red-50"}`}>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-900 font-bold text-white text-sm">
+                                {idx + 1}
+                              </div>
+                              <div>
+                                <p className="text-gray-900 font-bold">{sub.player?.username || "Unknown"}</p>
+                                <p className="text-xs text-gray-700">{sub.language?.toUpperCase() || "N/A"} • {new Date(sub.submittedAt).toLocaleString()}</p>
+                              </div>
+                            </div>
+                            <span className={`text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 ${sub.passed ? "bg-green-100 text-green-700 border border-green-300" : "bg-red-100 text-red-700 border border-red-300"}`}>
+                              {sub.passed ? "✓ PASSED" : "✗ FAILED"}
+                            </span>
                           </div>
                         </div>
-                        <span className={`text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 ${sub.passed ? "bg-green-100 text-green-700 border border-green-300" : "bg-red-100 text-red-700 border border-red-300"}`}>
-                          {sub.passed ? "✓ PASSED" : "✗ FAILED"}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="p-5">
-                      <div className="bg-gray-50 rounded-xl border border-gray-300 overflow-hidden">
-                        <div className="flex items-center justify-between px-4 py-2 bg-gray-100 border-b border-gray-300">
-                          <span className="text-xs font-semibold text-gray-700">CODE</span>
-                          <span className="text-xs text-gray-700">{sub.code?.length || 0} characters</span>
+                        <div className="p-5">
+                          <div className="bg-gray-50 rounded-xl border border-gray-300 overflow-hidden">
+                            <div className="flex items-center justify-between px-4 py-2 bg-gray-100 border-b border-gray-300">
+                              <span className="text-xs font-semibold text-gray-700">CODE</span>
+                              <span className="text-xs text-gray-700">{sub.code?.length || 0} characters</span>
+                            </div>
+                            <pre className="p-4 text-gray-900 font-mono text-sm whitespace-pre-wrap break-words leading-relaxed max-h-72 overflow-auto">{sub.code}</pre>
+                          </div>
                         </div>
-                        <pre className="p-4 text-gray-900 font-mono text-sm whitespace-pre-wrap break-words leading-relaxed max-h-72 overflow-auto">{sub.code}</pre>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
                 ) : (
                   <div className="text-center py-16">
                     <p className="text-gray-600 text-sm font-medium">💤 Waiting for submissions...</p>
@@ -540,7 +546,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
               </>
             ) : (
               <div className="text-center py-12">
-                <p className="text-gray-600 text-sm">⏱️ Solutions will be revealed after timer ends</p>
+                <p className="text-gray-600 text-sm">Solutions will be revealed after timer ends</p>
               </div>
             )}
           </div>

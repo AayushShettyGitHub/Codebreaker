@@ -3,8 +3,7 @@ package com.example.codebreaker.model;
 import jakarta.persistence.*;
 import lombok.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Data
@@ -32,8 +31,9 @@ public class RoomPlayer {
     @Builder.Default
     private boolean hasAnsweredCorrectly = false;
 
-    @Builder.Default
-    private Long correctAnswerTimestamp = null;
 
-    private LocalDateTime lastCorrectSubmissionTime;
+
+    private Instant correctAnswerTimestamp;
+
+    private Instant lastCorrectSubmissionTime;
 }

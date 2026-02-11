@@ -22,14 +22,14 @@ export default function JoinRoom({ playerId, onJoin }) {
       });
 
       const roomData = res.data;
-      console.log("✅ Successfully joined room:", roomData);
+      console.log("Successfully joined room:", roomData);
       onJoin(roomData);
       
       if (roomData?.id) {
         console.log("📥 Fetching players for room:", roomData.id);
         setTimeout(() => {
           fetchPlayers(roomData.id);
-          console.log("✅ Players fetch triggered for room:", roomData.id);
+          console.log("Players fetch triggered for room:", roomData.id);
         }, 100);
       }
     } catch (err) {

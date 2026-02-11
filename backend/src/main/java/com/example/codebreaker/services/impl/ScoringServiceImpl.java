@@ -1,13 +1,13 @@
 package com.example.codebreaker.services.impl;
 
-import com.example.codebreaker.model.Submission;
 import com.example.codebreaker.model.Room;
 import com.example.codebreaker.model.RoomPlayer;
+import com.example.codebreaker.model.Submission;
 import com.example.codebreaker.services.ScoringService;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Service
 public class ScoringServiceImpl implements ScoringService {
@@ -22,13 +22,13 @@ public class ScoringServiceImpl implements ScoringService {
         Room room = submission.getRoom();
         RoomPlayer player = submission.getPlayer();
 
-      
+        // Apply penalty if submission failed
         if (!submission.isPassed()) {
             player.setScore(player.getScore() + WRONG_PENALTY);
             return WRONG_PENALTY;
         }
 
-        
+        // Calculate bonus based on first solve time
         int bonus = calculateFirstSolveBonus(
                 room.getProblemStartTime(),
                 submission.getSubmittedAt()
@@ -44,14 +44,13 @@ public class ScoringServiceImpl implements ScoringService {
         return gainedScore;
     }
 
-    private int calculateFirstSolveBonus(
-            LocalDateTime problemStart,
-            LocalDateTime submittedAt
-    ) {
-        long minutesElapsed =
-                Duration.between(problemStart, submittedAt).toMinutes();
+    private int calculateFirstSolveBonus(java.time.Instant problemStart, java.time.Instant submittedAt) {
+        if (problemStart == null || submittedAt == null) {
+            return 0;
+        }
+
+        long minutesElapsed = Duration.between(problemStart, submittedAt).toMinutes();
 
         return Math.max(0, FIRST_SOLVE_BONUS - (int) minutesElapsed);
     }
 }
-    
