@@ -29,7 +29,6 @@ public class BadgeServiceImpl implements BadgeService {
     public PlayerBadge awardBadge(Player player, String badgeKey, String badgeName, String description, BadgeCategory category) {
         Badge badge = getOrCreateBadge(badgeKey, badgeName, description, category);
 
-        // if player already has this badge, increment counter and update rank
         PlayerBadge existing = playerBadgeRepo.findByPlayer(player).stream()
                 .filter(pb -> pb.getBadge().getKey().equals(badgeKey))
                 .findFirst().orElse(null);
@@ -39,7 +38,6 @@ public class BadgeServiceImpl implements BadgeService {
             existing.setRank(computeRank(existing.getCount()));
             playerBadgeRepo.save(existing);
 
-            // notify clients about badge count update
             try {
                 java.util.Map<String, Object> payload = new java.util.HashMap<>();
                 payload.put("type", "BADGE_UPDATED");
@@ -67,8 +65,6 @@ public class BadgeServiceImpl implements BadgeService {
                 .build();
 
         playerBadgeRepo.save(pb);
-
-        // notify clients about awarded badge
         try {
             java.util.Map<String, Object> payload = new java.util.HashMap<>();
             payload.put("type", "BADGE_AWARDED");
@@ -99,12 +95,12 @@ public class BadgeServiceImpl implements BadgeService {
     }
 
     public Integer getNextThreshold(Integer count) {
-        if (count == null || count < 1) return 1; // to get BRONZE
-        if (count < 3) return 3; // SILVER
-        if (count < 5) return 5; // GOLD
-        if (count < 10) return 10; // DIAMOND
-        if (count < 20) return 20; // PLATINUM
-        return count + 1; // continue counting beyond PLATINUM
+        if (count == null || count < 1) return 1; 
+        if (count < 3) return 3; 
+        if (count < 5) return 5; 
+        if (count < 10) return 10; 
+        if (count < 20) return 20; 
+        return count + 1;
     }
 
     @Override

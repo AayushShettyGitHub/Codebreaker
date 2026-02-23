@@ -2,6 +2,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "../../config/client";
+import { User, Award, Clock, Star } from "lucide-react";
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -9,12 +10,12 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <main className="flex-1 flex items-center justify-center">
+      <main className="flex-1 flex items-center justify-center bg-[#0a0a0f]">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">Login Required</h2>
+          <h2 className="text-xl font-bold text-[#e8e6e3] mb-4">Login Required</h2>
           <button
             onClick={() => navigate("/auth")}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium"
+            className="px-6 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium text-sm transition-all"
           >
             Go to Login
           </button>
@@ -28,7 +29,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!user) return;
-    (async function(){
+    (async function () {
       try {
         const [badgesRes, meRes] = await Promise.all([
           api.get('/badges/me'),
@@ -59,98 +60,123 @@ export default function ProfilePage() {
   };
 
   return (
-    <main className="flex-1">
-      <div className="max-w-4xl mx-auto px-6 py-20">
-        <h1 className="text-4xl font-bold text-slate-900 mb-8">Profile</h1>
+    <main className="flex-1 bg-[#0a0a0f]">
+      <div className="max-w-6xl mx-auto px-6 py-10">
+        {}
+        <header className="mb-10">
+          <h1 className="text-3xl font-bold text-[#e8e6e3] mb-2">Profile</h1>
+          <p className="text-sm text-[#6b6560]">Your activity, statistics, and earned achievements.</p>
+        </header>
 
-        <div className="grid md:grid-cols-3 gap-8 mb-8">
-          <div className="md:col-span-1">
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-slate-200 text-center sticky top-24">
-              <div className="w-24 h-24 bg-blue-600 rounded-full mx-auto mb-6 flex items-center justify-center text-4xl font-bold text-white">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {}
+          <div className="lg:col-span-1">
+            <div className="rounded-xl border border-[#1e1215] bg-[#0f0d12] p-8 text-center sticky top-24">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-600 to-red-800 mx-auto mb-5 flex items-center justify-center text-3xl font-bold text-white">
                 {user.username?.[0]?.toUpperCase()}
               </div>
-              <h2 className="text-2xl font-bold text-slate-900">{user.username}</h2>
-              <p className="text-slate-600 mt-2">Competitive Programmer</p>
-              <div className="mt-6 pt-6 border-t border-slate-200 space-y-3 text-sm">
-                <div>
-                  <p className="text-slate-600">Member Since</p>
-                  <p className="font-semibold text-slate-900">January 2026</p>
+              <h2 className="text-lg font-bold text-[#e8e6e3]">{user.username}</h2>
+              <p className="text-xs text-[#6b6560] mt-1">Codebreaker</p>
+
+              <div className="mt-6 pt-6 border-t border-[#1e1215] space-y-4">
+                <div className="flex items-center gap-3 text-left">
+                  <Clock size={14} className="text-[#44403c]" />
+                  <div>
+                    <p className="text-xs text-[#44403c]">Joined</p>
+                    <p className="text-xs font-medium text-[#a8a29e]">Jan 2026</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-slate-600">Status</p>
-                  <p className="font-semibold text-green-600">Active</p>
+                <div className="flex items-center gap-3 text-left">
+                  <div className="w-3.5 h-3.5 flex items-center justify-center">
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-[#44403c]">Status</p>
+                    <p className="text-xs font-medium text-green-400">Active</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="md:col-span-2">
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-slate-200 mb-8">
-              <h3 className="text-2xl font-bold text-slate-900 mb-6">Statistics</h3>
-              <div className="grid grid-cols-2 gap-6">
+          {}
+          <div className="lg:col-span-3 space-y-6">
+            {}
+            <div className="rounded-xl border border-[#1e1215] bg-[#0f0d12] p-6">
+              <h3 className="text-sm font-semibold text-[#e8e6e3] mb-5">Statistics</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                  { label: "Problems Solved", value: "12" },
-                  { label: "Competitions", value: "5" },
-                  { label: "Current Rank", value: "#24" },
-                  { label: "Total Score", value: "2,450" },
+                  { label: "Solved", value: "12", icon: <Award size={16} className="text-red-400" /> },
+                  { label: "Participated", value: "5", icon: <User size={16} className="text-red-400" /> },
+                  { label: "Rank", value: "#24", icon: <Star size={16} className="text-red-400" /> },
+                  { label: "Score", value: "2450", icon: <Award size={16} className="text-red-400" /> },
                 ].map((stat, i) => (
-                  <div key={i} className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-                    <p className="text-sm text-slate-600 mb-2">{stat.label}</p>
-                    <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-slate-200 mb-6">
-              <h3 className="text-2xl font-bold text-slate-900 mb-6">Recent Activity</h3>
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-start gap-4 pb-4 border-b border-slate-200 last:border-0">
-                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-bold text-white">✓</div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-slate-900">Solved Problem #{i}</p>
-                      <p className="text-sm text-slate-600">Completed in competition</p>
-                      <p className="text-xs text-slate-500 mt-1">2 hours ago</p>
+                  <div key={i} className="p-4 rounded-lg bg-[#141118] border border-[#1e1215]">
+                    <div className="flex items-center gap-2 mb-2">
+                      {stat.icon}
+                      <p className="text-xs text-[#6b6560]">{stat.label}</p>
                     </div>
+                    <p className="text-2xl font-bold text-[#e8e6e3]">{stat.value}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-slate-200">
-              <h3 className="text-2xl font-bold text-slate-900 mb-6">Badges</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {badges.length === 0 && <p className="text-slate-600">No badges yet. Play public rooms to earn badges!</p>}
-                {badges.map((b) => {
-                  const rank = (b.rank || '').toUpperCase();
-                  const earned = !!b.earned;
-                  const getColors = (r) => {
-                    switch (r) {
-                      case 'GOLD': return { bg: 'bg-yellow-50', dot: 'bg-yellow-200', text: 'text-amber-900' };
-                      case 'DIAMOND': return { bg: 'bg-indigo-50', dot: 'bg-indigo-200', text: 'text-indigo-900' };
-                      case 'PLATINUM': return { bg: 'bg-slate-50', dot: 'bg-slate-200', text: 'text-slate-900' };
-                      case 'SILVER': return { bg: 'bg-slate-50', dot: 'bg-slate-200', text: 'text-slate-900' };
-                      case 'BRONZE': default: return { bg: 'bg-amber-50', dot: 'bg-amber-200', text: 'text-amber-900' };
-                    }
-                  };
-
-                  const cols = getColors(rank);
-
-                  return (
-                    <div key={b.key} className={`flex flex-col items-center p-3 border rounded-lg ${earned ? 'border-slate-100' : 'border-gray-200 bg-gray-50 opacity-80 filter grayscale'}`}>
-                      <div className={`w-12 h-12 rounded-full ${cols.dot} flex items-center justify-center font-bold ${cols.text} mb-2`}>🏅</div>
-                      <p className={`text-sm font-semibold ${cols.text}`}>{b.name} <span className="text-xs text-gray-500 ml-1">{b.rank}</span></p>
-                      <p className="text-xs text-gray-700 text-center">{b.description}</p>
-                      <div className="text-xs text-gray-600 mt-2">Progress: {b.progressPercent ?? 0}%</div>
-                      <div className="mt-2">
-                        <button disabled={!earned} onClick={() => toggleFeatured(b.key)} className={`text-xs px-3 py-1 rounded ${featured.includes(b.key) ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'} ${!earned ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                          {featured.includes(b.key) ? '★ Featured' : 'Feature'}
-                        </button>
+            {}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {}
+              <div className="rounded-xl border border-[#1e1215] bg-[#0f0d12] p-6">
+                <h3 className="text-sm font-semibold text-[#e8e6e3] mb-5">Recent Activity</h3>
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-start gap-4 pb-4 border-b border-[#1e1215] last:border-0 last:pb-0">
+                      <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-xs font-medium text-red-400 flex-shrink-0">
+                        {String(i).padStart(2, '0')}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#e8e6e3]">Solved Problem</p>
+                        <p className="text-xs text-[#6b6560] mt-0.5">Problem {i} completed</p>
+                        <p className="text-xs text-[#44403c] mt-1">{i}h ago</p>
                       </div>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
+              </div>
+
+              {}
+              <div className="rounded-xl border border-[#1e1215] bg-[#0f0d12] p-6">
+                <h3 className="text-sm font-semibold text-[#e8e6e3] mb-5">Achievements</h3>
+                <div className="space-y-3">
+                  {badges.length === 0 && (
+                    <div className="py-10 text-center rounded-lg border border-dashed border-[#1e1215] bg-[#141118]">
+                      <p className="text-xs text-[#44403c]">No achievements earned yet.</p>
+                    </div>
+                  )}
+                  {badges.map((b) => {
+                    const earned = !!b.earned;
+                    return (
+                      <div key={b.key} className={`flex items-center gap-4 p-3 rounded-lg border transition-all ${earned ? 'border-[#1e1215] bg-[#141118]' : 'border-[#1e1215]/50 bg-[#0a0a0f] opacity-40'}`}>
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm flex-shrink-0 ${earned ? 'bg-red-500/10 text-red-400' : 'bg-[#141118] text-[#44403c]'}`}>
+                          {featured.includes(b.key) ? '★' : '◈'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-[#e8e6e3] truncate">{b.name}</p>
+                          <p className="text-xs text-[#6b6560]">{b.rank}</p>
+                        </div>
+                        <button
+                          disabled={!earned}
+                          onClick={() => toggleFeatured(b.key)}
+                          className={`px-3 py-1 text-xs font-medium rounded-md border transition-all flex-shrink-0 ${featured.includes(b.key)
+                            ? 'bg-red-600 text-white border-red-600'
+                            : 'border-[#1e1215] text-[#6b6560] hover:border-red-500/30 hover:text-red-400'
+                            } ${!earned ? 'cursor-not-allowed opacity-0' : ''}`}
+                        >
+                          {featured.includes(b.key) ? 'Featured' : 'Feature'}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>

@@ -49,7 +49,7 @@ public class ProblemController {
 
         Integer duration = body.get("duration");
         
-        // Validation
+        
         if (duration == null || duration < 10) {
             return ResponseEntity.badRequest().body(Map.of(
                     "error", "Duration is required and must be at least 10 seconds"

@@ -25,33 +25,22 @@ const CodeEditor = ({ value, onChange, language = "python", disabled = false }) 
   const handleFullscreen = () => {
     const elem = containerRef.current;
     if (!isFullscreen) {
-      if (elem.requestFullscreen) {
-        elem.requestFullscreen();
-      } else if (elem.webkitRequestFullscreen) {
-        elem.webkitRequestFullscreen();
-      } else if (elem.msRequestFullscreen) {
-        elem.msRequestFullscreen();
-      }
+      if (elem.requestFullscreen) elem.requestFullscreen();
+      else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+      else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
       setIsFullscreen(true);
     } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
-      }
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if (document.msExitFullscreen) document.msExitFullscreen();
       setIsFullscreen(false);
     }
   };
 
   React.useEffect(() => {
     const handleFullscreenChange = () => {
-      if (!document.fullscreenElement && isFullscreen) {
-        setIsFullscreen(false);
-      }
+      if (!document.fullscreenElement && isFullscreen) setIsFullscreen(false);
     };
-
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, [isFullscreen]);
@@ -59,7 +48,7 @@ const CodeEditor = ({ value, onChange, language = "python", disabled = false }) 
   const editorOptions = {
     minimap: { enabled: true },
     fontSize: 14,
-    fontFamily: "'Fira Code', 'Jetbrains Mono', 'Courier New', monospace",
+    fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
     formatOnPaste: true,
     formatOnType: true,
     tabSize: 4,
@@ -86,35 +75,33 @@ const CodeEditor = ({ value, onChange, language = "python", disabled = false }) 
   return (
     <div
       ref={containerRef}
-      className={`relative w-full transition-all duration-300 rounded-lg overflow-hidden shadow-lg border border-gray-300 ${
-        isFullscreen ? "fixed inset-0 z-50 m-0 rounded-none" : "h-full min-h-[500px]"
-      }`}
-      style={{
-        backgroundColor: "#ffffff",
-      }}
+      className={`relative w-full transition-all duration-300 overflow-hidden ${isFullscreen ? "fixed inset-0 z-50 m-0" : "h-full min-h-[500px]"}`}
+      style={{ backgroundColor: "#0a0a0f" }}
     >
-      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between bg-gradient-to-b from-gray-100 to-gray-50 px-4 py-1.5 border-b border-gray-300 backdrop-blur-md">
-        <div className="flex items-center gap-2">
-          <span className="px-2.5 py-0.5 bg-gray-900 text-white text-xs font-bold rounded shadow-md">
+      {}
+      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between bg-[#141118] px-5 py-2.5 border-b border-[#1e1215]">
+        <div className="flex items-center gap-3">
+          <div className="flex gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-500/60"></div>
+            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/40"></div>
+            <div className="w-2.5 h-2.5 rounded-full bg-green-500/40"></div>
+          </div>
+          <span className="text-xs text-[#6b6560] font-medium ml-1">
             {getMonacoLanguage().toUpperCase()}
           </span>
           {disabled && (
-            <span className="px-2 py-0.5 bg-yellow-600/40 text-yellow-200 text-xs rounded font-semibold">
-              Read-only
+            <span className="px-2 py-0.5 rounded-md bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium">
+              Read Only
             </span>
           )}
         </div>
 
         <button
           onClick={handleFullscreen}
-          className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-700 hover:text-gray-900"
-          title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          className="p-1.5 rounded-md hover:bg-[#1a1520] text-[#6b6560] hover:text-[#e8e6e3] transition-all"
+          title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
         >
-          {isFullscreen ? (
-            <Minimize2 size={18} />
-          ) : (
-            <Maximize2 size={18} />
-          )}
+          {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
         </button>
       </div>
 
@@ -122,7 +109,7 @@ const CodeEditor = ({ value, onChange, language = "python", disabled = false }) 
         className="w-full h-full"
         style={{
           minHeight: isFullscreen ? "100vh" : "500px",
-          paddingTop: "20px",
+          paddingTop: "40px",
         }}
       >
         <Editor
@@ -131,14 +118,17 @@ const CodeEditor = ({ value, onChange, language = "python", disabled = false }) 
           language={getMonacoLanguage()}
           value={value}
           onChange={(val) => onChange(val || "")}
-          theme="vs-light"
+          theme="vs-dark"
           options={editorOptions}
-          loading={<div className="flex items-center justify-center h-full text-gray-500">Loading editor...</div>}
+          loading={
+            <div className="flex items-center justify-center h-full text-[#44403c] text-xs font-medium animate-pulse">
+              Loading Editor...
+            </div>
+          }
         />
       </div>
     </div>
   );
 }
-;
 
 export default CodeEditor;

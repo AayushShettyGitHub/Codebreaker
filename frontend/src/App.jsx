@@ -30,9 +30,9 @@ export default function App() {
             pauseOnFocusLoss
             draggable
             pauseOnHover
-            theme="light"
+            theme="dark"
           />
-          <div className="min-h-screen flex flex-col bg-slate-50">
+          <div className="min-h-screen flex flex-col bg-[#0a0a0f]">
             <AppContent />
           </div>
         </BrowserRouter>
@@ -43,7 +43,7 @@ export default function App() {
 
 function AppContent() {
   const { user } = useAuth();
-  
+
   return (
     <>
       {user && <Navbar user={user} />}
@@ -52,7 +52,7 @@ function AppContent() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/about" element={<AboutPage />} />
-          <Route path="/public-rooms" element={
+          <Route path="/rooms" element={
             <ProtectedRoute>
               <PublicRoomsPage />
             </ProtectedRoute>

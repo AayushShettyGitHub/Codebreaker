@@ -12,7 +12,7 @@ public interface BadgeService {
     List<PlayerBadge> getBadgesForPlayer(Player player);
     Badge getOrCreateBadge(String key, String name, String description, com.example.codebreaker.model.BadgeCategory category);
 
-    // helper methods for rank/threshold computation used by controllers
+    
     String computeRank(Integer count);
     Integer getNextThreshold(Integer count);
 } 

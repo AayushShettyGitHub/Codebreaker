@@ -21,13 +21,13 @@ public class ScoringServiceImpl implements ScoringService {
         Room room = submission.getRoom();
         RoomPlayer player = submission.getPlayer();
 
-        // Apply penalty if submission failed
+        
         if (!submission.isPassed()) {
             player.setScore(player.getScore() + WRONG_PENALTY);
             return WRONG_PENALTY;
         }
 
-        // Calculate bonus based on first solve time
+        
         int bonus = calculateFirstSolveBonus(
                 room.getProblemStartTime(),
                 submission.getSubmittedAt()

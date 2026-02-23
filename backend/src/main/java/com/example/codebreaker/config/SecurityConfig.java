@@ -44,7 +44,7 @@ public class SecurityConfig {
 
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable()) // TODO: Implement proper CSRF for state-changing endpoints
+                .csrf(csrf -> csrf.disable()) 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/health").permitAll()

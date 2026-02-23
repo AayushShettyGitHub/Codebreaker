@@ -69,7 +69,7 @@ public class RoomController {
 
         List<Submission> submissions = submissionRepository.findByRoomOrderBySubmittedAtDesc(room);
 
-        // If no active problem or max answers reached → return everything
+        
         if (room.getProblemStartTime() == null || room.getCorrectAnswerCount() >= room.getMaxCorrectAnswers()) {
             return submissions;
         }
@@ -87,7 +87,7 @@ public class RoomController {
 
         for (Submission submission : submissions) {
 
-            // Check if submission belongs to current problem
+            
             boolean isCurrentProblem = currentProblemId != null &&
                     submission.getProblem() != null &&
                     currentProblemId.equals(submission.getProblem().getId());
@@ -104,7 +104,7 @@ public class RoomController {
                 }
             }
 
-            // Exclude submissions related to active problem
+            
             if (!isCurrentProblem && !duringActiveWindow) {
                 filtered.add(submission);
             }

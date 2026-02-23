@@ -21,6 +21,9 @@ public class TestCase {
     @Column(length = 2000)
     private String output;
 
+    @Builder.Default
+    private boolean hidden = false;
+
     @ManyToOne
     @JoinColumn(name = "problem_id")
     @JsonIgnore

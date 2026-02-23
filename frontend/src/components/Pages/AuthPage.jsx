@@ -31,48 +31,62 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer hover:opacity-80" onClick={() => navigate("/")}>
-            <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-blue-600">
+    <div className="min-h-screen bg-[#0a0a0f] flex flex-col relative overflow-hidden">
+      {}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-red-600/5 rounded-full blur-[120px] pointer-events-none"></div>
+
+      <div className="flex-1 flex items-center justify-center p-6 relative z-10">
+        <div className="w-full max-w-md animate-in">
+          {}
+          <div className="mb-10 text-center">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-red-600 to-red-800 mb-5 shadow-[0_0_30px_rgba(220,38,38,0.2)]">
               <span className="text-white text-xl font-bold">CB</span>
             </div>
-            <span className="text-xl font-bold text-slate-900">CodeBreaker</span>
+            <h2 className="text-2xl font-bold text-[#e8e6e3] mb-1">
+              Welcome back
+            </h2>
+            <p className="text-sm text-[#6b6560]">
+              Sign in to your account to continue
+            </p>
           </div>
-        </div>
-      </nav>
 
-      <div className="flex items-center justify-center px-6 py-20 min-h-[calc(100vh-64px)] bg-gradient-to-br from-slate-50 to-blue-50">
-        <div className="w-full max-w-md bg-white border border-slate-200 rounded-xl shadow-sm p-8">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-slate-900">Welcome to CodeBreaker</h2>
-            <p className="text-slate-600 text-sm mt-2">Join the competitive coding revolution</p>
+          {}
+          <div className="rounded-xl border border-[#1e1215] bg-[#0f0d12] p-8 shadow-2xl">
+            {}
+            <div className="flex gap-1 mb-8 p-1 bg-[#141118] rounded-lg">
+              <button
+                onClick={() => handleTabSwitch("login")}
+                className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all ${showLogin
+                    ? "bg-red-600 text-white shadow-sm"
+                    : "text-[#6b6560] hover:text-[#a8a29e]"
+                  }`}
+              >
+                Login
+              </button>
+              <button
+                onClick={() => handleTabSwitch("signup")}
+                className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all ${!showLogin
+                    ? "bg-red-600 text-white shadow-sm"
+                    : "text-[#6b6560] hover:text-[#a8a29e]"
+                  }`}
+              >
+                Register
+              </button>
+            </div>
+
+            <div className="animate-in" key={showLogin ? "login" : "signup"}>
+              {showLogin ? <Login /> : <Signup />}
+            </div>
           </div>
-          <div className="flex gap-2 mb-8 border-b border-slate-200">
-          <button
-            onClick={() => handleTabSwitch("login")}
-            className={`px-6 py-3 font-medium transition-colors border-b-2 ${
-              showLogin
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Sign In
-          </button>
-          <button
-            onClick={() => handleTabSwitch("signup")}
-            className={`px-6 py-3 font-medium transition-colors border-b-2 ${
-              !showLogin
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Sign Up
-          </button>
-        </div>
 
-          {showLogin ? <Login /> : <Signup />}
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => navigate("/")}
+              className="text-sm text-[#44403c] hover:text-red-400 transition-colors"
+            >
+              ← Back to Home
+            </button>
+          </div>
         </div>
       </div>
     </div>

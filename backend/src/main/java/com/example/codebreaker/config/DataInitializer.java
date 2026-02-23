@@ -19,116 +19,143 @@ import java.util.List;
 @Configuration
 public class DataInitializer {
 
+    private static final String JSON_FILE = "problems.json";
+    private static final int LIMIT = 500;
+
     @Bean
     CommandLineRunner initDatabase(ProblemLibraryRepository repository) {
         return args -> {
-            if (repository.count() == 0) {
-                System.out.println("Starting database seeding...");
-                ClassPathResource jsonResource = new ClassPathResource("problems.json");
+            ClassPathResource resource = new ClassPathResource(JSON_FILE);
+            if (!resource.exists()) return;
 
-                if (jsonResource.exists()) {
-                    seedFromJson(jsonResource, repository);
-                } else {
-                    System.err.println("problems.json not found in resources!");
-                }
+            long problemCount = repository.count();
+            long hiddenTestCount = repository.countHiddenTests();
+
+            if (problemCount == 0) {
+                System.out.println("Seeding problems (fresh database)...");
+                seedFromJson(resource, repository, true);
+            } else if (hiddenTestCount == 0) {
+                System.out.println("Problems exist but hidden tests missing. Fixing...");
+                seedFromJson(resource, repository, false);
+            } else {
+                System.out.println("Database already seeded. Skipping.");
             }
         };
     }
 
-    private void seedFromJson(ClassPathResource resource, ProblemLibraryRepository repository) {
+    private void seedFromJson(ClassPathResource resource,
+                              ProblemLibraryRepository repository,
+                              boolean fullSeed) {
+
         ObjectMapper mapper = new ObjectMapper();
         int count = 0;
-        int limit = 200; 
 
         try (InputStream is = resource.getInputStream();
              JsonParser parser = mapper.getFactory().createParser(is)) {
 
-            if (parser.nextToken() != JsonToken.START_ARRAY) {
-                System.err.println("JSON is not an array!");
-                return;
-            }
+            if (parser.nextToken() != JsonToken.START_ARRAY) return;
 
-            while (parser.nextToken() == JsonToken.START_OBJECT && count < limit) {
+            while (parser.nextToken() == JsonToken.START_OBJECT && count < LIMIT) {
                 JsonNode node = mapper.readTree(parser);
-                
-                String name = node.has("name") ? node.get("name").asText() : "Unnamed Problem";
-                String description = node.has("description") ? node.get("description").asText() : "";
-                
-                int diffLevel = node.has("difficulty") ? node.get("difficulty").asInt() : 3;
-                String difficulty = "MEDIUM";
-                if (diffLevel <= 2) difficulty = "EASY";
-                else if (diffLevel >= 6) difficulty = "HARD";
+                String title = getText(node, "name");
 
-                List<String> tags = new ArrayList<>();
-                if (node.has("cf_tags") && node.get("cf_tags").isArray()) {
-                    for (JsonNode tagNode : node.get("cf_tags")) {
-                        tags.add(tagNode.asText());
-                    }
-                }
-
-                String input = "";
-                String output = "";
-                if (node.has("public_tests")) {
-                    JsonNode tests = node.get("public_tests");
-                    if (tests.has("input") && tests.get("input").isArray() && tests.get("input").size() > 0) {
-                        input = tests.get("input").get(0).asText();
-                    }
-                    if (tests.has("output") && tests.get("output").isArray() && tests.get("output").size() > 0) {
-                        output = tests.get("output").get(0).asText();
-                    }
-                }
-
-                ProblemLibrary problem = ProblemLibrary.builder()
-                        .title(name)
-                        .description(description)
-                        .difficulty(difficulty)
-                        .tags(tags)
-                        .build();
-
-                LibraryTestCase tc = LibraryTestCase.builder()
-                        .input(input)
-                        .output(output)
-                        .problemLibrary(problem)
-                        .build();
-
-                problem.getTestCases().add(tc);
-
-                if (node.has("generated_tests")) {
-                    JsonNode genTests = node.get("generated_tests");
-                    if (genTests.has("input") && genTests.has("output") &&
-                        genTests.get("input").isArray() && genTests.get("output").isArray()) {
-                        
-                        JsonNode inputs = genTests.get("input");
-                        JsonNode outputs = genTests.get("output");
-                        int iterations = Math.min(inputs.size(), outputs.size());
-                        
-                        for (int i = 0; i < iterations; i++) {
-                            LibraryTestCase htc = LibraryTestCase.builder()
-                                    .input(inputs.get(i).asText())
-                                    .output(outputs.get(i).asText())
-                                    .problemLibraryHidden(problem)
-                                    .build();
-                            problem.getHiddenTestCases().add(htc);
-                        }
-                    }
-                }
-
-                try {
+                if (fullSeed) {
+                    ProblemLibrary problem = buildProblem(node, title);
+                    addPublicTest(node, problem);
+                    addHiddenTests(node, problem);
                     repository.save(problem);
-                    count++;
-                    if (count % 50 == 0) {
-                        System.out.println("Seeded " + count + " problems...");
-                    }
-                } catch (Exception e) {
-                    System.err.println("Error saving problem " + name + ": " + e.getMessage());
+                } else {
+                    repository.findByTitleWithHidden(title).ifPresent(problem -> {
+                        if (problem.getHiddenTestCases().isEmpty()) {
+                            int before = problem.getHiddenTestCases().size();
+                            addHiddenTests(node, problem);
+                            int added = problem.getHiddenTestCases().size() - before;
+
+                            if (added > 0) {
+                                System.out.println("Added " + added + " hidden tests to: " + title);
+                                repository.save(problem);
+                            }
+                        }
+                    });
+                }
+
+                count++;
+                if (count % 50 == 0) {
+                    System.out.println("Processed " + count + " problems...");
                 }
             }
 
-            System.out.println("Seeding complete. Total problems: " + count);
+            System.out.println("Seeding complete. Total processed: " + count);
 
         } catch (Exception e) {
-            System.err.println("Critical error during JSON seeding: " + e.getMessage());
+            System.err.println("Seeding error: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private ProblemLibrary buildProblem(JsonNode node, String title) {
+        String description = getText(node, "description");
+        int diffLevel = node.has("difficulty") ? node.get("difficulty").asInt() : 3;
+
+        String difficulty =
+                diffLevel <= 2 ? "EASY" :
+                diffLevel >= 6 ? "HARD" : "MEDIUM";
+
+        List<String> tags = new ArrayList<>();
+        if (node.has("cf_tags") && node.get("cf_tags").isArray()) {
+            node.get("cf_tags").forEach(t -> tags.add(t.asText()));
+        }
+
+        return ProblemLibrary.builder()
+                .title(title)
+                .description(description)
+                .difficulty(difficulty)
+                .tags(tags)
+                .build();
+    }
+
+    private void addPublicTest(JsonNode node, ProblemLibrary problem) {
+        if (!node.has("public_tests")) return;
+
+        JsonNode pt = node.get("public_tests");
+        if (pt.has("input") && pt.get("input").size() > 0) {
+            String input = pt.get("input").get(0).asText();
+            String output = pt.has("output") && pt.get("output").size() > 0
+                    ? pt.get("output").get(0).asText()
+                    : "";
+
+            LibraryTestCase testCase = LibraryTestCase.builder()
+                    .input(input)
+                    .output(output)
+                    .problemLibrary(problem)
+                    .build();
+
+            problem.getTestCases().add(testCase);
+        }
+    }
+
+    private void addHiddenTests(JsonNode node, ProblemLibrary problem) {
+        if (!node.has("generated_tests")) return;
+
+        JsonNode gen = node.get("generated_tests");
+        if (!gen.has("input") || !gen.has("output")) return;
+
+        JsonNode inputs = gen.get("input");
+        JsonNode outputs = gen.get("output");
+
+        int size = Math.min(inputs.size(), outputs.size());
+        for (int i = 0; i < size; i++) {
+            LibraryTestCase hidden = LibraryTestCase.builder()
+                    .input(inputs.get(i).asText())
+                    .output(outputs.get(i).asText())
+                    .problemLibraryHidden(problem)
+                    .build();
+
+            problem.getHiddenTestCases().add(hidden);
+        }
+    }
+
+    private String getText(JsonNode node, String field) {
+        return node.has(field) ? node.get(field).asText() : "";
     }
 }

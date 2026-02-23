@@ -29,7 +29,7 @@ export default function CreateRoom({ playerId, onCreate }) {
       const roomData = res.data;
       console.log("Successfully created room:", roomData);
       onCreate(roomData);
-      
+
       if (roomData?.id) {
         console.log("📥 Fetching players for room:", roomData.id);
         setTimeout(() => {
@@ -48,36 +48,46 @@ export default function CreateRoom({ playerId, onCreate }) {
   }
 
   return (
-    <div className="bg-white border border-gray-300 shadow-lg rounded-lg p-6">
-      <h3 className="text-xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Create Competition</h3>
-      <p className="text-sm text-gray-600 mb-4">Start a new coding competition and invite others using the room code.</p>
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold text-[#e8e6e3] mb-1">Create Room</h3>
+        <p className="text-sm text-[#6b6560]">Start a new competition room.</p>
+      </div>
 
-      <div className="space-y-3">
-        <input
-          className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-          placeholder="Room name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+      <div className="space-y-5">
+        <div>
+          <label className="block text-xs font-medium text-[#a8a29e] mb-2">Room Name</label>
+          <input
+            className="w-full px-4 py-3 bg-[#141118] border border-[#1e1215] rounded-lg text-[#e8e6e3] text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all placeholder:text-[#44403c]"
+            placeholder="My Awesome Room"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
 
-        <label className="flex items-center gap-2 text-sm text-gray-700">
+        <label className="flex items-center gap-3 cursor-pointer group">
           <input
             type="checkbox"
             checked={isPrivate}
             onChange={() => setIsPrivate(!isPrivate)}
-            className="w-4 h-4 accent-blue-600"
+            className="hidden"
           />
-          Private room
+          <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${isPrivate ? 'bg-red-600 border-red-600' : 'border-[#2a1519] group-hover:border-red-500/40'}`}>
+            {isPrivate && (
+              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </div>
+          <span className="text-sm text-[#a8a29e] group-hover:text-[#e8e6e3] transition-colors">Private Room</span>
         </label>
 
-        <div className="flex justify-end pt-2">
-          <button
-            className="px-6 py-1.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold rounded-lg transition-all text-sm"
-            onClick={handleCreate}
-          >
-            Create Room
-          </button>
-        </div>
+        <button
+          className="w-full py-3 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-semibold transition-all hover:shadow-[0_4px_20px_rgba(220,38,38,0.3)] active:scale-[0.98]"
+          onClick={handleCreate}
+        >
+          Create Room
+        </button>
       </div>
     </div>
   );

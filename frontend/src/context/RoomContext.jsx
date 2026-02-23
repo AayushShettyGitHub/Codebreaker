@@ -147,7 +147,7 @@ export function RoomProvider({ children }) {
   useEffect(() => {
     if (!myRoom?.id) return;
 
-    // Always poll as fallback, but with different intervals based on WS connection
+    
     const pollRoom = async () => {
       try {
         const res = await api.get(`/rooms/${myRoom.id}`);
@@ -175,8 +175,8 @@ export function RoomProvider({ children }) {
     pollRoom();
     pollPlayers();
 
-    // Poll more frequently when problem is active (every 1 second for accurate timer)
-    // Otherwise poll every 5 seconds
+    
+    
     const shouldPollFrequently = myRoom?.problemStartTime && myRoom?.problemDuration;
     const pollInterval = shouldPollFrequently ? 1000 : 5000;
     
@@ -194,7 +194,7 @@ export function RoomProvider({ children }) {
   useEffect(() => {
     if (!wsConnected || !myRoom?.id) return;
 
-    // When WS connects, immediately fetch fresh data
+    
     fetchMyRoom();
     fetchPlayers(myRoom.id);
   }, [wsConnected, myRoom?.id, fetchMyRoom, fetchPlayers]);

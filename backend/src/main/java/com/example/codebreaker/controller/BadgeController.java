@@ -66,12 +66,12 @@ public class BadgeController {
         return badgeRepo.findAll().stream().map(b -> {
             Map<String, Object> extra = pbMap.get(b.getKey());
             
-            // Calculate progress based on badge type
+            
             Integer count = extra != null ? (Integer) extra.get("count") : 0;
             Integer nextThreshold = extra != null ? (Integer) extra.get("nextThreshold") : null;
             String rank = extra != null ? (String) extra.get("rank") : "NONE";
             
-            // Determine the threshold based on badge type
+            
             if (nextThreshold == null) {
                 switch (b.getKey()) {
                     case "SOLVER_10":
@@ -96,7 +96,7 @@ public class BadgeController {
                                 count = (int) Math.round(accuracy * 100);
                             } else {
                                 count = totalSubmissions;
-                                nextThreshold = 10; // Need 10 submissions first
+                                nextThreshold = 10; 
                             }
                         }
                         break;
@@ -143,7 +143,7 @@ public class BadgeController {
                         }
                         break;
                     default:
-                        // For other badges, use default threshold
+                        
                         nextThreshold = badgeService.getNextThreshold(count);
                         break;
                 }

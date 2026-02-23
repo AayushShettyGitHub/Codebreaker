@@ -1,59 +1,112 @@
+import { Code2, Wifi, Globe, Server, Layout, Database, Cpu, Monitor } from "lucide-react";
+
 export default function AboutPage() {
-  return (
-    <main className="flex-1">
-      <div className="max-w-4xl mx-auto px-6 py-20">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-slate-900 mb-4">About CodeBreaker</h1>
-          <p className="text-xl text-slate-600">Real-time competitive programming platform</p>
-        </div>
+    return (
+        <main className="flex-1 bg-[#0a0a0f]">
+            <div className="max-w-[1440px] mx-auto px-8 md:px-16 lg:px-20 py-20">
+                {}
+                <div className="mb-14">
+                    <p className="text-xs font-medium text-red-400 mb-2">About</p>
+                    <h1 className="text-4xl md:text-5xl font-bold text-[#e8e6e3] mb-4">
+                        About Codebreaker
+                    </h1>
+                    <div className="w-16 h-1 rounded-full bg-gradient-to-r from-red-500 to-red-700"></div>
+                </div>
 
-        {/* Mission */}
-        <div className="bg-white rounded-xl p-8 shadow-sm border border-slate-200 mb-12">
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">Our Mission</h2>
-          <p className="text-slate-600 leading-relaxed">
-            We empower programmers to test their skills in real-time competitions. CodeBreaker brings competitive coding to life with instant synchronization, live rankings, and a global community of developers.
-          </p>
-        </div>
+                {}
+                <div className="rounded-xl border border-[#1e1215] bg-[#0f0d12] p-8 mb-8 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-[100px] pointer-events-none"></div>
+                    <h2 className="text-lg font-semibold text-[#e8e6e3] mb-4 flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                        Our Mission
+                    </h2>
+                    <p className="text-[#a8a29e] text-sm leading-relaxed max-w-2xl">
+                        Codebreaker is a real-time competitive programming platform. We
+                        provide a space for developers to test their coding skills in live
+                        environments. Real-time synchronization. Accurate rankings. Seamless
+                        competition.
+                    </p>
+                </div>
 
-        {/* Core Features */}
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
-          {[
-            { title: "Real-Time", desc: "Instant synchronization for fair competition" },
-            { title: "Live Rankings", desc: "See your position update live" },
-            { title: "Community", desc: "Connect with programmers worldwide" },
-          ].map((item, i) => (
-            <div key={i} className="bg-gradient-to-br from-blue-50 to-slate-50 rounded-xl p-6 border border-slate-200">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold mb-4">●</div>
-              <h3 className="text-lg font-bold text-slate-900 mb-2">{item.title}</h3>
-              <p className="text-slate-600 text-sm">{item.desc}</p>
-            </div>
-          ))}
-        </div>
+                {}
+                <div className="grid md:grid-cols-3 gap-4 mb-8">
+                    {[
+                        {
+                            icon: <Wifi size={20} className="text-red-400" />,
+                            title: "Real-Time",
+                            desc: "Instant synchronization across all active players.",
+                        },
+                        {
+                            icon: <Globe size={20} className="text-red-400" />,
+                            title: "Leaderboards",
+                            desc: "Live tracking of all user performance data.",
+                        },
+                        {
+                            icon: <Code2 size={20} className="text-red-400" />,
+                            title: "Global Connectivity",
+                            desc: "Secure channels for global coding challenges.",
+                        },
+                    ].map((item, i) => (
+                        <div
+                            key={i}
+                            className="rounded-xl border border-[#1e1215] bg-[#0f0d12] p-6 hover:border-red-500/20 hover:bg-[#141118] transition-all group"
+                        >
+                            <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center mb-4 group-hover:bg-red-500/15 transition-colors">
+                                {item.icon}
+                            </div>
+                            <h3 className="text-sm font-semibold text-[#e8e6e3] mb-2">
+                                {item.title}
+                            </h3>
+                            <p className="text-xs text-[#6b6560] leading-relaxed">
+                                {item.desc}
+                            </p>
+                        </div>
+                    ))}
+                </div>
 
-        {/* Tech Stack */}
-        <div className="bg-white rounded-xl p-8 border border-slate-200">
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">Built With</h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            <div>
-              <h3 className="font-semibold text-slate-900 mb-3">Backend</h3>
-              <div className="flex flex-wrap gap-2">
-                {['Spring Boot', 'WebSocket', 'PostgreSQL'].map((tech) => (
-                  <span key={tech} className="px-3 py-1 bg-blue-50 text-blue-600 text-sm rounded-lg border border-blue-200">{tech}</span>
-                ))}
-              </div>
+                {}
+                <div className="rounded-xl border border-[#1e1215] bg-[#0f0d12] p-8">
+                    <h2 className="text-lg font-semibold text-[#e8e6e3] mb-8">
+                        System Architecture
+                    </h2>
+                    <div className="grid md:grid-cols-2 gap-10">
+                        <div>
+                            <h3 className="text-xs font-medium text-[#6b6560] uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <Server size={14} /> Backend
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                                {["Spring Boot", "WebSocket", "PostgreSQL", "Docker"].map(
+                                    (tech) => (
+                                        <span
+                                            key={tech}
+                                            className="px-3 py-1.5 rounded-md bg-[#141118] border border-[#1e1215] text-xs text-[#a8a29e] font-medium"
+                                        >
+                                            {tech}
+                                        </span>
+                                    )
+                                )}
+                            </div>
+                        </div>
+                        <div>
+                            <h3 className="text-xs font-medium text-[#6b6560] uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <Monitor size={14} /> Frontend
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                                {["React 19", "Vite", "TailwindCSS", "Monaco Editor"].map(
+                                    (tech) => (
+                                        <span
+                                            key={tech}
+                                            className="px-3 py-1.5 rounded-md bg-[#141118] border border-[#1e1215] text-xs text-[#a8a29e] font-medium"
+                                        >
+                                            {tech}
+                                        </span>
+                                    )
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div>
-              <h3 className="font-semibold text-slate-900 mb-3">Frontend</h3>
-              <div className="flex flex-wrap gap-2">
-                {['React', 'Vite', 'TailwindCSS'].map((tech) => (
-                  <span key={tech} className="px-3 py-1 bg-blue-50 text-blue-600 text-sm rounded-lg border border-blue-200">{tech}</span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
-  );
+        </main>
+    );
 }

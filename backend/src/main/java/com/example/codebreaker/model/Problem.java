@@ -20,7 +20,7 @@ public class Problem {
 
     private String title;
 
-    @Column(length = 2000)
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     private String answer;

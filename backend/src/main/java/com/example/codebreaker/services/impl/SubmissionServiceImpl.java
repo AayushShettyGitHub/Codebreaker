@@ -101,30 +101,49 @@ public class SubmissionServiceImpl implements SubmissionService {
 
         List<TestCaseResult> results = new ArrayList<>();
         boolean allPassed = true;
+        
+        List<String> inputs = problem.getTestCases().stream()
+                .map(com.example.codebreaker.model.TestCase::getInput)
+                .toList();
 
-        for (var tc : problem.getTestCases()) {
+        DockerExecutor.BatchExecutionResult batchRes = 
+                DockerExecutor.executeBatch(request.getLanguage(), request.getCode(), inputs);
 
-            DockerExecutor.ExecutionResult exec =
-                    DockerExecutor.execute(
-                            request.getLanguage(),
-                            request.getCode(),
-                            tc.getInput()
-                    );
+        if (!batchRes.success) {
+            allPassed = false;
+            
+            for (var tc : problem.getTestCases()) {
+                if (!tc.isHidden()) {
+                    results.add(TestCaseResult.builder()
+                            .testCaseId(tc.getId())
+                            .passed(false)
+                            .error(batchRes.errorMessage)
+                            .input(tc.getInput())
+                            .expectedOutput(tc.getOutput())
+                            .actualOutput("")
+                            .build());
+                }
+            }
+        } else {
+            for (int i = 0; i < problem.getTestCases().size(); i++) {
+                var tc = problem.getTestCases().get(i);
+                String actualOutput = i < batchRes.outputs.size() ? batchRes.outputs.get(i) : "";
+                
+                boolean passed = actualOutput.trim().equals(tc.getOutput().trim());
 
-            boolean passed = exec.success &&
-                    exec.output.trim().equals(tc.getOutput().trim());
+                if (!tc.isHidden()) {
+                    results.add(TestCaseResult.builder()
+                            .testCaseId(tc.getId())
+                            .passed(passed)
+                            .input(tc.getInput())
+                            .expectedOutput(tc.getOutput())
+                            .actualOutput(actualOutput)
+                            .build());
+                }
 
-            results.add(TestCaseResult.builder()
-                    .testCaseId(tc.getId())
-                    .passed(passed)
-                    .error(exec.success ? null : exec.error)
-                    .input(tc.getInput())
-                    .expectedOutput(tc.getOutput())
-                    .actualOutput(exec.success ? exec.output : "")
-                    .build());
-
-            if (!passed) {
-                allPassed = false;
+                if (!passed) {
+                    allPassed = false;
+                }
             }
         }
 
@@ -152,7 +171,7 @@ public class SubmissionServiceImpl implements SubmissionService {
             roomPlayer.setHasAnsweredCorrectly(true);
             roomPlayer.setCorrectAnswerTimestamp(now);
 
-            // Player stats
+            
             var player = roomPlayer.getPlayer();
             player.setTotalCorrectSubmissions(
                     (player.getTotalCorrectSubmissions() == null ? 0 : player.getTotalCorrectSubmissions()) + 1
@@ -174,7 +193,7 @@ public class SubmissionServiceImpl implements SubmissionService {
                     true
             );
 
-            // FIRST BLOOD
+            
             if (prevCorrect == 0 && !room.isPrivateRoom()) {
                 badgeService.awardBadge(
                         player,
@@ -185,7 +204,7 @@ public class SubmissionServiceImpl implements SubmissionService {
                 );
             }
 
-            // SPEEDSTER
+            
             long elapsedSeconds = 0;
             Instant problemStart = room.getProblemStartTime();
             if (problemStart != null) {
@@ -202,7 +221,7 @@ public class SubmissionServiceImpl implements SubmissionService {
                 );
             }
 
-            // SOLVER + ACCURACY badges (public rooms only)
+            
             if (!room.isPrivateRoom()) {
 
                 if (player.getTotalProblemsSolved() == 10) {
@@ -243,7 +262,7 @@ public class SubmissionServiceImpl implements SubmissionService {
             }
 
         } else {
-            // Incorrect submission → still count total submissions
+            
             var player = roomPlayer.getPlayer();
             player.setTotalSubmissions(
                     (player.getTotalSubmissions() == null ? 0 : player.getTotalSubmissions()) + 1

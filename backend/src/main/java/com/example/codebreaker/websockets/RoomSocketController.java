@@ -113,7 +113,7 @@ public class RoomSocketController {
         payload.put("type", "PROBLEM_ENDED");
         payload.put("problemId", problemId);
         payload.put("timestamp", Instant.now());
-        // fetch top successful submissions for this problem and include them as part of the reveal
+        
         try {
             java.util.List<Submission> sols = submissionRepository.findByProblemIdAndPassedTrueOrderBySubmittedAtAsc(problemId, PageRequest.of(0, 5));
             java.util.List<java.util.Map<String, Object>> mapped = sols.stream().map(s -> {
@@ -129,7 +129,7 @@ public class RoomSocketController {
             }).collect(Collectors.toList());
             payload.put("solutions", mapped);
         } catch (Exception e) {
-            // swallow errors here to avoid disrupting the event; frontend will still receive PROBLEM_ENDED
+            
             System.err.println("Failed to fetch solutions for reveal: " + e.getMessage());
         }
 

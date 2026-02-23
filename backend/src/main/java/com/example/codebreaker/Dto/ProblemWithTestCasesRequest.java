@@ -16,6 +16,8 @@ public class ProblemWithTestCasesRequest {
     private String description;
     private String difficulty;
     private List<TestCaseRequest> testCases;
+    private List<TestCaseRequest> hiddenTestCases;
+    private Long libraryProblemId;
 
     @Data
     @NoArgsConstructor

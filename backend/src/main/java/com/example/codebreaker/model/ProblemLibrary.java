@@ -1,6 +1,7 @@
 package com.example.codebreaker.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -43,6 +44,7 @@ public class ProblemLibrary {
     @Builder.Default
     private List<LibraryTestCase> testCases = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "problemLibraryHidden", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<LibraryTestCase> hiddenTestCases = new ArrayList<>();

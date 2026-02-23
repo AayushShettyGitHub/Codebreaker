@@ -1,4 +1,5 @@
 import React from "react";
+import { CheckCircle, XCircle } from "lucide-react";
 
 export default function SubmissionResult({ result }) {
   if (!result) return null;
@@ -14,113 +15,116 @@ export default function SubmissionResult({ result }) {
   const remaining = Math.max(0, results.length - visibleResults.length);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-5">
-      <div className="flex items-center justify-between">
+    <div className="space-y-5 animate-in">
+      {}
+      <div className="flex items-center justify-between p-5 rounded-lg bg-[#141118] border border-[#1e1215]">
         <div>
-          <p className="text-xs text-gray-600 font-semibold">Problem</p>
-          <p className="text-black font-bold text-lg">ID: {problemId ?? "N/A"}</p>
+          <p className="text-xs text-[#6b6560] mb-0.5">Problem</p>
+          <p className="text-sm font-semibold text-[#e8e6e3]">ID: {problemId ?? "Unknown"}</p>
         </div>
-
         <div className="text-right">
-          <p className="text-xs text-gray-600 font-semibold">Score</p>
-          <p className={`text-4xl font-bold ${allPassed ? "text-emerald-600" : "text-yellow-600"}`}>
+          <p className="text-xs text-[#6b6560] mb-0.5">Score</p>
+          <p className={`text-2xl font-bold ${allPassed ? "text-green-400" : "text-[#a8a29e]"}`}>
             {score}
           </p>
         </div>
       </div>
 
-      <div className="border-t border-slate-700">
-        <p className="text-black font-bold mt-5 mb-4">Test Results</p>
+      {}
+      <div>
+        <p className="text-xs font-medium text-[#6b6560] mb-3">Test Results</p>
 
         {results.length === 0 ? (
-          <div className="text-sm text-gray-600 bg-gray-100 p-4 rounded-lg border border-gray-200">
-            No test case results returned.
+          <div className="text-center py-10 rounded-lg border border-dashed border-[#1e1215] bg-[#141118]">
+            <p className="text-xs text-[#44403c]">No test data available.</p>
           </div>
         ) : (
-          <ul className="space-y-4">
+          <div className="space-y-3">
             {visibleResults.map((r, idx) => (
-              <li
+              <div
                 key={r.testCaseId}
-                className={`p-4 border-2 rounded-lg transition-all ${
-                  r.passed
-                    ? "bg-emerald-100 border-emerald-200"
-                    : "bg-red-100 border-red-200"
-                }`}
+                className={`p-5 rounded-lg border transition-all ${r.passed
+                  ? "bg-[#141118] border-[#1e1215]"
+                  : "bg-red-500/5 border-red-500/15"
+                  }`}
               >
-                <div className="flex justify-between items-start gap-4 mb-3">
-                  <div className="flex-1">
-                    <p className="font-bold text-black flex items-center gap-2">
-                      <span className={r.passed ? "text-emerald-600" : "text-red-600"}>
-                        {r.passed ? "✓" : "✗"}
-                      </span>
-                      Test Case #{idx + 1}
+                <div className="flex justify-between items-center mb-4">
+                  <div className="flex items-center gap-2.5">
+                    {r.passed ? (
+                      <CheckCircle size={14} className="text-green-400" />
+                    ) : (
+                      <XCircle size={14} className="text-red-400 animate-pulse" />
+                    )}
+                    <p className="text-sm font-medium text-[#e8e6e3]">
+                      Test Case {idx + 1}
                     </p>
                   </div>
-
-                  <span className={`text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap ${r.passed ? "bg-emerald-200 text-emerald-700" : "bg-red-200 text-red-700"}`}>
-                    {r.passed ? "PASS" : "FAIL"}
+                  <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${r.passed ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"}`}>
+                    {r.passed ? "Passed" : "Failed"}
                   </span>
                 </div>
 
-                {r.input && (
-                  <div className="mb-3">
-                    <p className="text-xs font-semibold text-gray-800 mb-2">📥 Input:</p>
-                    <pre className="text-xs text-black font-mono bg-white p-3 rounded border border-gray-200 overflow-auto max-h-32">
-                      {r.input}
-                    </pre>
-                  </div>
-                )}
+                <div className="grid gap-3">
+                  {r.input && (
+                    <div>
+                      <p className="text-xs text-[#6b6560] mb-1.5">Input</p>
+                      <pre className="text-xs text-[#a8a29e] font-mono bg-[#0a0a0f] p-3 rounded-lg border border-[#1e1215] overflow-auto max-h-28 custom-scrollbar">
+                        {r.input}
+                      </pre>
+                    </div>
+                  )}
 
-                {r.expectedOutput && (
-                  <div className="mb-3">
-                    <p className="text-xs font-semibold text-gray-800 mb-2">✓ Expected Output:</p>
-                    <pre className="text-xs text-black font-mono bg-white p-3 rounded border border-gray-200 overflow-auto max-h-32">
-                      {r.expectedOutput}
-                    </pre>
-                  </div>
-                )}
+                  {r.expectedOutput && (
+                    <div>
+                      <p className="text-xs text-[#6b6560] mb-1.5">Expected Output</p>
+                      <pre className="text-xs text-[#a8a29e] font-mono bg-[#0a0a0f] p-3 rounded-lg border border-[#1e1215] overflow-auto max-h-28 custom-scrollbar">
+                        {r.expectedOutput}
+                      </pre>
+                    </div>
+                  )}
 
-                {r.actualOutput && (
-                  <div className="mb-3">
-                    <p className={`text-xs font-semibold mb-2 ${r.passed ? "text-gray-800" : "text-gray-800"}`}>
-                      {r.passed ? "✓ Actual Output:" : "✗ Actual Output:"}
-                    </p>
-                    <pre className={`text-xs font-mono p-3 rounded border overflow-auto max-h-32 ${
-                      r.passed
-                        ? "bg-white text-black border-emerald-200"
-                        : "bg-white text-black border-red-200"
-                    }`}>
-                      {r.actualOutput}
-                    </pre>
-                  </div>
-                )}
+                  {r.actualOutput && (
+                    <div>
+                      <p className="text-xs text-[#6b6560] mb-1.5">Your Output</p>
+                      <pre className={`text-xs font-mono p-3 rounded-lg border overflow-auto max-h-28 custom-scrollbar ${r.passed
+                        ? "bg-[#0a0a0f] text-[#a8a29e] border-[#1e1215]"
+                        : "bg-[#0a0a0f] text-red-400 border-red-500/10"
+                        }`}>
+                        {r.actualOutput}
+                      </pre>
+                    </div>
+                  )}
 
-                {r.error && (
-                  <div className="mt-3">
-                    <p className="text-xs font-semibold text-gray-800 mb-2">Error:</p>
-                    <pre className="text-xs text-black font-mono bg-white p-3 rounded border border-red-100 overflow-auto max-h-32">
-                      {r.error}
-                    </pre>
-                  </div>
-                )}
-              </li>
+                  {r.error && (
+                    <div>
+                      <p className="text-xs text-red-400 mb-1.5">Error</p>
+                      <pre className="text-xs text-red-400 font-mono bg-[#0a0a0f] p-3 rounded-lg border border-red-500/10 overflow-auto max-h-28 custom-scrollbar">
+                        {r.error}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              </div>
             ))}
 
             {remaining > 0 && (
-              <li className="text-sm text-gray-600">+{remaining} more test case(s) hidden</li>
+              <p className="text-xs text-[#44403c] text-center pt-2">
+                {remaining} more test case(s) hidden
+              </p>
             )}
-          </ul>
+          </div>
         )}
       </div>
 
-      <div className="bg-gradient-to-r from-slate-800/50 to-slate-800/30 rounded-xl p-4 border border-slate-700/50">
-        <p className="text-xs text-slate-400 font-semibold mb-2">Overall Result</p>
-        <div className="flex items-center justify-between">
-          <span className="text-white font-bold">Final Status:</span>
-          <span className={`text-lg font-bold ${allPassed ? "text-emerald-400" : "text-yellow-400"}`}>
-            {allPassed ? "✓ All Passed" : "⚠ Some Failed"}
-          </span>
+      {}
+      <div className={`p-4 rounded-lg flex items-center justify-between ${allPassed ? "bg-green-500/5 border border-green-500/15" : "bg-red-500/5 border border-red-500/15"}`}>
+        <div className="flex items-center gap-2.5">
+          {allPassed ? <CheckCircle size={16} className="text-green-400" /> : <XCircle size={16} className="text-red-400 animate-pulse" />}
+          <span className="text-xs font-medium text-[#a8a29e]">Overall Status</span>
         </div>
+        <span className={`text-sm font-semibold ${allPassed ? "text-green-400" : "text-red-400"}`}>
+          {allPassed ? "All Passed" : "Some Failed"}
+        </span>
       </div>
     </div>
   );

@@ -2,225 +2,223 @@ package com.example.codebreaker.util;
 
 import java.io.*;
 import java.nio.file.*;
+import java.util.*;
 import java.util.concurrent.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class DockerExecutor {
 
-    private static final int TIMEOUT_SECONDS = 15;
-    private static final DateTimeFormatter LOG_TIME =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
-
-    private static volatile boolean imagesChecked = false;
+    private static final int TIMEOUT_SECONDS = 30;
+    private static final DateTimeFormatter LOG_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
     private static String TEMP_DIR;
 
     private static synchronized void initIfNeeded() {
         if (TEMP_DIR != null) return;
-
         TEMP_DIR = resolveTempDirectory();
-        
-        // Ensure the directory exists internally
         File tempDir = new File(TEMP_DIR);
         if (!tempDir.exists() && !tempDir.mkdirs()) {
-            // If it's a mounted volume like /executor, it might already exist or be read-only if permissions are tricky, 
-            // but we usually need write access.
             logInfo("Warning: Could not create/verify directory: " + TEMP_DIR);
         }
-
-        logInfo("Initialized internal temp directory: " + TEMP_DIR);
-        logInfo("Using host path for Docker volumes: " + resolveHostDirectory());
     }
 
     private static String resolveTempDirectory() {
-        // First check environment variable
         String envPath = System.getenv("EXECUTOR_CONTAINER_PATH");
-        if (envPath != null && !envPath.isEmpty()) {
-            return envPath;
-        }
-
+        if (envPath != null && !envPath.isEmpty()) return envPath;
         if (isWindows()) {
             String base = System.getProperty("java.io.tmpdir");
             return new File(base, "codebreaker-executor").getAbsolutePath();
         }
-        
-        // Default for Linux/Docker
         return "/executor";
     }
 
     private static String resolveHostDirectory() {
-        // The path on the HOST where the volumes are mounted. 
-        // Docker daemon needs this path to find the files.
         String hostPath = System.getenv("EXECUTOR_HOST_PATH");
-        if (hostPath != null && !hostPath.isEmpty()) {
-            return hostPath;
-        }
-        
-        // Fallback to internal path (works if not in a container or if paths match)
+        if (hostPath != null && !hostPath.isEmpty()) return hostPath;
         return resolveTempDirectory();
     }
 
-    public static ExecutionResult execute(String language, String code, String input) {
-        try {
-            initIfNeeded();
+    public static BatchExecutionResult executeBatch(String language, String code, List<String> inputs) {
+        initIfNeeded();
+        String executionId = UUID.randomUUID().toString().substring(0, 8);
+        String subDirName = "exec_" + executionId;
+        Path subDirPath = Paths.get(TEMP_DIR, subDirName);
+        
+        long buildTime = 0;
+        long executionTime = 0;
 
-            if (!imagesChecked) {
-                verifyDockerImages(language);
-                imagesChecked = true;
+        try {
+            Files.createDirectories(subDirPath);
+            
+            
+            String codeFilename = getFilenameForLanguage(language);
+            Files.write(subDirPath.resolve(codeFilename), code.getBytes());
+
+            
+            for (int i = 0; i < inputs.size(); i++) {
+                Files.write(subDirPath.resolve("in_" + i + ".txt"), (inputs.get(i) == null ? "" : inputs.get(i)).getBytes());
             }
 
-            logInfo("=== Starting Code Execution ===");
-            logInfo("Language: " + language);
-
-            String codeFile = writeCodeFile(language, code);
-            logInfo("Code file created: " + codeFile);
-
-            ProcessBuilder pb = buildDockerCommand(language, codeFile);
-            logInfo("Docker command: " + String.join(" ", pb.command()));
-
+            
+            long startTime = System.currentTimeMillis();
+            ProcessBuilder pb = buildBatchDockerCommand(language, subDirName, inputs.size());
             Process process = pb.start();
 
-            if (input != null && !input.isEmpty()) {
-                try (BufferedWriter writer =
-                             new BufferedWriter(new OutputStreamWriter(process.getOutputStream()))) {
-                    writer.write(input);
-                    writer.flush();
-                }
-            }
-
             boolean finished = process.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            long endTime = System.currentTimeMillis();
+            
             if (!finished) {
                 process.destroyForcibly();
-                return ExecutionResult.timeout();
+                cleanupRecursive(subDirPath);
+                return BatchExecutionResult.error("Execution timed out after " + TIMEOUT_SECONDS + "s");
             }
 
-            String stdout = read(process.getInputStream());
-            String stderr = read(process.getErrorStream());
+            String stdout = readStream(process.getInputStream());
+            String stderr = readStream(process.getErrorStream());
             int exitCode = process.exitValue();
+            
+            cleanupRecursive(subDirPath);
 
-            cleanup(codeFile);
-
-            if (exitCode != 0) {
-                return ExecutionResult.error(
-                        stderr.isEmpty()
-                                ? "Runtime error (exit code " + exitCode + ")"
-                                : stderr
-                );
+            if (exitCode != 0 && stdout.isEmpty()) {
+                return BatchExecutionResult.error(stderr.isEmpty() ? "Runtime error (" + exitCode + ")" : stderr);
             }
 
-            return ExecutionResult.success(stdout);
+            
+            List<String> results = parseBatchOutput(stdout);
+            
+            
+            buildTime = (language.equalsIgnoreCase("java") || language.equalsIgnoreCase("cpp")) ? (endTime - startTime) / 3 : 0;
+            executionTime = (endTime - startTime) - buildTime;
+
+            return BatchExecutionResult.success(results, buildTime, executionTime);
 
         } catch (Exception e) {
-            logError("Execution failed: " + e.getMessage());
-            return ExecutionResult.error(e.getMessage());
+            logError("Batch execution failed: " + e.getMessage());
+            cleanupRecursive(subDirPath);
+            return BatchExecutionResult.error(e.getMessage());
         }
     }
 
-    private static void verifyDockerImages(String language) {
-        try {
-            String image = getDockerImage(language);
-            ProcessBuilder pb = isWindows()
-                    ? new ProcessBuilder("cmd.exe", "/c", "docker images | findstr " + image)
-                    : new ProcessBuilder("sh", "-c", "docker images | grep " + image);
-
-            Process p = pb.start();
-            String out = read(p.getInputStream());
-            p.waitFor();
-
-            if (out == null || out.isEmpty()) {
-                pullDockerImage(image);
-            }
-        } catch (Exception e) {
-            logInfo("Image verification skipped: " + e.getMessage());
-        }
+    private static String getFilenameForLanguage(String lang) {
+        return switch (lang.toLowerCase()) {
+            case "python" -> "Main.py";
+            case "javascript" -> "Main.js";
+            case "java" -> "Main.java";
+            case "cpp" -> "Main.cpp";
+            default -> "Main.txt";
+        };
     }
 
-    private static void pullDockerImage(String image) {
-        try {
-            logInfo("Pulling Docker image: " + image);
-            ProcessBuilder pb = isWindows()
-                    ? new ProcessBuilder("cmd.exe", "/c", "docker pull " + image)
-                    : new ProcessBuilder("sh", "-c", "docker pull " + image);
+    private static ProcessBuilder buildBatchDockerCommand(String language, String subDirName, int count) {
+        String hostDir = resolveHostDirectory();
+        
+        
+        String hostSubDir = hostDir.endsWith("/") || hostDir.endsWith("\\") ? hostDir + subDirName : hostDir + "/" + subDirName;
+        String volumePath = convertPathForDocker(hostSubDir);
+        
+        String image = getDockerImage(language);
 
-            Process p = pb.start();
-            p.waitFor();
-        } catch (Exception e) {
-            logError("Docker pull failed: " + e.getMessage());
+        List<String> command = new ArrayList<>();
+        command.add("docker");
+        command.add("run");
+        command.add("--rm");
+        command.add("--memory=512m");
+        command.add("--cpus=1.0");
+        command.add("--pids-limit=64");
+        command.add("--network=none");
+        command.add("-v");
+        command.add(volumePath + ":/code:ro");
+        command.add(image);
+        command.add("bash");
+        command.add("-c");
+        command.add(buildScript(language, count));
+
+        return new ProcessBuilder(command);
+    }
+
+    private static String buildScript(String language, int count) {
+        StringBuilder script = new StringBuilder();
+        script.append("cd /code && ");
+
+        if (language.equalsIgnoreCase("java")) {
+            script.append("javac Main.java && ");
+        } else if (language.equalsIgnoreCase("cpp")) {
+            script.append("g++ Main.cpp -O2 -o main && ");
         }
+
+        String runCmd = switch (language.toLowerCase()) {
+            case "python" -> "python3 Main.py";
+            case "javascript" -> "node Main.js";
+            case "java" -> "java Main";
+            case "cpp" -> "./main";
+            default -> "cat";
+        };
+
+        script.append("for i in $(seq 0 ").append(count - 1).append("); do ");
+        script.append("if [ -f in_$i.txt ]; then cat in_$i.txt | ").append(runCmd).append("; fi; ");
+        script.append("echo '---BATCH_DELIMITER---'; done");
+
+        return script.toString();
+    }
+
+    private static List<String> parseBatchOutput(String stdout) {
+        if (stdout == null || stdout.isEmpty()) return Collections.emptyList();
+        String[] parts = stdout.split("---BATCH_DELIMITER---");
+        List<String> results = new ArrayList<>();
+        for (String p : parts) {
+            String trimmed = p.trim();
+            if (!trimmed.isEmpty() || results.size() < parts.length - 1) {
+                results.add(trimmed);
+            }
+        }
+        return results;
     }
 
     private static String getDockerImage(String language) {
         return switch (language.toLowerCase()) {
-            case "python" -> "python:3.9";
-            case "javascript" -> "node:18";
-            case "java" -> "eclipse-temurin:17";
+            case "python" -> "python:3.9-slim";
+            case "javascript" -> "node:18-slim";
+            case "java" -> "eclipse-temurin:17-alpine";
             case "cpp" -> "gcc:latest";
-            default -> "python:3.9";
+            default -> "python:3.9-slim";
         };
-    }
-
-    private static String writeCodeFile(String language, String code) throws IOException {
-        String ext = switch (language.toLowerCase()) {
-            case "python" -> ".py";
-            case "javascript" -> ".js";
-            case "java" -> ".java";
-            case "cpp" -> ".cpp";
-            default -> ".txt";
-        };
-
-        String filename = "Main" + ext;
-        Path path = Paths.get(TEMP_DIR, filename);
-        Files.write(path, code.getBytes());
-
-        return path.toString();
-    }
-
-    private static ProcessBuilder buildDockerCommand(String language, String codeFile) {
-        String hostDir = resolveHostDirectory();
-        String volumePath = convertPathForDocker(hostDir);
-
-        String cmd = switch (language.toLowerCase()) {
-            case "python" ->
-                    "docker run --rm -i -v \"" + volumePath + ":/code\" python:3.9 python /code/Main.py";
-            case "javascript" ->
-                    "docker run --rm -i -v \"" + volumePath + ":/code\" node:18 node /code/Main.js";
-            case "java" ->
-                    "docker run --rm -i -v \"" + volumePath + ":/code\" eclipse-temurin:17 " +
-                            "bash -c \"cd /code && javac Main.java && java Main\"";
-            case "cpp" ->
-                    "docker run --rm -i -v \"" + volumePath + ":/code\" gcc:latest " +
-                            "bash -c \"cd /code && g++ Main.cpp -o main && ./main\"";
-            default ->
-                    throw new IllegalArgumentException("Unsupported language");
-        };
-
-        return isWindows()
-                ? new ProcessBuilder("cmd.exe", "/c", cmd)
-                : new ProcessBuilder("sh", "-c", cmd);
     }
 
     private static String convertPathForDocker(String path) {
-        return path.replace("\\", "/");
+        String p = path.replace("\\", "/");
+        
+        
+        if (p.length() > 2 && p.charAt(1) == ':') {
+            char drive = Character.toLowerCase(p.charAt(0));
+            p = "/" + drive + p.substring(2);
+        }
+        return p;
     }
 
     private static boolean isWindows() {
         return System.getProperty("os.name").toLowerCase().contains("win");
     }
 
-    private static String read(InputStream is) throws IOException {
+    private static String readStream(InputStream is) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(is));
         StringBuilder sb = new StringBuilder();
         String line;
         while ((line = br.readLine()) != null) {
             sb.append(line).append("\n");
         }
-        return sb.toString().trim();
+        return sb.toString();
     }
 
-    private static void cleanup(String file) {
+    private static void cleanupRecursive(Path path) {
         try {
-            Files.deleteIfExists(Paths.get(file));
-        } catch (Exception ignored) {
+            if (Files.exists(path)) {
+                Files.walk(path)
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+            }
+        } catch (IOException e) {
+            logError("Cleanup failed: " + e.getMessage());
         }
     }
 
@@ -232,27 +230,36 @@ public class DockerExecutor {
         System.err.println("[" + LocalDateTime.now().format(LOG_TIME) + "] [DockerExecutor] ERROR " + msg);
     }
 
+    public static class BatchExecutionResult {
+        public final boolean success;
+        public final List<String> outputs;
+        public final String errorMessage;
+        public final long buildTimeMs;
+        public final long executionTimeMs;
+
+        private BatchExecutionResult(boolean success, List<String> outputs, String error, long bTime, long eTime) {
+            this.success = success;
+            this.outputs = outputs;
+            this.errorMessage = error;
+            this.buildTimeMs = bTime;
+            this.executionTimeMs = eTime;
+        }
+
+        public static BatchExecutionResult success(List<String> outputs, long b, long e) {
+            return new BatchExecutionResult(true, outputs, null, b, e);
+        }
+
+        public static BatchExecutionResult error(String error) {
+            return new BatchExecutionResult(false, null, error, 0, 0);
+        }
+    }
+
     public static class ExecutionResult {
         public final boolean success;
         public final String output;
         public final String error;
-
-        private ExecutionResult(boolean success, String output, String error) {
-            this.success = success;
-            this.output = output;
-            this.error = error;
-        }
-
-        public static ExecutionResult success(String output) {
-            return new ExecutionResult(true, output, null);
-        }
-
-        public static ExecutionResult error(String error) {
-            return new ExecutionResult(false, null, error);
-        }
-
-        public static ExecutionResult timeout() {
-            return new ExecutionResult(false, null, "Execution timeout (15 seconds)");
-        }
+        private ExecutionResult(boolean s, String o, String e) { this.success = s; this.output = o; this.error = e; }
+        public static ExecutionResult success(String o) { return new ExecutionResult(true, o, null); }
+        public static ExecutionResult error(String e) { return new ExecutionResult(false, null, e); }
     }
 }

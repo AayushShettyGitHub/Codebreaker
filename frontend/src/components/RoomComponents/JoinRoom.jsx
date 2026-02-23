@@ -24,7 +24,7 @@ export default function JoinRoom({ playerId, onJoin }) {
       const roomData = res.data;
       console.log("Successfully joined room:", roomData);
       onJoin(roomData);
-      
+
       if (roomData?.id) {
         console.log("📥 Fetching players for room:", roomData.id);
         setTimeout(() => {
@@ -46,33 +46,42 @@ export default function JoinRoom({ playerId, onJoin }) {
   }
 
   return (
-    <form onSubmit={handleJoin} className="bg-white border border-gray-300 shadow-lg rounded-lg p-6">
-      <h3 className="text-xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Join Competition</h3>
-      <p className="text-sm text-gray-600 mb-4">
-        Enter the room code to join an existing competition.
-      </p>
+    <form onSubmit={handleJoin} className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold text-[#e8e6e3] mb-1">Join Room</h3>
+        <p className="text-sm text-[#6b6560]">
+          Enter the join code to join an existing room.
+        </p>
+      </div>
 
-      <div className="flex gap-2">
-        <input
-          className="flex-1 p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-          type="text"
-          placeholder="Enter Room Code"
-          value={joinCode}
-          onChange={e => setJoinCode(e.target.value)}
-          required
-          disabled={loading}
-        />
+      <div className="space-y-5">
+        <div>
+          <label className="block text-xs font-medium text-[#a8a29e] mb-2">Join Code</label>
+          <input
+            className="w-full px-4 py-3 bg-[#141118] border border-[#1e1215] rounded-lg text-[#e8e6e3] text-sm font-mono tracking-wider focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all placeholder:text-[#44403c]"
+            type="text"
+            placeholder="ABC-123"
+            value={joinCode}
+            onChange={e => setJoinCode(e.target.value)}
+            required
+            disabled={loading}
+          />
+        </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="px-6 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 text-white font-semibold rounded-lg transition-all text-sm"
+          className="w-full py-3 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-semibold transition-all hover:shadow-[0_4px_20px_rgba(220,38,38,0.3)] active:scale-[0.98] disabled:opacity-40"
         >
-          {loading ? "Joining..." : "Join"}
+          {loading ? "Joining..." : "Join Room"}
         </button>
       </div>
 
-      {error && <p className="text-sm text-red-600 mt-3 font-medium">{error}</p>}
+      {error && (
+        <div className="p-3 rounded-lg border border-red-500/20 bg-red-500/5">
+          <p className="text-xs text-red-400">{error}</p>
+        </div>
+      )}
     </form>
   );
 }
