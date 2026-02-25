@@ -20,6 +20,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import com.example.codebreaker.Dto.executor.ExecutorRequest;
+import com.example.codebreaker.Dto.executor.ExecutorResponse;
+import com.example.codebreaker.config.RabbitMQConfig;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -35,6 +39,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final ScoringService scoringService;
     private final RoomSocketController roomSocketController;
     private final BadgeService badgeService;
+    private final RabbitTemplate rabbitTemplate;
     private final int speedsterSeconds;
 
     public SubmissionServiceImpl(
@@ -44,6 +49,7 @@ public class SubmissionServiceImpl implements SubmissionService {
             ScoringService scoringService,
             RoomSocketController roomSocketController,
             BadgeService badgeService,
+            RabbitTemplate rabbitTemplate,
             @Value("${rooms.badges.speedsterSeconds:120}") int speedsterSeconds
     ) {
         this.problemRepo = problemRepo;
@@ -52,6 +58,7 @@ public class SubmissionServiceImpl implements SubmissionService {
         this.scoringService = scoringService;
         this.roomSocketController = roomSocketController;
         this.badgeService = badgeService;
+        this.rabbitTemplate = rabbitTemplate;
         this.speedsterSeconds = speedsterSeconds;
     }
 
@@ -106,18 +113,38 @@ public class SubmissionServiceImpl implements SubmissionService {
                 .map(com.example.codebreaker.model.TestCase::getInput)
                 .toList();
 
-        DockerExecutor.BatchExecutionResult batchRes = 
-                DockerExecutor.executeBatch(request.getLanguage(), request.getCode(), inputs);
+        ExecutorRequest execRequest = ExecutorRequest.builder()
+                .language(request.getLanguage())
+                .code(request.getCode())
+                .inputs(inputs)
+                .build();
 
-        if (!batchRes.success) {
+        ExecutorResponse batchRes;
+        try {
+            System.out.println("Sending code execution request to RabbitMQ...");
+            long startTime = System.currentTimeMillis();
+            batchRes = (ExecutorResponse) rabbitTemplate.convertSendAndReceive(
+                    RabbitMQConfig.EXCHANGE,
+                    RabbitMQConfig.ROUTING_KEY,
+                    execRequest
+            );
+            long duration = System.currentTimeMillis() - startTime;
+            System.out.println("Received response from RabbitMQ in " + duration + "ms");
+        } catch (Exception e) {
+            System.err.println("RabbitMQ execution error: " + e.getMessage());
+            throw new RuntimeException("Code executor service (MQ) unavailable: " + e.getMessage());
+        }
+
+        if (batchRes == null || !batchRes.isSuccess()) {
             allPassed = false;
+            String errorMsg = batchRes != null ? batchRes.getErrorMessage() : "Unknown error";
             
             for (var tc : problem.getTestCases()) {
                 if (!tc.isHidden()) {
                     results.add(TestCaseResult.builder()
                             .testCaseId(tc.getId())
                             .passed(false)
-                            .error(batchRes.errorMessage)
+                            .error(errorMsg)
                             .input(tc.getInput())
                             .expectedOutput(tc.getOutput())
                             .actualOutput("")
@@ -127,7 +154,7 @@ public class SubmissionServiceImpl implements SubmissionService {
         } else {
             for (int i = 0; i < problem.getTestCases().size(); i++) {
                 var tc = problem.getTestCases().get(i);
-                String actualOutput = i < batchRes.outputs.size() ? batchRes.outputs.get(i) : "";
+                String actualOutput = i < batchRes.getOutputs().size() ? batchRes.getOutputs().get(i) : "";
                 
                 boolean passed = actualOutput.trim().equals(tc.getOutput().trim());
 

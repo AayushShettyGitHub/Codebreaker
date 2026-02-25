@@ -27,7 +27,7 @@ public class PlayerController {
     }
 
     @PostMapping("/join/{roomId}")
-    public Player joinRoom(
+    public com.example.codebreaker.Dto.PlayerResponse joinRoom(
             @PathVariable Long roomId,
             @RequestBody Map<String, String> payload
     ) {
@@ -58,7 +58,7 @@ public class PlayerController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "playerId or username is required");
         }
 
-        return service.joinRoom(roomId, playerId);
+        return com.example.codebreaker.Dto.PlayerResponse.fromEntity(service.joinRoom(roomId, playerId));
     }
 
    @GetMapping("/room/{roomId}")
@@ -84,7 +84,7 @@ public List<Map<String, Object>> listPlayers(@PathVariable Long roomId) {
         return Map.<String, Object>of(
                 "id", rp.getPlayer().getId(),
                 "username", rp.getPlayer().getUsername(),
-                "role", rp.getPlayer().getRole(),
+                "role", rp.getPlayer().getRole() != null ? rp.getPlayer().getRole().name() : "MEMBER",
                 "score", rp.getScore(),
                 "hasAnsweredCorrectly", rp.isHasAnsweredCorrectly(),
                 "badges", badges
@@ -128,7 +128,7 @@ public List<Map<String, Object>> listPlayers(@PathVariable Long roomId) {
         return Map.of(
                 "id", player.getId(),
                 "username", player.getUsername(),
-                "role", player.getRole(),
+                "role", player.getRole() != null ? player.getRole().name() : "MEMBER",
                 "badges", badges
         );
     }

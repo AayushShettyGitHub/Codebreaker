@@ -33,13 +33,15 @@ public class RoomController {
     }
 
     @PostMapping
-    public Room createRoom(@Valid @RequestBody CreateRoomRequest request) {
-        return roomService.createRoom(request.getPlayerId(), request.getName(), request.getPrivateRoom());
+    public com.example.codebreaker.Dto.RoomResponse createRoom(@Valid @RequestBody CreateRoomRequest request) {
+        return com.example.codebreaker.Dto.RoomResponse.fromEntity(roomService.createRoom(request.getPlayerId(), request.getName(), request.getPrivateRoom()));
     }
 
     @GetMapping
-    public List<Room> listRooms() {
-        return roomService.listRooms();
+    public List<com.example.codebreaker.Dto.RoomResponse> listRooms() {
+        return roomService.listRooms().stream()
+                .map(com.example.codebreaker.Dto.RoomResponse::fromEntity)
+                .toList();
     }
 
     @GetMapping("/public")
@@ -55,8 +57,8 @@ public class RoomController {
     }
 
     @GetMapping("/{roomId}")
-    public Room getRoom(@PathVariable Long roomId) {
-        return roomService.getRoom(roomId);
+    public com.example.codebreaker.Dto.RoomResponse getRoom(@PathVariable Long roomId) {
+        return com.example.codebreaker.Dto.RoomResponse.fromEntity(roomService.getRoom(roomId));
     }
 
     @GetMapping("/{roomId}/submissions")
@@ -114,55 +116,55 @@ public class RoomController {
     }
 
     @GetMapping("/me")
-    public Room getMyRoom() {
+    public com.example.codebreaker.Dto.RoomResponse getMyRoom() {
         Player player = playerService.getAuthenticatedPlayer()
                 .orElseThrow(() -> new RuntimeException("Not logged in"));
 
-        Room room = player.getRoom();
+        com.example.codebreaker.model.Room room = player.getRoom();
         if (room != null) room.getPlayers().size();
-        return room;
+        return com.example.codebreaker.Dto.RoomResponse.fromEntity(room);
     }
 
     @GetMapping("/me/room")
-    public Room getMyRoomById(@RequestParam Long playerId) {
-        Room room = playerService.findById(playerId)
+    public com.example.codebreaker.Dto.RoomResponse getMyRoomById(@RequestParam Long playerId) {
+        com.example.codebreaker.model.Room room = playerService.findById(playerId)
                 .map(Player::getRoom)
                 .orElse(null);
         if (room != null) room.getPlayers().size();
-        return room;
+        return com.example.codebreaker.Dto.RoomResponse.fromEntity(room);
     }
 
     @PostMapping("/{roomId}/join")
-    public Room joinRoom(@PathVariable Long roomId, @RequestBody Map<String, String> payload) {
+    public com.example.codebreaker.Dto.RoomResponse joinRoom(@PathVariable Long roomId, @RequestBody Map<String, String> payload) {
         Long playerId = extractPlayerId(payload);
         roomService.joinRoom(roomId, playerId);
-        return roomService.getRoom(roomId);
+        return com.example.codebreaker.Dto.RoomResponse.fromEntity(roomService.getRoom(roomId));
     }
 
     @PostMapping("/join")
-    public Room joinRoomByCode(@RequestBody Map<String, String> payload) {
+    public com.example.codebreaker.Dto.RoomResponse joinRoomByCode(@RequestBody Map<String, String> payload) {
         Long playerId = extractPlayerId(payload);
         String joinCode = payload.get("joinCode");
         if (joinCode == null || joinCode.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "joinCode is required");
         }
 
-        Room room = roomService.joinRoomByCode(joinCode, playerId);
-        return room;
+        com.example.codebreaker.model.Room room = roomService.joinRoomByCode(joinCode, playerId);
+        return com.example.codebreaker.Dto.RoomResponse.fromEntity(room);
     }
 
     @PostMapping("/{roomId}/problem")
-    public Room setProblem(@PathVariable Long roomId, @RequestBody Problem problem) {
-        return roomService.setProblem(roomId, problem);
+    public com.example.codebreaker.Dto.RoomResponse setProblem(@PathVariable Long roomId, @RequestBody Problem problem) {
+        return com.example.codebreaker.Dto.RoomResponse.fromEntity(roomService.setProblem(roomId, problem));
     }
 
     @PostMapping("/{roomId}/maxCorrectAnswers")
-    public Room setMaxCorrectAnswers(@PathVariable Long roomId, @RequestBody Map<String, Integer> payload) {
+    public com.example.codebreaker.Dto.RoomResponse setMaxCorrectAnswers(@PathVariable Long roomId, @RequestBody Map<String, Integer> payload) {
         Integer maxAnswers = payload.get("maxCorrectAnswers");
         if (maxAnswers == null || maxAnswers < 1) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "maxCorrectAnswers must be >= 1");
         }
-        return roomService.setMaxCorrectAnswers(roomId, maxAnswers);
+        return com.example.codebreaker.Dto.RoomResponse.fromEntity(roomService.setMaxCorrectAnswers(roomId, maxAnswers));
     }
 
     @PostMapping("/{roomId}/submit")

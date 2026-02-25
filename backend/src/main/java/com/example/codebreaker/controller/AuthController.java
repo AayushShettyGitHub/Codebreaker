@@ -84,11 +84,15 @@ public class AuthController {
             return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
         }
 
-        Object idObj = authentication.getDetails();
+        String role = authentication.getAuthorities().stream()
+                .map(a -> a.getAuthority().replace("ROLE_", ""))
+                .findFirst()
+                .orElse("MEMBER");
+
         Map<String, Object> user = Map.of(
-                "id", idObj,
+                "id", authentication.getDetails(),
                 "username", authentication.getName(),
-                "roles", authentication.getAuthorities()
+                "role", role
         );
 
         return ResponseEntity.ok(user);

@@ -36,7 +36,7 @@ public class RoomSocketController {
     public void roomCreated(Room room) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "ROOM_CREATED");
-        payload.put("room", room);
+        payload.put("room", com.example.codebreaker.Dto.RoomResponse.fromEntity(room));
         payload.put("timestamp", Instant.now());
 
         messagingTemplate.convertAndSend(roomsTopic(), payload);
@@ -55,7 +55,7 @@ public class RoomSocketController {
     public void roomUpdated(Room room) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "ROOM_UPDATED");
-        payload.put("room", room);
+        payload.put("room", com.example.codebreaker.Dto.RoomResponse.fromEntity(room));
         payload.put("timestamp", Instant.now());
 
         messagingTemplate.convertAndSend(roomTopic(room.getId()), payload);
@@ -64,7 +64,7 @@ public class RoomSocketController {
     public void playerJoined(Long roomId, Player player) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "PLAYER_JOINED");
-        payload.put("player", player);
+        payload.put("player", com.example.codebreaker.Dto.PlayerResponse.fromEntity(player));
         payload.put("timestamp", Instant.now());
 
         messagingTemplate.convertAndSend(roomTopic(roomId), payload);
@@ -73,7 +73,7 @@ public class RoomSocketController {
     public void playerLeft(Long roomId, Player player) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "PLAYER_LEFT");
-        payload.put("player", player);
+        payload.put("player", com.example.codebreaker.Dto.PlayerResponse.fromEntity(player));
         payload.put("timestamp", Instant.now());
 
         messagingTemplate.convertAndSend(roomTopic(roomId), payload);
@@ -91,7 +91,7 @@ public class RoomSocketController {
     public void problemSet(Long roomId, Problem problem) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "PROBLEM_SET");
-        payload.put("problem", problem);
+        payload.put("problem", com.example.codebreaker.Dto.ProblemResponse.fromEntity(problem));
         payload.put("timestamp", Instant.now());
 
         messagingTemplate.convertAndSend(roomTopic(roomId), payload);
@@ -100,7 +100,7 @@ public class RoomSocketController {
     public void problemStarted(Long roomId, Problem problem, Long startTime, Integer durationSeconds) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "PROBLEM_STARTED");
-        payload.put("problem", problem);
+        payload.put("problem", com.example.codebreaker.Dto.ProblemResponse.fromEntity(problem));
         payload.put("startTime", startTime);
         payload.put("durationSeconds", durationSeconds);
         payload.put("timestamp", Instant.now());

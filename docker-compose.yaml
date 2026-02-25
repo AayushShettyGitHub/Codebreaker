@@ -13,23 +13,42 @@ services:
     ports:
       - "5432:5432"
 
-  backend:
-    image: codebreaker-backend
-    container_name: codebreaker-backend
-    depends_on:
-    - postgres
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: codebreaker-mq
     ports:
-    - "8081:8081"
-    env_file:
-    - .env
-    volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
-    - C:/codebreaker-executor:/executor
+      - "5672:5672"
+      - "15672:15672"
     restart: unless-stopped
 
+  backend:
+    build: ./backend
+    container_name: codebreaker-backend
+    depends_on:
+      - postgres
+      - rabbitmq
+      - code-executor
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - EXECUTOR_SERVICE_URL=http://code-executor:8081/api/execute
+    restart: unless-stopped
+
+  code-executor:
+    build: ./code-executor
+    container_name: code-executor
+    ports:
+      - "8081:8081"
+    env_file:
+      - .env
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
 
   frontend:
-    image: codebreaker-frontend
+    build: ./frontend
     container_name: codebreaker-frontend
     depends_on:
       - backend

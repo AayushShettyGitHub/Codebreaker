@@ -28,15 +28,15 @@ public class ProblemController {
     }
 
     @PostMapping("/{roomId}/with-test-cases")
-    public Problem createWithTestCases(
+    public com.example.codebreaker.Dto.ProblemResponse createWithTestCases(
             @PathVariable Long roomId,
             @RequestBody ProblemWithTestCasesRequest request) {
-        return problemService.createWithTestCases(roomId, request);
+        return com.example.codebreaker.Dto.ProblemResponse.fromEntity(problemService.createWithTestCases(roomId, request));
     }
 
     @GetMapping("/{id}")
-    public Problem getProblem(@PathVariable Long id) {
-        return problemService.getById(id);
+    public com.example.codebreaker.Dto.ProblemResponse getProblem(@PathVariable Long id) {
+        return com.example.codebreaker.Dto.ProblemResponse.fromEntity(problemService.getById(id));
     }
 
     @PostMapping("/rooms/{roomId}/start-problem")

@@ -21,13 +21,9 @@ public class ProblemLibraryController {
 
     @Transactional(readOnly = true)
     @GetMapping
-    public List<ProblemLibrary> getAll() {
-        List<ProblemLibrary> problems = repository.findAll();
-        problems.forEach(p -> {
-            p.getTags().size();
-            p.getTestCases().size();
-        });
-
-        return problems;
+    public List<com.example.codebreaker.Dto.ProblemLibraryResponse> getAll() {
+        return repository.findAll().stream()
+                .map(com.example.codebreaker.Dto.ProblemLibraryResponse::fromEntity)
+                .toList();
     }
 }
