@@ -2,7 +2,7 @@ package com.example.code_executor.controller;
 
 import com.example.code_executor.dto.ExecutionRequest;
 import com.example.code_executor.dto.ExecutionResponse;
-import com.example.code_executor.service.LocalCodeExecutor;
+import com.example.code_executor.service.CodeExecutor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ExecutorController {
 
-    private final LocalCodeExecutor executor;
+    private final CodeExecutor executor;
 
     @PostMapping
     public ExecutionResponse execute(@RequestBody ExecutionRequest request) {

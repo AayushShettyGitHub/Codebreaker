@@ -129,7 +129,7 @@ public class SubmissionServiceImpl implements SubmissionService {
                     execRequest
             );
             long duration = System.currentTimeMillis() - startTime;
-            System.out.println("Received response from RabbitMQ in " + duration + "ms");
+            System.out.println("Received response from RabbitMQ in " + duration + "ms. Build: " + batchRes.getBuildTimeMs() + "ms, Execution: " + batchRes.getExecutionTimeMs() + "ms");
         } catch (Exception e) {
             System.err.println("RabbitMQ execution error: " + e.getMessage());
             throw new RuntimeException("Code executor service (MQ) unavailable: " + e.getMessage());

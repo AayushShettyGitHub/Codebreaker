@@ -1,8 +1,7 @@
-version: "3.9"
 
 services:
   postgres:
-    image: postgres:15
+    image: postgres:15-alpine
     container_name: codebreaker-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -12,17 +11,34 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 512M
+        reservations:
+          memory: 256M
+    restart: unless-stopped
 
   rabbitmq:
-    image: rabbitmq:3-management
+    image: rabbitmq:3-management-alpine
     container_name: codebreaker-mq
     ports:
       - "5672:5672"
       - "15672:15672"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+        reservations:
+          memory: 256M
     restart: unless-stopped
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: codebreaker-backend
     depends_on:
       - postgres
@@ -34,26 +50,51 @@ services:
       - .env
     environment:
       - EXECUTOR_SERVICE_URL=http://code-executor:8081/api/execute
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+        reservations:
+          memory: 512M
     restart: unless-stopped
 
   code-executor:
-    build: ./code-executor
+    build:
+      context: ./code-executor
+      dockerfile: Dockerfile
     container_name: code-executor
+    depends_on:
+      - rabbitmq
     ports:
       - "8081:8081"
     env_file:
       - .env
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+        reservations:
+          memory: 512M
     restart: unless-stopped
-    depends_on:
-      - rabbitmq
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: codebreaker-frontend
     depends_on:
       - backend
     ports:
       - "5173:5173"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+        reservations:
+          memory: 256M
     restart: unless-stopped
 
 volumes:

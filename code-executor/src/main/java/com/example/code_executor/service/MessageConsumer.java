@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class MessageConsumer {
 
-    private final LocalCodeExecutor executor;
+    private final CodeExecutor executor;
 
     @RabbitListener(queues = RabbitMQConfig.QUEUE)
     public ExecutionResponse consumeMessage(ExecutionRequest request) {
