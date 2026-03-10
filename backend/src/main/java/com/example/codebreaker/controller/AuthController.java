@@ -2,6 +2,8 @@ package com.example.codebreaker.controller;
 
 import com.example.codebreaker.Dto.AuthRequest;
 import com.example.codebreaker.Dto.AuthResponse;
+import com.example.codebreaker.Dto.MessageResponse;
+import com.example.codebreaker.Dto.UserResponse;
 import com.example.codebreaker.model.Player;
 import com.example.codebreaker.security.JwtUtil;
 import com.example.codebreaker.services.PlayerService;
@@ -75,13 +77,13 @@ public class AuthController {
                 .build();
 
         response.addHeader("Set-Cookie", cookie.toString());
-        return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+        return ResponseEntity.ok(MessageResponse.builder().message("Logged out successfully").build());
     }
 
     @GetMapping("/me")
     public ResponseEntity<?> me(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+            return ResponseEntity.status(401).body(MessageResponse.builder().error("Not authenticated").build());
         }
 
         String role = authentication.getAuthorities().stream()
@@ -89,11 +91,11 @@ public class AuthController {
                 .findFirst()
                 .orElse("MEMBER");
 
-        Map<String, Object> user = Map.of(
-                "id", authentication.getDetails(),
-                "username", authentication.getName(),
-                "role", role
-        );
+        UserResponse user = UserResponse.builder()
+                .id((Long) authentication.getDetails())
+                .username(authentication.getName())
+                .role(role)
+                .build();
 
         return ResponseEntity.ok(user);
     }

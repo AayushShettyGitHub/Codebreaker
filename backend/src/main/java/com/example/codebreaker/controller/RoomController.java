@@ -1,6 +1,8 @@
 package com.example.codebreaker.controller;
 
 import com.example.codebreaker.Dto.CreateRoomRequest;
+import com.example.codebreaker.Dto.LeaderboardEntry;
+import com.example.codebreaker.Dto.PublicRoomResponse;
 import com.example.codebreaker.model.Player;
 import com.example.codebreaker.model.Problem;
 import com.example.codebreaker.model.Room;
@@ -9,14 +11,15 @@ import com.example.codebreaker.repo.SubmissionRepository;
 import com.example.codebreaker.services.RoomService;
 import com.example.codebreaker.services.PlayerService;
 import jakarta.validation.Valid;
+import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/rooms")
@@ -25,11 +28,13 @@ public class RoomController {
     private final RoomService roomService;
     private final PlayerService playerService;
     private final SubmissionRepository submissionRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    public RoomController(RoomService roomService, PlayerService playerService, SubmissionRepository submissionRepository) {
+    public RoomController(RoomService roomService, PlayerService playerService, SubmissionRepository submissionRepository, RedisTemplate<String, Object> redisTemplate) {
         this.roomService = roomService;
         this.playerService = playerService;
         this.submissionRepository = submissionRepository;
+        this.redisTemplate = redisTemplate;
     }
 
     @PostMapping
@@ -45,20 +50,35 @@ public class RoomController {
     }
 
     @GetMapping("/public")
-    public List<Map<String, Object>> listPublicRoomsMapped() {
+    public List<PublicRoomResponse> listPublicRoomsMapped() {
         List<Room> rooms = roomService.listPublicRooms();
-        return rooms.stream().map(r -> Map.<String, Object>of(
-                "id", r.getId(),
-                "name", r.getName(),
-                "playersCount", r.getPlayers() == null ? 0 : r.getPlayers().size(),
-                "minPlayersToStart", r.getMinPlayersToStart(),
-                "privateRoom", r.isPrivateRoom()
-        )).toList();
+        return rooms.stream().map(r -> PublicRoomResponse.builder()
+                .id(r.getId())
+                .name(r.getName())
+                .playersCount(r.getPlayers() == null ? 0 : r.getPlayers().size())
+                .minPlayersToStart(r.getMinPlayersToStart())
+                .privateRoom(r.isPrivateRoom())
+                .build()).toList();
     }
 
     @GetMapping("/{roomId}")
     public com.example.codebreaker.Dto.RoomResponse getRoom(@PathVariable Long roomId) {
         return com.example.codebreaker.Dto.RoomResponse.fromEntity(roomService.getRoom(roomId));
+    }
+
+    @GetMapping("/{roomId}/leaderboard")
+    public List<LeaderboardEntry> getLeaderboard(@PathVariable Long roomId) {
+        String lbKey = "room:" + roomId + ":leaderboard";
+        Set<ZSetOperations.TypedTuple<Object>> range = redisTemplate.opsForZSet().reverseRangeWithScores(lbKey, 0, -1);
+        
+        if (range == null || range.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return range.stream().map(tuple -> LeaderboardEntry.builder()
+                .username(Objects.requireNonNull(tuple.getValue()).toString())
+                .score(Objects.requireNonNull(tuple.getScore()).intValue())
+                .build()).collect(Collectors.toList());
     }
 
     @GetMapping("/{roomId}/submissions")

@@ -10,13 +10,11 @@ import com.example.codebreaker.repo.RoomRepository;
 import com.example.codebreaker.repo.SubmissionRepository;
 import com.example.codebreaker.websockets.RoomSocketController;
 
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 public class RoomService {
@@ -30,6 +28,7 @@ public class RoomService {
     private int defaultMinPlayers;
     private final BadgeService badgeService;
     private final ScoringService scoringService;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     public RoomService(
             RoomRepository roomRepo,
@@ -38,7 +37,8 @@ public class RoomService {
             PlayerService playerService,
             RoomSocketController roomSocketController,
             BadgeService badgeService,
-            ScoringService scoringService
+            ScoringService scoringService,
+            RedisTemplate<String, Object> redisTemplate
     ) {
         this.roomRepo = roomRepo;
         this.roomPlayerRepo = roomPlayerRepo;
@@ -47,6 +47,7 @@ public class RoomService {
         this.roomSocketController = roomSocketController;
         this.badgeService = badgeService;
         this.scoringService = scoringService;
+        this.redisTemplate = redisTemplate;
     }
 
     @org.springframework.beans.factory.annotation.Value("${rooms.public.minPlayers:5}")
@@ -150,6 +151,9 @@ public class RoomService {
             rp.setLastCorrectSubmissionTime(null);
         });
 
+        String lbKey = "room:" + room.getId() + ":leaderboard";
+        redisTemplate.delete(lbKey);
+
         Room saved = roomRepo.save(room);
         roomSocketController.problemSet(roomId, problem);
         return saved;
@@ -167,10 +171,19 @@ public class RoomService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Room getRoom(Long roomId) {
         Room room = roomRepo.findById(roomId)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
-        room.getPlayers().size();
+        
+        if (room.getPlayers() != null) {
+            room.getPlayers().size();
+        }
+        
+        if (room.getCurrentProblem() != null && room.getCurrentProblem().getTestCases() != null) {
+            room.getCurrentProblem().getTestCases().size();
+        }
+        
         return room;
     }
 
@@ -312,6 +325,8 @@ public class RoomService {
             }
 
             roomRepo.delete(room);
+            String lbKey = "room:" + roomId + ":leaderboard";
+            redisTemplate.delete(lbKey);
             roomSocketController.roomDeleted(roomId);
             return "Room deleted.";
         } catch (Exception e) {
@@ -357,6 +372,9 @@ public class RoomService {
 
             room.setCorrectAnswerCount(room.getCorrectAnswerCount() + 1);
             roomRepo.save(room);
+
+            String lbKey = "room:" + roomId + ":leaderboard";
+            redisTemplate.opsForZSet().add(lbKey, player.getUsername(), rp.getScore());
 
             roomSocketController.answerCorrect(roomId, player, rp.getScore());
             return "Correct +" + score;

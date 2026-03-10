@@ -106,7 +106,7 @@ public class CodeExecutor {
 
     private List<String> runTestCasesInParallel(String language, Path dir, int testCaseCount) throws Exception {
 
-        int threads = Math.min(testCaseCount, 8);
+        int threads = Math.min(testCaseCount, 16);
         System.out.println("Running " + testCaseCount + " test cases in parallel with " + threads + " threads.");
         ExecutorService executor = Executors.newFixedThreadPool(threads);
 

@@ -24,6 +24,7 @@ import com.example.codebreaker.Dto.executor.ExecutorRequest;
 import com.example.codebreaker.Dto.executor.ExecutorResponse;
 import com.example.codebreaker.config.RabbitMQConfig;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -40,6 +41,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final RoomSocketController roomSocketController;
     private final BadgeService badgeService;
     private final RabbitTemplate rabbitTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
     private final int speedsterSeconds;
 
     public SubmissionServiceImpl(
@@ -50,6 +52,7 @@ public class SubmissionServiceImpl implements SubmissionService {
             RoomSocketController roomSocketController,
             BadgeService badgeService,
             RabbitTemplate rabbitTemplate,
+            RedisTemplate<String, Object> redisTemplate,
             @Value("${rooms.badges.speedsterSeconds:120}") int speedsterSeconds
     ) {
         this.problemRepo = problemRepo;
@@ -59,6 +62,7 @@ public class SubmissionServiceImpl implements SubmissionService {
         this.roomSocketController = roomSocketController;
         this.badgeService = badgeService;
         this.rabbitTemplate = rabbitTemplate;
+        this.redisTemplate = redisTemplate;
         this.speedsterSeconds = speedsterSeconds;
     }
 
@@ -66,8 +70,27 @@ public class SubmissionServiceImpl implements SubmissionService {
     @Transactional
     public SubmissionResult submitCode(SubmissionRequest request) {
 
-        Problem problem = problemRepo.findById(request.getProblemId())
-                .orElseThrow(() -> new RuntimeException("Problem not found"));
+        String problemCacheKey = "problem:cache:" + request.getProblemId();
+        Problem problem = null;
+        try {
+            problem = (Problem) redisTemplate.opsForValue().get(problemCacheKey);
+        } catch (Exception e) {
+            System.err.println("Redis cache read error for problem: " + e.getMessage());
+        }
+
+        if (problem == null) {
+            problem = problemRepo.findById(request.getProblemId())
+                    .orElseThrow(() -> new RuntimeException("Problem not found"));
+            
+            if (problem.getTestCases() != null) {
+                problem.getTestCases().size(); 
+            }
+            try {
+                redisTemplate.opsForValue().set(problemCacheKey, problem, Duration.ofHours(1));
+            } catch (Exception e) {
+                System.err.println("Redis cache write error for problem: " + e.getMessage());
+            }
+        }
 
         RoomPlayer roomPlayer = roomPlayerRepo
                 .findByRoomIdAndPlayerId(request.getRoomId(), request.getPlayerId())
@@ -129,7 +152,11 @@ public class SubmissionServiceImpl implements SubmissionService {
                     execRequest
             );
             long duration = System.currentTimeMillis() - startTime;
-            System.out.println("Received response from RabbitMQ in " + duration + "ms. Build: " + batchRes.getBuildTimeMs() + "ms, Execution: " + batchRes.getExecutionTimeMs() + "ms");
+            if (batchRes != null) {
+                System.out.println("Received response from RabbitMQ in " + duration + "ms. Build: " + batchRes.getBuildTimeMs() + "ms, Execution: " + batchRes.getExecutionTimeMs() + "ms");
+            } else {
+                System.err.println("RabbitMQ conversion returned null after " + duration + "ms (timeout or processing failure)");
+            }
         } catch (Exception e) {
             System.err.println("RabbitMQ execution error: " + e.getMessage());
             throw new RuntimeException("Code executor service (MQ) unavailable: " + e.getMessage());
@@ -219,6 +246,9 @@ public class SubmissionServiceImpl implements SubmissionService {
                     roomPlayer.getScore(),
                     true
             );
+
+            String lbKey = "room:" + room.getId() + ":leaderboard";
+            redisTemplate.opsForZSet().add(lbKey, player.getUsername(), roomPlayer.getScore());
 
             
             if (prevCorrect == 0 && !room.isPrivateRoom()) {

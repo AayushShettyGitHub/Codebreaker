@@ -35,6 +35,17 @@ services:
           memory: 256M
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    container_name: codebreaker-redis
+    ports:
+      - "6379:6379"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    restart: unless-stopped
+
   backend:
     build:
       context: ./backend
@@ -43,6 +54,7 @@ services:
     depends_on:
       - postgres
       - rabbitmq
+      - redis
       - code-executor
     ports:
       - "8080:8080"
@@ -50,13 +62,14 @@ services:
       - .env
     environment:
       - EXECUTOR_SERVICE_URL=http://code-executor:8081/api/execute
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/codebreaker
+      - RABBITMQ_HOST=rabbitmq
     deploy:
       resources:
         limits:
-          cpus: "1.0"
           memory: 1024M
-        reservations:
-          memory: 512M
     restart: unless-stopped
 
   code-executor:
@@ -70,13 +83,15 @@ services:
       - "8081:8081"
     env_file:
       - .env
+    environment:
+      - RABBITMQ_HOST=rabbitmq
     deploy:
       resources:
         limits:
-          cpus: "1.0"
-          memory: 1024M
+          cpus: "4.0"
+          memory: 4096M
         reservations:
-          memory: 512M
+          memory: 1024M
     restart: unless-stopped
 
   frontend:

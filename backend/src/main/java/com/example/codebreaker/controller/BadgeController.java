@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.codebreaker.Dto.*;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -28,15 +29,13 @@ public class BadgeController {
     }
 
     @GetMapping
-    public List<Map<String, Object>> listAllBadges() {
-        return badgeRepo.findAll().stream().map(b -> {
-            java.util.Map<String, Object> m = new java.util.HashMap<>();
-            m.put("key", b.getKey());
-            m.put("name", b.getName());
-            m.put("description", b.getDescription());
-            m.put("category", b.getCategory());
-            return m;
-        }).collect(Collectors.toList());
+    public List<BadgeLibraryEntry> listAllBadges() {
+        return badgeRepo.findAll().stream().map(b -> BadgeLibraryEntry.builder()
+                .key(b.getKey())
+                .name(b.getName())
+                .description(b.getDescription())
+                .category(b.getCategory().name())
+                .build()).collect(Collectors.toList());
     }
 
     @GetMapping("/me")

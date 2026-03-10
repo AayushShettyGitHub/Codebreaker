@@ -5,7 +5,7 @@ import com.example.codebreaker.model.Room;
 import com.example.codebreaker.repo.RoomRepository;
 import com.example.codebreaker.services.ProblemService;
 import com.example.codebreaker.websockets.RoomSocketController;
-import com.example.codebreaker.Dto.ProblemWithTestCasesRequest;
+import com.example.codebreaker.Dto.*;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,49 +42,46 @@ public class ProblemController {
     @PostMapping("/rooms/{roomId}/start-problem")
     public ResponseEntity<?> startProblem(
             @PathVariable Long roomId,
-            @RequestBody Map<String, Integer> body) {
+            @RequestBody StartProblemRequest body) {
 
         Room room = roomRepo.findById(roomId)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
 
-        Integer duration = body.get("duration");
-        
+        Integer duration = body.getDuration();
         
         if (duration == null || duration < 10) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Duration is required and must be at least 10 seconds"
-            ));
+            return ResponseEntity.badRequest().body(MessageResponse.builder()
+                    .error("Duration is required and must be at least 10 seconds")
+                    .build());
         }
         
         if (room.getCurrentProblem() == null) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "No problem set for this room. Set a problem first before starting."
-            ));
+            return ResponseEntity.badRequest().body(MessageResponse.builder()
+                    .error("No problem set for this room. Set a problem first before starting.")
+                    .build());
         }
 
         if (!room.isPrivateRoom()) {
             int currentPlayers = room.getPlayers() == null ? 0 : room.getPlayers().size();
             int minNeeded = room.getMinPlayersToStart() == null ? 1 : room.getMinPlayersToStart();
             if (currentPlayers < minNeeded) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "error", "Not enough players to start public room. Minimum required: " + minNeeded
-                ));
+                return ResponseEntity.badRequest().body(MessageResponse.builder()
+                        .error("Not enough players to start public room. Minimum required: " + minNeeded)
+                        .build());
             }
         }
 
         room.setProblemStartTime(Instant.now());
-
         room.setProblemDuration(duration);
         roomRepo.save(room);
 
-        
         roomSocketController.problemStarted(roomId, room.getCurrentProblem(), System.currentTimeMillis(), duration);
 
-        return ResponseEntity.ok(Map.of(
-                "message", "Problem started",
-                "duration", duration,
-                "problemStartTime", room.getProblemStartTime(),
-                "problemDuration", room.getProblemDuration()
-        ));
+        return ResponseEntity.ok(ProblemStartResponse.builder()
+                .message("Problem started")
+                .duration(duration)
+                .problemStartTime(room.getProblemStartTime())
+                .problemDuration(room.getProblemDuration())
+                .build());
     }
 }

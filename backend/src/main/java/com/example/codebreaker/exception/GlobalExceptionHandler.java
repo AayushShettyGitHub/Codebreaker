@@ -1,6 +1,7 @@
 package com.example.codebreaker.exception;
 
 import com.example.codebreaker.Dto.ErrorResponse;
+import com.example.codebreaker.Dto.ValidationErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -37,10 +38,10 @@ public class GlobalExceptionHandler {
                 .path(request.getDescription(false).replace("uri=", ""))
                 .build();
 
-        return new ResponseEntity<>(Map.of(
-                "error", errorResponse,
-                "details", errors
-        ), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(ValidationErrorResponse.builder()
+                .error(errorResponse)
+                .details(errors)
+                .build(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(ResponseStatusException.class)

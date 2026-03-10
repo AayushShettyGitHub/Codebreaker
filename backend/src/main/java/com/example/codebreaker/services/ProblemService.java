@@ -36,9 +36,14 @@ public class ProblemService {
         this.problemLibraryRepository = problemLibraryRepository;
     }
 
+    @Transactional(readOnly = true)
     public Problem getById(Long id) {
-        return problemRepository.findById(id)
+        Problem problem = problemRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Problem not found"));
+        if (problem.getTestCases() != null) {
+            problem.getTestCases().size(); // Trigger lazy load
+        }
+        return problem;
     }
 
     @Transactional

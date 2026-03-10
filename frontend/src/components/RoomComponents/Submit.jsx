@@ -6,10 +6,12 @@ import CodeEditor from "./CodeEditor";
 import { useRoom } from "../../context/RoomContext";
 import { Play, RotateCcw, AlertCircle, Lock, Loader2 } from "lucide-react";
 
-export default function Submit({ playerId }) {
+export default function Submit({ playerId, roomId: propsRoomId, problemId: propsProblemId }) {
   const { myRoom } = useRoom();
-  const roomId = myRoom?.id;
-  const problemId = myRoom?.currentProblem?.id;
+
+  // Use props if provided, otherwise fallback to context
+  const roomId = propsRoomId || myRoom?.id;
+  const problemId = propsProblemId || myRoom?.currentProblem?.id;
 
   const [code, setCode] = useState("# write your solution here\n");
   const [language, setLanguage] = useState("python");
@@ -18,19 +20,39 @@ export default function Submit({ playerId }) {
   const [loading, setLoading] = useState(false);
   const [maxSubmissionsReached, setMaxSubmissionsReached] = useState(false);
 
+  // Load persisted code and language
   useEffect(() => {
     setResult(null);
     setError("");
     setMaxSubmissionsReached(false);
-    const key = `code:${roomId}:${problemId}`;
-    const saved = localStorage.getItem(key);
-    if (saved !== null) { setCode(saved); } else { setCode("# write your solution here\n"); }
+
+    if (roomId && problemId) {
+      const codeKey = `code:${roomId}:${problemId}`;
+      const langKey = `lang:${roomId}:${problemId}`;
+
+      const savedCode = localStorage.getItem(codeKey);
+      const savedLang = localStorage.getItem(langKey);
+
+      if (savedCode !== null) setCode(savedCode);
+      else setCode("# write your solution here\n");
+
+      if (savedLang !== null) setLanguage(savedLang);
+    }
   }, [roomId, problemId]);
 
+  // Persist code on change
   useEffect(() => {
-    const key = `code:${roomId}:${problemId}`;
-    if (problemId && roomId) localStorage.setItem(key, code);
+    if (problemId && roomId) {
+      localStorage.setItem(`code:${roomId}:${problemId}`, code);
+    }
   }, [code, roomId, problemId]);
+
+  // Persist language on change
+  useEffect(() => {
+    if (problemId && roomId) {
+      localStorage.setItem(`lang:${roomId}:${problemId}`, language);
+    }
+  }, [language, roomId, problemId]);
 
   useEffect(() => {
     if (!roomId || !websocketService.isReady()) return;
@@ -74,7 +96,7 @@ export default function Submit({ playerId }) {
 
   return (
     <div className="rounded-xl border border-[#1e1215] bg-[#0f0d12] p-6 md:p-8 flex flex-col h-full animate-in relative overflow-hidden">
-      {}
+      { }
       <div className="flex items-center justify-between mb-6 pb-5 border-b border-[#1e1215]">
         <div className="flex items-center gap-3">
           <div className="w-2 h-6 rounded-full bg-red-500"></div>
@@ -104,7 +126,7 @@ export default function Submit({ playerId }) {
         </div>
       </div>
 
-      {}
+      { }
       {maxSubmissionsReached && (
         <div className="mb-5 p-4 rounded-lg bg-red-500/5 border border-red-500/20 flex items-center gap-3">
           <AlertCircle size={16} className="text-red-400 flex-shrink-0" />
@@ -119,7 +141,7 @@ export default function Submit({ playerId }) {
         </div>
       )}
 
-      {}
+      { }
       <div className="mb-5">
         <label className="block text-xs font-medium text-[#a8a29e] mb-2">Language</label>
         <select
@@ -135,7 +157,7 @@ export default function Submit({ playerId }) {
         </select>
       </div>
 
-      {}
+      { }
       <div className="flex-1 flex flex-col min-h-[500px]">
         <div className="flex items-center justify-between mb-2">
           <label className="text-xs text-[#6b6560]">Solution Code</label>
@@ -151,7 +173,7 @@ export default function Submit({ playerId }) {
         </div>
       </div>
 
-      {}
+      { }
       <div className="flex gap-3 mt-6">
         <button
           className={`flex-1 py-3 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${isDisabled
@@ -179,7 +201,7 @@ export default function Submit({ playerId }) {
         </button>
       </div>
 
-      {}
+      { }
       {result && (
         <div className="mt-8 pt-8 border-t border-[#1e1215] animate-in">
           <div className="flex items-center gap-3 mb-6">

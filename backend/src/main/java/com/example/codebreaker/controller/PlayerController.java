@@ -3,9 +3,7 @@ package com.example.codebreaker.controller;
 import com.example.codebreaker.model.Player;
 import com.example.codebreaker.model.RoomPlayer;
 import com.example.codebreaker.services.PlayerService;
-import com.example.codebreaker.Dto.PlayerProfileResponse;
-import com.example.codebreaker.Dto.BadgeResponse;
-import com.example.codebreaker.Dto.FeaturedBadgesRequest;
+import com.example.codebreaker.Dto.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,24 +27,16 @@ public class PlayerController {
     @PostMapping("/join/{roomId}")
     public com.example.codebreaker.Dto.PlayerResponse joinRoom(
             @PathVariable Long roomId,
-            @RequestBody Map<String, String> payload
+            @RequestBody PlayerJoinRequest payload
     ) {
         if (payload == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body required");
         }
 
-        String idStr = payload.get("playerId");
-        Long playerId = null;
-        if (idStr != null) {
-            try {
-                playerId = Long.valueOf(idStr);
-            } catch (NumberFormatException ex) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "playerId must be a number");
-            }
-        }
+        Long playerId = payload.getPlayerId();
 
         if (playerId == null) {
-            String username = payload.get("username");
+            String username = payload.getUsername();
             if (username != null) {
                 playerId = service.findByUsername(username)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Player not found"))
@@ -62,75 +52,75 @@ public class PlayerController {
     }
 
    @GetMapping("/room/{roomId}")
-public List<Map<String, Object>> listPlayers(@PathVariable Long roomId) {
+public List<RoomPlayerResponse> listPlayers(@PathVariable Long roomId) {
     List<RoomPlayer> roomPlayers = service.getRoomPlayers(roomId);
 
     return roomPlayers.stream().map(rp -> {
         java.util.List<com.example.codebreaker.model.PlayerBadge> pbs = badgeService.getBadgesForPlayer(rp.getPlayer());
-        java.util.List<Map<String, Object>> badges = pbs.stream()
+        java.util.List<BadgeStatusResponse> badges = pbs.stream()
                 .map(pb -> {
                     Integer count = pb.getCount() == null ? 1 : pb.getCount();
                     String rank = pb.getRank() == null ? "BRONZE" : pb.getRank();
                     boolean featured = rp.getPlayer().getFeaturedBadges() != null && rp.getPlayer().getFeaturedBadges().contains(pb.getBadge().getKey());
-                    return Map.<String, Object>of(
-                            "key", pb.getBadge().getKey(),
-                            "name", pb.getBadge().getName(),
-                            "count", count,
-                            "rank", rank,
-                            "featured", featured
-                    );
+                    return BadgeStatusResponse.builder()
+                            .key(pb.getBadge().getKey())
+                            .name(pb.getBadge().getName())
+                            .count(count)
+                            .rank(rank)
+                            .featured(featured)
+                            .build();
                 }).limit(3).collect(Collectors.toList());
 
-        return Map.<String, Object>of(
-                "id", rp.getPlayer().getId(),
-                "username", rp.getPlayer().getUsername(),
-                "role", rp.getPlayer().getRole() != null ? rp.getPlayer().getRole().name() : "MEMBER",
-                "score", rp.getScore(),
-                "hasAnsweredCorrectly", rp.isHasAnsweredCorrectly(),
-                "badges", badges
-        );
+        return RoomPlayerResponse.builder()
+                .id(rp.getPlayer().getId())
+                .username(rp.getPlayer().getUsername())
+                .role(rp.getPlayer().getRole() != null ? rp.getPlayer().getRole().name() : "MEMBER")
+                .score(rp.getScore())
+                .hasAnsweredCorrectly(rp.isHasAnsweredCorrectly())
+                .badges(badges)
+                .build();
     }).collect(Collectors.toList());
 }
 
     @GetMapping("/me/badges")
-    public List<Map<String, Object>> getMyBadges() {
+    public List<BadgeStatusResponse> getMyBadges() {
         Player me = service.getAuthenticatedPlayer().orElseThrow(() -> new RuntimeException("Not logged in"));
         return badgeService.getBadgesForPlayer(me).stream().map(pb -> {
             Integer count = pb.getCount() == null ? 1 : pb.getCount();
             String rank = pb.getRank() == null ? "BRONZE" : pb.getRank();
             Integer nextThreshold = badgeService.getNextThreshold(count);
             int progress = nextThreshold == null || nextThreshold == 0 ? 100 : (int) Math.min(100, Math.floor((count * 100.0) / nextThreshold));
-            return Map.<String, Object>of(
-                    "key", pb.getBadge().getKey(),
-                    "name", pb.getBadge().getName(),
-                    "description", pb.getBadge().getDescription(),
-                    "awardedAt", pb.getAwardedAt() != null ? pb.getAwardedAt().toString() : null,
-                    "count", count,
-                    "rank", rank,
-                    "progressPercent", progress
-            );
+            return BadgeStatusResponse.builder()
+                    .key(pb.getBadge().getKey())
+                    .name(pb.getBadge().getName())
+                    .description(pb.getBadge().getDescription())
+                    .awardedAt(pb.getAwardedAt() != null ? pb.getAwardedAt().toString() : null)
+                    .count(count)
+                    .rank(rank)
+                    .progressPercent(progress)
+                    .build();
         }).collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
-    public Map<String, Object> getPlayerProfile(@PathVariable Long id) {
+    public PlayerProfileSummaryResponse getPlayerProfile(@PathVariable Long id) {
         Player player = service.findById(id).orElseThrow(() -> new ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Player not found"));
         java.util.List<com.example.codebreaker.model.PlayerBadge> pbs = badgeService.getBadgesForPlayer(player);
-        java.util.List<Map<String, Object>> badges = pbs.stream().map(pb -> Map.<String, Object>of(
-                "key", pb.getBadge().getKey(),
-                "name", pb.getBadge().getName(),
-                "description", pb.getBadge().getDescription(),
-                "awardedAt", pb.getAwardedAt() != null ? pb.getAwardedAt().toString() : null,
-                "count", pb.getCount(),
-                "rank", pb.getRank()
-        )).collect(Collectors.toList());
+        java.util.List<BadgeStatusResponse> badges = pbs.stream().map(pb -> BadgeStatusResponse.builder()
+                .key(pb.getBadge().getKey())
+                .name(pb.getBadge().getName())
+                .description(pb.getBadge().getDescription())
+                .awardedAt(pb.getAwardedAt() != null ? pb.getAwardedAt().toString() : null)
+                .count(pb.getCount() == null ? 0 : pb.getCount())
+                .rank(pb.getRank())
+                .build()).collect(Collectors.toList());
 
-        return Map.of(
-                "id", player.getId(),
-                "username", player.getUsername(),
-                "role", player.getRole() != null ? player.getRole().name() : "MEMBER",
-                "badges", badges
-        );
+        return PlayerProfileSummaryResponse.builder()
+                .id(player.getId())
+                .username(player.getUsername())
+                .role(player.getRole() != null ? player.getRole().name() : "MEMBER")
+                .badges(badges)
+                .build();
     }
 
     @GetMapping("/me")
@@ -163,14 +153,17 @@ public List<Map<String, Object>> listPlayers(@PathVariable Long roomId) {
     }
 
     @PostMapping("/me/featured")
-    public Map<String, Object> setFeaturedBadges(@RequestBody FeaturedBadgesRequest request) {
+    public FeaturedBadgesResponse setFeaturedBadges(@RequestBody FeaturedBadgesRequest request) {
         List<String> selected = request.getBadges();
         if (selected.size() > 3) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At most 3 badges can be featured");
         Player player = service.getAuthenticatedPlayer().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not logged in"));
         player.setFeaturedBadges(new java.util.ArrayList<>(selected));
         service.save(player);
 
-        return Map.of("status","ok","featured", player.getFeaturedBadges());
+        return FeaturedBadgesResponse.builder()
+                .status("ok")
+                .featured(player.getFeaturedBadges())
+                .build();
     }
 }
 
