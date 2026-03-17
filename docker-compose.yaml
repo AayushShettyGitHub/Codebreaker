@@ -85,6 +85,9 @@ services:
       - .env
     environment:
       - RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_LISTENER_SIMPLE_PREFETCH=1
+    tmpfs:
+      - /executor:size=512M
     deploy:
       resources:
         limits:
@@ -93,6 +96,7 @@ services:
         reservations:
           memory: 1024M
     restart: unless-stopped
+
 
   frontend:
     build:

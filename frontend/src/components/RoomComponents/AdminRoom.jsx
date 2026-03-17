@@ -7,7 +7,7 @@ import { toastError, toastSuccess } from "../../utils/toast";
 import { parseAsUTC } from "../../utils/dateUtils";
 import ProblemLibrary from "./ProblemLibrary";
 import { Settings, Trash2, Copy, Check, Clock, BookOpen, Code2, Trophy, FileText, Library, Crown, X } from "lucide-react";
-import CodeEditor from "./CodeEditor";
+import Editor from "@monaco-editor/react";
 
 export default function AdminRoom({ adminId, playerId, onDelete }) {
   const { myRoom, players, setMyRoom } = useRoom();
@@ -23,7 +23,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
   const [timeLeft, setTimeLeft] = useState(0);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [topSubmissions, setTopSubmissions] = useState([]);
+  const [topSolutions, setTopSolutions] = useState([]);
   const [copied, setCopied] = useState(false);
   const [roomCode, setRoomCode] = useState("");
   const [selectedLibraryId, setSelectedLibraryId] = useState(null);
@@ -53,18 +53,16 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
 
   useEffect(() => {
     if (!roomId || isProblemActive) return;
-    const fetchTopSubmissions = async () => {
+    const fetchTopSolutions = async () => {
+      if (!myRoom?.currentProblem?.id) return;
       try {
-        const res = await api.get(`/rooms/${roomId}/submissions`);
-        const problemId = myRoom?.currentProblem?.id;
-        const filtered = problemId ? res.data.filter(sub => sub.problem?.id === problemId) : res.data;
-        const sorted = filtered.sort((a, b) => b.id - a.id).slice(0, 3);
-        setTopSubmissions(sorted);
-      } catch (err) { console.error("Failed to fetch submissions:", err); }
+        const res = await api.get(`/rooms/${roomId}/top-solutions?problemId=${myRoom.currentProblem.id}`);
+        setTopSolutions(res.data || []);
+      } catch (err) { console.error("Failed to fetch top solutions:", err); }
     };
-    fetchTopSubmissions();
+    fetchTopSolutions();
     if (websocketService.isReady()) {
-      const handleSubmissionResult = (message) => { if (message.type === "SUBMISSION_RESULT") fetchTopSubmissions(); };
+      const handleSubmissionResult = (message) => { if (message.type === "SUBMISSION_RESULT" || message.type === "PROBLEM_ENDED") fetchTopSolutions(); };
       websocketService.subscribe(`/topic/room/${roomId}`, handleSubmissionResult);
       return () => websocketService.unsubscribe(`/topic/room/${roomId}`);
     }
@@ -160,7 +158,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
     { key: "submit", label: "Solve", icon: <Code2 size={14} /> },
     { key: "settings", label: "Settings", icon: <Settings size={14} /> },
     { key: "leaderboard", label: "Leaderboard", icon: <Trophy size={14} /> },
-    { key: "solutions", label: "Logs", icon: <BookOpen size={14} /> },
+    { key: "solutions", label: "Top Solutions", icon: <Trophy size={14} /> },
   ];
 
   return (
@@ -432,59 +430,49 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
 
         {activeTab === "solutions" && (
           <div className="animate-in space-y-6 max-w-4xl mx-auto">
-            {!isProblemActive ? (
-              <div className="space-y-6">
-                <div className="p-5 rounded-lg bg-[#141118] border-l-2 border-red-500">
-                  <p className="text-sm font-medium text-[#e8e6e3]">
-                    {topSubmissions?.length > 0 ? `${topSubmissions.length} submission(s)` : "No Submissions"}
-                  </p>
-                  {topSubmissions?.length > 0 && myRoom?.currentProblem && (
-                    <p className="text-xs text-[#6b6560] mt-1">Problem: {myRoom.currentProblem.title}</p>
-                  )}
-                </div>
-
-                {topSubmissions?.length > 0 ? (
-                  <div className="space-y-4">
-                    {topSubmissions.map((sub, idx) => (
-                      <div key={sub.id} className="rounded-xl border border-[#1e1215] bg-[#141118] overflow-hidden group hover:border-[#2a1519] transition-all">
-                        <div className={`p-5 border-b border-[#1e1215] ${sub.passed ? "bg-green-500/5" : "bg-red-500/5"}`}>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="text-xs font-bold text-[#44403c]">{idx + 1}</div>
-                              <div>
-                                <p className="text-sm font-medium text-[#e8e6e3]">{sub.player?.username || "Anonymous"}</p>
-                                <p className="text-xs text-[#6b6560] mt-0.5">{sub.language?.toUpperCase() || "N/A"} • {new Date(sub.submittedAt).toLocaleTimeString()}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wider ${sub.passed ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"}`}>
-                                {sub.passed ? "Passed" : "Failed"}
-                              </span>
-                              <button
-                                onClick={() => { setModalContent(sub); setCodeModalVisible(true); }}
-                                className="p-2 rounded-lg bg-[#0a0a0f] border border-[#1e1215] text-[#a8a29e] hover:text-white hover:border-red-500/30 transition-all"
-                                title="View Code"
-                              >
-                                <FileText size={14} />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="p-5 bg-[#0a0a0f]/50">
-                          <pre className="text-[12px] text-[#6b6560] font-mono whitespace-pre-wrap truncate max-h-12 overflow-hidden">{sub.code}</pre>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-16 rounded-lg border border-dashed border-[#1e1215] bg-[#141118]">
-                    <p className="text-sm text-[#44403c]">Scanning for incoming data...</p>
-                  </div>
-                )}
+            <div className="flex items-center gap-2 pb-3 border-b border-[#1e1215]">
+              <Trophy size={14} className="text-yellow-500" />
+              <p className="text-xs font-bold text-[#e8e6e3] uppercase tracking-wider">Top 3 Solutions</p>
+            </div>
+            {isProblemActive ? (
+              <div className="text-center py-16 rounded-lg border border-dashed border-[#1e1215] bg-[#141118]">
+                <Trophy size={28} className="text-[#44403c] mx-auto mb-3" />
+                <p className="text-sm text-[#44403c]">Solutions will appear after the round ends.</p>
+              </div>
+            ) : topSolutions.length === 0 ? (
+              <div className="text-center py-16 rounded-lg border border-dashed border-[#1e1215] bg-[#141118]">
+                <p className="text-sm text-[#44403c]">No successful solutions yet.</p>
               </div>
             ) : (
-              <div className="text-center py-16 rounded-lg border border-dashed border-[#1e1215] bg-[#141118]">
-                <p className="text-sm text-[#44403c]">Solutions will be visible after the problem ends.</p>
+              <div className="space-y-4">
+                {topSolutions.map((sub, i) => (
+                  <div key={sub.id} className="rounded-xl border border-[#1e1215] bg-[#141118] overflow-hidden hover:border-green-500/20 transition-all">
+                    <div className="p-5 bg-green-500/5 border-b border-[#1e1215]">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                            i === 0 ? "bg-yellow-500/20 text-yellow-400" :
+                            i === 1 ? "bg-gray-400/20 text-gray-300" :
+                            "bg-orange-500/20 text-orange-400"
+                          }`}>#{i + 1}</div>
+                          <div>
+                            <p className="text-sm font-semibold text-[#e8e6e3]">{sub.player?.player?.username}</p>
+                            <p className="text-xs text-[#6b6560] mt-0.5">{sub.language?.toUpperCase()}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wider bg-green-500/10 text-green-400">Passed</span>
+                          <button
+                            onClick={() => { setModalContent(sub); setCodeModalVisible(true); }}
+                            className="p-2 rounded-lg bg-[#0a0a0f] border border-[#1e1215] text-[#a8a29e] hover:text-white hover:border-green-500/30 transition-all"
+                          >
+                            <Code2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -493,76 +481,54 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
 
       {codeModalVisible && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0a0a0f]/90 backdrop-blur-xl p-4 md:p-10">
-          <div className="rounded-2xl border border-[#1e1215] bg-[#0f0d12] w-full max-w-5xl max-h-[90vh] flex flex-col shadow-[0_32px_64px_-16px_rgba(0,0,0,0.8)] overflow-hidden animate-in">
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 bg-[#141118] border-b border-[#1e1215]">
+          <div className="rounded-2xl border border-[#1e1215] bg-[#0f0d12] w-full max-w-5xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.8)] overflow-hidden animate-in" style={{ height: "75vh" }}>
+            <div className="flex items-center justify-between px-6 py-4 bg-[#141118] border-b border-[#1e1215] shrink-0">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
                   <Code2 size={20} className="text-red-400" />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-[#e8e6e3] leading-none">
-                    {modalContent?.player?.username || "Submission"}
+                    {modalContent?.player?.player?.username || modalContent?.player?.username || "Submission"}
                   </h3>
-                  <p className="text-xs text-[#6b6560] mt-1.5 font-medium flex items-center gap-2">
-                    <span className="px-1.5 py-0.5 rounded bg-[#1e1215] text-[#a8a29e] text-[10px] uppercase tracking-wider">
-                      {modalContent?.language || "plain"}
-                    </span>
-                    • Round Submission
+                  <p className="text-xs text-[#6b6560] mt-1.5 font-medium">
+                    {modalContent?.language?.toUpperCase() || "PLAIN"} • Solution
                   </p>
                 </div>
               </div>
-
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(modalContent?.code || "");
-                    toastSuccess("Copied to clipboard!");
-                  }}
+                  onClick={() => { navigator.clipboard.writeText(modalContent?.code || ""); toastSuccess("Copied!"); }}
                   className="px-4 py-2 rounded-lg border border-[#1e1215] text-xs font-semibold text-[#a8a29e] hover:text-[#e8e6e3] hover:border-red-500/30 transition-all flex items-center gap-2 bg-[#0a0a0f]"
                 >
-                  <Copy size={14} /> Copy Code
+                  <Copy size={14} /> Copy
                 </button>
-                <div className="w-px h-6 bg-[#1e1215] mx-1"></div>
                 <button
                   onClick={() => setCodeModalVisible(false)}
-                  className="p-2 rounded-full hover:bg-red-500/10 text-[#6b6560] hover:text-red-400 transition-all group"
-                  aria-label="Close"
+                  className="px-3 py-1.5 rounded-lg bg-red-600/10 text-red-400 hover:bg-red-600 hover:text-white transition-all text-xs font-semibold"
                 >
-                  <X size={20} />
+                  Close
                 </button>
               </div>
             </div>
-
-            {/* Code Content */}
-            <div className="flex-1 overflow-hidden bg-[#0a0a0f] p-0 relative">
-              <CodeEditor
+            <div style={{ height: "calc(75vh - 64px)" }}>
+              <Editor
+                height="100%"
+                language={(() => { const m = { python: "python", javascript: "javascript", java: "java", cpp: "cpp", c: "c" }; return m[modalContent?.language] || "plaintext"; })()}
                 value={modalContent?.code || ""}
-                language={modalContent?.language || "python"}
-                disabled={true}
+                theme="vs-dark"
+                options={{
+                  readOnly: true,
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
+                  wordWrap: "on",
+                  scrollBeyondLastLine: false,
+                  lineNumbersMinChars: 3,
+                  smoothScrolling: true,
+                  bracketPairColorization: { enabled: true },
+                }}
               />
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 py-4 bg-[#141118] border-t border-[#1e1215] flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <div>
-                  <p className="text-[10px] uppercase tracking-widest text-[#44403c] font-bold mb-1">Status</p>
-                  <span className={`text-xs font-semibold ${modalContent?.passed ? "text-green-400" : "text-red-400"}`}>
-                    {modalContent?.passed ? "Passed All Tests" : "Failed Some Tests"}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-[10px] uppercase tracking-widest text-[#44403c] font-bold mb-1">Complexity</p>
-                  <span className="text-xs font-semibold text-[#a8a29e]">O(N) - Estimated</span>
-                </div>
-              </div>
-              <button
-                onClick={() => setCodeModalVisible(false)}
-                className="px-6 py-2.5 rounded-xl bg-[#0a0a0f] border border-[#1e1215] text-sm font-bold text-[#e8e6e3] hover:bg-[#141118] transition-all"
-              >
-                Done
-              </button>
             </div>
           </div>
         </div>

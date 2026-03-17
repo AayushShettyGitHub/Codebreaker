@@ -17,6 +17,8 @@ public class CodeExecutor {
     private static final int MAX_OUTPUT_LENGTH = 10000;
     private static final String TEMP_DIR = "/executor";
 
+    private static final ExecutorService SHARED_EXECUTOR = Executors.newFixedThreadPool(128);
+
     public ExecutionResponse execute(ExecutionRequest request) {
 
         String executionId = UUID.randomUUID().toString().substring(0, 8);
@@ -26,7 +28,6 @@ public class CodeExecutor {
         long executionTime = 0;
 
         try {
-         
             Files.createDirectories(workingDir);
 
             String language = request.getLanguage().toLowerCase();
@@ -53,7 +54,6 @@ public class CodeExecutor {
             }
             buildTime = System.currentTimeMillis() - compileStart;
 
-     
             long runStart = System.currentTimeMillis();
             List<String> outputs = runTestCasesInParallel(language, workingDir, inputs.size());
             executionTime = System.currentTimeMillis() - runStart;
@@ -106,15 +106,11 @@ public class CodeExecutor {
 
     private List<String> runTestCasesInParallel(String language, Path dir, int testCaseCount) throws Exception {
 
-        int threads = Math.min(testCaseCount, 16);
-        System.out.println("Running " + testCaseCount + " test cases in parallel with " + threads + " threads.");
-        ExecutorService executor = Executors.newFixedThreadPool(threads);
-
         List<Future<String>> futures = new ArrayList<>();
 
         for (int i = 0; i < testCaseCount; i++) {
             final int index = i;
-            futures.add(executor.submit(() -> runSingleTestCase(language, dir, index)));
+            futures.add(SHARED_EXECUTOR.submit(() -> runSingleTestCase(language, dir, index)));
         }
 
         List<String> results = new ArrayList<>();
@@ -123,29 +119,28 @@ public class CodeExecutor {
             try {
                 String output = future.get(RUN_TIMEOUT_SECONDS + 2, TimeUnit.SECONDS);
 
-        
-                if (output.length() > MAX_OUTPUT_LENGTH) {
+                if (output != null && output.length() > MAX_OUTPUT_LENGTH) {
                     results.add("Output limit exceeded");
                 } else {
-                    results.add(output.trim());
+                    results.add(output == null ? "Runtime error" : output.trim());
                 }
 
             } catch (TimeoutException e) {
                 results.add("Time limit exceeded");
+            } catch (Exception e) {
+                results.add("Runtime error: " + e.getMessage());
             }
         }
 
-        executor.shutdownNow();
         return results;
     }
 
     private String runSingleTestCase(String language, Path dir, int index) throws Exception {
-        long start = System.currentTimeMillis();
-        String runCommand = getRunCommand(language);
-        String fullCommand = "cat input_" + index + ".txt | " + runCommand;
+        List<String> command = getRunCommandList(language);
 
-        ProcessBuilder pb = new ProcessBuilder("bash", "-c", fullCommand);
+        ProcessBuilder pb = new ProcessBuilder(command);
         pb.directory(dir.toFile());
+        pb.redirectInput(dir.resolve("input_" + index + ".txt").toFile());
         pb.redirectErrorStream(true);
         Process process = pb.start();
 
@@ -155,8 +150,6 @@ public class CodeExecutor {
             return "Time limit exceeded";
         }
         String output = readStream(process.getInputStream());
-        long duration = System.currentTimeMillis() - start;
-        System.out.println("Test case " + index + " finished in " + duration + "ms for language: " + language);
         if (process.exitValue() != 0 && output.isEmpty()) return "Runtime error";
         return output;
     }
@@ -176,18 +169,18 @@ public class CodeExecutor {
         }
     }
 
-    private String getRunCommand(String language) {
+    private List<String> getRunCommandList(String language) {
         switch (language) {
             case "java":
-                return "java -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Xmx128m Main";
+                return Arrays.asList("java", "-XX:+TieredCompilation", "-XX:TieredStopAtLevel=1", "-XX:+UseSerialGC", "-Xss256k", "-Xmx128m", "Main");
             case "cpp":
-                return "./main";
+                return Arrays.asList("./main");
             case "python":
-                return "python3 Main.py";
+                return Arrays.asList("python3", "-u", "Main.py");
             case "javascript":
-                return "node Main.js";
+                return Arrays.asList("node", "Main.js");
             default:
-                return "cat Main.txt";
+                return Arrays.asList("cat", "Main.txt");
         }
     }
 

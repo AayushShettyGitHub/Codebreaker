@@ -135,6 +135,21 @@ public class RoomController {
         return filtered;
     }
 
+    @GetMapping("/{roomId}/top-solutions")
+    public List<Submission> getTopSolutions(@PathVariable Long roomId, @RequestParam Long problemId) {
+        Room room = roomService.getRoom(roomId);
+        if (room == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Room not found");
+        }
+
+        if (room.isProblemActive()) {
+            return Collections.emptyList();
+        }
+
+        return submissionRepository.findTop3ByRoomIdAndProblemIdAndPassedTrueOrderByIdAsc(roomId, problemId);
+    }
+
+
     @GetMapping("/me")
     public com.example.codebreaker.Dto.RoomResponse getMyRoom() {
         Player player = playerService.getAuthenticatedPlayer()

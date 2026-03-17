@@ -12,7 +12,6 @@ FROM eclipse-temurin:17-jdk-jammy
 RUN apt-get update && apt-get install -y \
     python3 \
     nodejs \
-    npm \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
@@ -23,4 +22,4 @@ RUN mkdir /executor && chmod 777 /executor
 
 EXPOSE 8081
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:+TieredCompilation", "-XX:TieredStopAtLevel=1", "-Xms256m", "-Xmx2g", "-jar", "app.jar"]

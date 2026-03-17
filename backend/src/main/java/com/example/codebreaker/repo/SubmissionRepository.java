@@ -20,4 +20,5 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     long countByRoomAndPlayerAndPassedTrue(Room room, RoomPlayer player);
     List<Submission> findByRoomOrderBySubmittedAtAsc(Room room);
     List<Submission> findBySubmittedAtBetween(java.time.Instant start, java.time.Instant end);
+    List<Submission> findTop3ByRoomIdAndProblemIdAndPassedTrueOrderByIdAsc(Long roomId, Long problemId);
 }

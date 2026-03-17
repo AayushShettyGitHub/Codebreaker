@@ -5,7 +5,8 @@ import { useRoom } from "../../context/RoomContext";
 import websocketService from "../../services/websocketService";
 import { toastError, toastSuccess } from "../../utils/toast";
 import { parseAsUTC } from "../../utils/dateUtils";
-import { Users, Clock, Crown, LogOut, UserX, ChevronDown, ChevronRight, Copy, X, Code2 } from "lucide-react";
+import { Users, Clock, Crown, LogOut, UserX, ChevronDown, ChevronRight, Copy, X, Code2, Trophy } from "lucide-react";
+import Editor from "@monaco-editor/react";
 
 export default function RoomDisplay({ currentUser, onLeave = null }) {
   const { myRoom, players, setMyRoom, fetchPlayers, fetchMyRoom, kickedOut, setKickedOut } = useRoom();
@@ -69,6 +70,7 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
   const [showOnlyTopN, setShowOnlyTopN] = useState(2);
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [profilePlayer, setProfilePlayer] = useState(null);
+  const [topSolutions, setTopSolutions] = useState([]);
 
   const openProfile = async (playerId) => {
     try {
@@ -88,6 +90,7 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
     try {
       const res = await api.get(`/rooms/${room.id}/submissions`);
       let subs = res.data || [];
+      subs = subs.filter(s => s.player?.player?.id === currentUser.id);
       if (isProblemActive && room?.currentProblem?.id) {
         const curId = room.currentProblem.id;
         subs = subs.filter(s => !(s.problem && s.problem.id === curId));
@@ -110,12 +113,27 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
     } catch (err) { console.error("Failed to fetch submissions:", err); }
   };
 
+  const fetchTopSolutions = async () => {
+    if (!room?.id || !room?.currentProblem?.id) return;
+    try {
+      const res = await api.get(`/rooms/${room.id}/top-solutions?problemId=${room.currentProblem.id}`);
+      setTopSolutions(res.data || []);
+    } catch (err) {
+      console.error("Failed to fetch top solutions:", err);
+      setTopSolutions([]);
+    }
+  };
+
   useEffect(() => {
     if (!room?.id) return;
     fetchSubmissions();
+    fetchTopSolutions();
     if (websocketService.isReady()) {
       const handler = (message) => {
-        if (message.type === "PROBLEM_ENDED") fetchSubmissions();
+        if (message.type === "PROBLEM_ENDED") {
+          fetchSubmissions();
+          fetchTopSolutions();
+        }
       };
       websocketService.subscribe(`/topic/room/${room.id}`, handler);
       return () => websocketService.unsubscribe(`/topic/room/${room.id}`);
@@ -123,7 +141,10 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
   }, [room?.id, showOnlyTopN, isProblemActive]);
 
   useEffect(() => {
-    if (!isProblemActive && room?.id) fetchSubmissions();
+    if (!isProblemActive && room?.id) {
+      fetchSubmissions();
+      fetchTopSolutions();
+    }
   }, [isProblemActive, room?.id]);
 
   useEffect(() => { localStorage.setItem(`openProblems_${room?.id}`, JSON.stringify(openProblems)); }, [openProblems, room?.id]);
@@ -159,6 +180,11 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
     }
   };
 
+  const getMonacoLanguage = (lang) => {
+    const map = { python: "python", javascript: "javascript", java: "java", cpp: "cpp", c: "c" };
+    return map[lang] || "plaintext";
+  };
+
   if (!room) return <div className="text-center p-6 text-red-400 text-sm font-medium">Room no longer exists</div>;
 
   if (kickedOut) {
@@ -184,12 +210,12 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
     { key: "leaderboard", label: "Leaderboard" },
     { key: "players", label: "Players" },
     { key: "problem", label: "Problem" },
-    { key: "solutions", label: "History" },
+    { key: "top_solutions", label: "Top Solutions" },
+    ...(!isAdmin ? [{ key: "my_submissions", label: "My Submissions" }] : []),
   ];
 
   return (
     <div className="rounded-xl border border-[#1e1215] bg-[#0f0d12] overflow-hidden flex flex-col h-full animate-in">
-      {}
       <div className="px-5 py-4 bg-[#141118] border-b border-[#1e1215]">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold text-[#e8e6e3] truncate">{room.name}</h2>
@@ -211,13 +237,12 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
         </div>
       </div>
 
-      {}
       <div className="flex border-b border-[#1e1215] bg-[#0a0a0f] overflow-x-auto no-scrollbar">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex-1 py-3 text-xs font-medium transition-all border-b-2 ${activeTab === tab.key
+            className={`flex-1 py-3 text-xs font-medium transition-all border-b-2 whitespace-nowrap px-2 ${activeTab === tab.key
               ? "border-red-500 text-red-400 bg-red-500/5"
               : "border-transparent text-[#6b6560] hover:text-[#a8a29e] hover:bg-[#141118]"
               }`}
@@ -227,7 +252,6 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
         ))}
       </div>
 
-      {}
       <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
         {activeTab === "leaderboard" && (
           <div className="animate-in space-y-4">
@@ -334,10 +358,59 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
           </div>
         )}
 
-        {activeTab === "solutions" && (
+        {activeTab === "top_solutions" && (
+          <div className="animate-in space-y-4">
+            <div className="flex items-center gap-2 pb-3 border-b border-[#1e1215]">
+              <Trophy size={14} className="text-yellow-500" />
+              <p className="text-xs font-bold text-[#e8e6e3] uppercase tracking-wider">Top Solutions</p>
+            </div>
+
+            {isProblemActive ? (
+              <div className="text-center py-16 rounded-lg border border-dashed border-[#1e1215] bg-[#141118]">
+                <Trophy size={28} className="text-[#44403c] mx-auto mb-3" />
+                <p className="text-sm text-[#44403c]">Solutions will appear after the round ends.</p>
+              </div>
+            ) : topSolutions.length === 0 ? (
+              <div className="text-center py-16 rounded-lg border border-dashed border-[#1e1215] bg-[#141118]">
+                <p className="text-sm text-[#44403c]">No successful solutions yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {topSolutions.map((sub, i) => (
+                  <div key={sub.id} className="p-4 rounded-lg bg-[#141118] border border-[#1e1215] hover:border-green-500/20 transition-all">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                          i === 0 ? "bg-yellow-500/20 text-yellow-400" :
+                          i === 1 ? "bg-gray-400/20 text-gray-300" :
+                          "bg-orange-500/20 text-orange-400"
+                        }`}>
+                          #{i + 1}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-[#e8e6e3]">{sub.player?.player?.username}</p>
+                          <p className="text-[10px] text-[#6b6560] uppercase">{sub.language}</p>
+                        </div>
+                      </div>
+                      <span className="text-xs px-2 py-0.5 rounded-md font-medium bg-green-500/10 text-green-400">Passed</span>
+                    </div>
+                    <button
+                      onClick={() => openCodeModal(sub)}
+                      className="w-full py-2.5 rounded-lg border border-green-500/20 text-xs font-semibold text-green-400 hover:bg-green-500/10 transition-all"
+                    >
+                      View Solution
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "my_submissions" && (
           <div className="animate-in space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#1e1215]">
-              <p className="text-xs font-medium text-[#6b6560]">Room History</p>
+              <p className="text-xs font-medium text-[#6b6560]">Your Submission History</p>
               <button onClick={() => setShowOnlyTopN(prev => prev === 2 ? 5 : 2)} className="text-xs px-2 py-1 rounded-md border border-[#1e1215] text-[#6b6560] hover:text-[#a8a29e] hover:border-[#2a1519] transition-all">
                 Limit: {showOnlyTopN}
               </button>
@@ -387,11 +460,10 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
         )}
       </div>
 
-      {}
       {codeModalVisible && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0a0a0f]/90 backdrop-blur-md p-4">
-          <div className="rounded-xl border border-[#1e1215] bg-[#0f0d12] w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in">
-            <div className="flex items-center justify-between px-6 py-4 bg-[#141118] border-b border-[#1e1215]">
+          <div className="rounded-xl border border-[#1e1215] bg-[#0f0d12] w-full max-w-4xl shadow-2xl overflow-hidden animate-in" style={{ height: "75vh" }}>
+            <div className="flex items-center justify-between px-6 py-4 bg-[#141118] border-b border-[#1e1215] shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded bg-red-500/10 flex items-center justify-center">
                   <Code2 size={16} className="text-red-400" />
@@ -416,42 +488,76 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-auto p-0 bg-[#0a0a0f] custom-scrollbar">
-              <pre className="text-sm font-mono text-[#a8a29e] leading-relaxed p-6 whitespace-pre">{modalContent?.code}</pre>
+            <div style={{ height: "calc(75vh - 64px)" }}>
+              <Editor
+                height="100%"
+                language={getMonacoLanguage(modalContent?.language)}
+                value={modalContent?.code || ""}
+                theme="vs-dark"
+                options={{
+                  readOnly: true,
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
+                  wordWrap: "on",
+                  scrollBeyondLastLine: false,
+                  lineNumbersMinChars: 3,
+                  smoothScrolling: true,
+                  bracketPairColorization: { enabled: true },
+                }}
+              />
             </div>
           </div>
         </div>
       )}
 
-      {}
       {profileModalVisible && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0a0a0f]/90 backdrop-blur-md p-4">
-          <div className="rounded-xl border border-[#1e1215] bg-[#0f0d12] w-full max-w-lg p-8 shadow-2xl animate-in">
-            <div className="flex justify-between items-start mb-6">
-              <div className="flex gap-4 items-center">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-xl font-bold text-white">
+          <div className="rounded-2xl border border-[#1e1215] bg-[#0f0d12] w-full max-w-sm overflow-hidden shadow-2xl animate-in">
+            <div className="h-20 bg-gradient-to-r from-red-900/40 to-black"></div>
+            <div className="px-6 pb-6 relative">
+              <div className="absolute -top-10 left-6 p-1 bg-[#0f0d12] rounded-full">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-2xl font-bold text-white shadow-lg">
                   {profilePlayer?.username?.[0]?.toUpperCase()}
                 </div>
+              </div>
+              <div className="pt-12 flex justify-between items-start">
                 <div>
-                  <h3 className="text-lg font-bold text-[#e8e6e3]">{profilePlayer?.username}</h3>
-                  <p className="text-xs text-[#6b6560]">{profilePlayer?.role || 'Player'}</p>
+                  <h3 className="text-xl font-bold text-[#e8e6e3]">{profilePlayer?.username}</h3>
+                  <p className="text-xs text-[#6b6560] font-medium uppercase tracking-wider">{profilePlayer?.role || 'Player'}</p>
+                </div>
+                <button onClick={closeProfile} className="p-2 -mr-2 text-[#44403c] hover:text-red-400 transition-colors">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="mt-8">
+                <h5 className="text-[10px] font-bold text-[#44403c] uppercase tracking-widest border-b border-[#1e1215] pb-2 mb-4">Achievements</h5>
+                <div className="grid grid-cols-1 gap-2">
+                  {(!profilePlayer?.badges || profilePlayer.badges.length === 0) ? (
+                    <p className="text-xs text-[#44403c] py-4 text-center italic">No badges earned yet.</p>
+                  ) : (
+                    profilePlayer.badges.map((b) => (
+                      <div key={b.key} className="flex items-center gap-3 p-3 rounded-xl bg-[#141118]/50 border border-[#1e1215] group hover:border-red-500/20 transition-all">
+                        <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-sm">
+                           {b.key === 'first_solve' ? '🥇' : b.key === 'top_3' ? '⭐' : '◈'}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-[#e8e6e3] truncate">{b.name}</p>
+                          <p className="text-[9px] text-[#6b6560] font-medium uppercase">{b.rank}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
-              <button onClick={closeProfile} className="text-xs text-red-400 hover:text-red-300 transition-colors">Close</button>
-            </div>
 
-            <div className="space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
-              <h5 className="text-xs font-medium text-[#6b6560] pb-2 border-b border-[#1e1215]">Achievements</h5>
-              <div className="grid grid-cols-1 gap-3">
-                {profilePlayer?.badges?.map((b) => (
-                  <div key={b.key} className="p-3 rounded-lg bg-[#141118] border border-[#1e1215]">
-                    <p className="text-xs text-[#a8a29e]">{b.description}</p>
-                  </div>
-                ))}
-                {(!profilePlayer?.badges || profilePlayer.badges.length === 0) && (
-                  <p className="text-xs text-[#44403c]">No achievements found.</p>
-                )}
-              </div>
+              <button 
+                onClick={closeProfile}
+                className="w-full mt-6 py-2.5 rounded-xl bg-[#141118] border border-[#1e1215] text-[#e8e6e3] text-xs font-bold hover:bg-red-600 hover:border-red-600 transition-all"
+              >
+                Close Profile
+              </button>
             </div>
           </div>
         </div>

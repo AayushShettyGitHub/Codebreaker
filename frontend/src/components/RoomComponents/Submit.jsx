@@ -13,8 +13,20 @@ export default function Submit({ playerId, roomId: propsRoomId, problemId: props
   const roomId = propsRoomId || myRoom?.id;
   const problemId = propsProblemId || myRoom?.currentProblem?.id;
 
-  const [code, setCode] = useState("# write your solution here\n");
-  const [language, setLanguage] = useState("python");
+  const [code, setCode] = useState(() => {
+    if (propsRoomId && propsProblemId) {
+      const saved = localStorage.getItem(`code:${propsRoomId}:${propsProblemId}`);
+      if (saved !== null) return saved;
+    }
+    return "# write your solution here\n";
+  });
+  const [language, setLanguage] = useState(() => {
+    if (propsRoomId && propsProblemId) {
+      const saved = localStorage.getItem(`lang:${propsRoomId}:${propsProblemId}`);
+      if (saved !== null) return saved;
+    }
+    return "python";
+  });
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);

@@ -48,6 +48,9 @@ public class RabbitMQConfig {
         org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory factory = new org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
         factory.setMessageConverter(converter());
+        factory.setConcurrentConsumers(5);
+        factory.setMaxConcurrentConsumers(10);
+        factory.setPrefetchCount(1);
         return factory;
     }
 

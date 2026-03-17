@@ -54,15 +54,30 @@ export default function ProblemLibrary({ onSelectProblem }) {
                     <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#44403c]" />
                 </div>
                 <select
-                    className="px-4 py-3 bg-[#141118] border border-[#1e1215] rounded-lg text-[#e8e6e3] text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all min-w-[180px] appearance-none cursor-pointer"
+                    className="px-4 py-3 bg-[#141118] border border-[#1e1215] rounded-lg text-[#e8e6e3] text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all min-w-[150px] appearance-none cursor-pointer"
                     value={difficultyFilter}
                     onChange={(e) => setDifficultyFilter(e.target.value)}
                 >
-                    <option value="ALL">All Difficulties</option>
+                    <option value="ALL">All</option>
                     <option value="EASY">Easy</option>
                     <option value="MEDIUM">Medium</option>
                     <option value="HARD">Hard</option>
                 </select>
+                <button
+                    onClick={async () => {
+                        try {
+                            await api.post("/problem-library/seed");
+                            toastSuccess("Library refresh triggered!");
+                            const res = await api.get("/problem-library");
+                            setProblems(res.data);
+                        } catch (err) {
+                            toastError("Failed to seed library");
+                        }
+                    }}
+                    className="px-4 py-3 border border-red-500/30 text-red-400 hover:bg-red-500/10 rounded-lg text-xs font-bold transition-all uppercase tracking-widest whitespace-nowrap"
+                >
+                    Refresh Library
+                </button>
             </div>
 
             {}
