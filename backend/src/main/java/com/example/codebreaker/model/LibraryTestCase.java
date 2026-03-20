@@ -7,7 +7,10 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 @Entity
-@Data
+@Getter
+@Setter
+@ToString(exclude = {"problemLibrary", "problemLibraryHidden"})
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -15,6 +18,7 @@ public class LibraryTestCase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @JdbcTypeCode(SqlTypes.LONGVARCHAR)

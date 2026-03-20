@@ -28,12 +28,12 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <main className="flex-1 flex items-center justify-center bg-[#0a0a0f]">
+      <main className="flex items-center justify-center min-h-screen bg-[#0a0a0f]">
         <div className="text-center">
-          <h2 className="text-xl font-bold text-[#e8e6e3] mb-4">Login Required</h2>
+          <h2 className="text-lg font-semibold mb-4">Login Required</h2>
           <button
             onClick={() => navigate("/auth")}
-            className="px-6 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium text-sm transition-all"
+            className="px-5 py-2 bg-red-600 text-white rounded-lg text-sm"
           >
             Go to Login
           </button>
@@ -43,113 +43,109 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="flex-1 bg-[#0a0a0f] min-h-screen text-[#e8e6e3]">
-      <div className="max-w-5xl mx-auto px-4 py-12">
-        {/* Profile Card */}
-        <div className="rounded-3xl border border-[#1e1215] bg-[#0f0d12] overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.8)]">
-          {/* Header/Hero Section */}
-          <div className="h-48 bg-gradient-to-br from-[#1a1114] via-[#0f0d12] to-black border-b border-[#1e1215] relative">
-            <div className="absolute -bottom-16 left-10 flex items-end gap-6">
-              <div className="p-1.5 bg-[#0f0d12] rounded-full border border-[#1e1215]">
-                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-5xl font-bold text-white shadow-2xl">
-                  {user.username?.[0]?.toUpperCase()}
-                </div>
-              </div>
-              <div className="pb-4">
-                 <div className="flex items-center gap-3">
-                    <h1 className="text-4xl font-extrabold tracking-tight">{user.username}</h1>
-                    <span className="px-3 py-1 rounded-full bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest border border-red-500/20">
-                       {playerData?.role || 'PARTICIPANT'}
-                    </span>
-                 </div>
-                 <div className="flex items-center gap-4 mt-2">
-                    <div className="flex items-center gap-1.5 text-[#6b6560]">
-                      <Clock size={14} />
-                      <span className="text-xs font-medium">Joined Jan 2026</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></span>
-                      <span className="text-xs font-medium text-green-400">Online</span>
-                    </div>
-                 </div>
-              </div>
-            </div>
-          </div>
+    <main className="min-h-screen bg-[#0a0a0f] text-white">
+      <div className="max-w-6xl mx-auto px-6 md:px-10 py-14">
 
-          {/* Body Content */}
-          <div className="pt-24 pb-12 px-10">
-            {/* Stats Bar */}
-            <div className="flex gap-4 mb-12">
-               <div className="flex-1 p-6 rounded-2xl bg-[#141118] border border-[#1e1215] hover:border-red-500/10 transition-colors">
-                  <p className="text-[10px] font-bold text-[#44403c] uppercase tracking-[0.2em] mb-1">Total Score</p>
-                  <p className="text-3xl font-black">{playerData?.score || 0}</p>
-               </div>
-               <div className="flex-1 p-6 rounded-2xl bg-[#141118] border border-[#1e1215] hover:border-red-500/10 transition-colors">
-                  <p className="text-[10px] font-bold text-[#44403c] uppercase tracking-[0.2em] mb-1">Global Rank</p>
-                  <div className="flex items-center gap-2">
-                    <Trophy size={20} className="text-yellow-500" />
-                    <p className="text-3xl font-black">#24</p>
-                  </div>
-               </div>
+                <div className="mb-12 flex flex-col md:flex-row md:items-end gap-8">
+          <div className="flex items-center gap-5">
+            <div className="w-20 h-20 rounded-2xl bg-red-600 flex items-center justify-center text-2xl font-bold">
+              {user.username?.[0]?.toUpperCase()}
             </div>
 
-            {/* Badges Layout */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 pb-4 border-b border-[#1e1215]">
-                <Award size={20} className="text-red-500" />
-                <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-[#e8e6e3]">Achievements & Unlocks</h2>
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl md:text-3xl font-semibold">
+                  {user.username}
+                </h1>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {badges.length === 0 ? (
-                  <div className="col-span-full py-16 text-center rounded-2xl border-2 border-dashed border-[#1e1215] bg-[#141118]/20">
-                     <p className="text-sm text-[#44403c]">Complete problems to unlock premium badges.</p>
-                  </div>
-                ) : (
-                  badges.map((b) => (
-                    <div 
-                      key={b.key}
-                      className={`relative group p-5 rounded-2xl border transition-all duration-300 ${
-                        b.earned 
-                        ? 'bg-[#141118] border-[#1e1215] hover:border-red-500/20 hover:bg-[#1a171f]' 
-                        : 'bg-[#0a0a0f] border-[#1e1215]/50 opacity-40 grayscale'
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl transition-transform duration-500 group-hover:rotate-12 ${
-                          b.earned ? 'bg-red-500/10 text-red-500' : 'bg-[#141118] text-[#44403c]'
-                        }`}>
-                          {b.key === 'first_solve' ? '🥇' : b.key === 'top_3' ? '⭐' : b.key === 'participant' ? '🎗️' : '◈'}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold truncate">{b.name}</p>
-                          <p className={`text-[10px] font-bold mt-1 tracking-wider uppercase ${
-                            b.rank === 'GOLD' ? 'text-yellow-500' : 
-                            b.rank === 'SILVER' ? 'text-gray-400' : 
-                            'text-[#6b6560]'
-                          }`}>{b.rank}</p>
-                        </div>
-                      </div>
-                      {b.earned && (
-                         <div className="absolute top-3 right-3 w-1.5 h-1.5 rounded-full bg-red-500"></div>
-                      )}
-                    </div>
-                  ))
-                )}
+              <div className="flex items-center gap-4 mt-2 text-xs text-[#6b6560]">
+                <span className="flex items-center gap-1">
+                  <Clock size={12} /> Joined 2026
+                </span>
+
               </div>
             </div>
           </div>
         </div>
 
-        {/* Navigation Footer */}
-        <div className="mt-10 flex justify-center">
-            <button 
-              onClick={() => navigate('/home')}
-              className="group flex items-center gap-2 text-[10px] font-bold text-[#44403c] hover:text-[#e8e6e3] transition-all uppercase tracking-[0.3em]"
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-14">
+          <div className="p-5 rounded-2xl bg-[#111016] border border-[#1e1215]">
+
+          </div>
+
+
+
+          <div className="p-5 rounded-2xl bg-[#111016] border border-[#1e1215]">
+            <p className="text-xs text-[#6b6560] mb-1">Achievements</p>
+            <p className="text-2xl font-semibold">
+              {badges.filter(b => b.earned).length}
+            </p>
+          </div>
+        </div>
+
+                <div>
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-lg font-semibold">Achievements</h2>
+              <p className="text-xs text-[#6b6560]">
+                Your earned badges
+              </p>
+            </div>
+
+            <button
+              onClick={() => navigate('/achievements')}
+              className="text-xs px-4 py-1.5 bg-[#141118] rounded-lg border border-[#1e1215]"
             >
-              <ArrowLeft size={12} className="group-hover:-translate-x-1 transition-transform" />
-              Return to Dashboard
+              View All
             </button>
+          </div>
+
+          {badges.length === 0 ? (
+            <div className="py-16 text-center border border-dashed border-[#1e1215] rounded-xl">
+              <p className="text-sm text-[#6b6560]">
+                No achievements yet
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {badges.slice(0, 8).map((b) => (
+                <div
+                  key={b.key}
+                  className={`p-4 rounded-xl border text-center ${b.earned
+                    ? "bg-[#111016] border-[#1e1215]"
+                    : "bg-black/30 border-[#1e1215]/40 opacity-40"
+                    }`}
+                >
+                  <div className={`text-2xl mb-2 ${b.earned ? "text-red-500" : "text-[#444]"
+                    }`}>
+                    {b.key === 'first_solve' ? '🥇'
+                      : b.key === 'top_3' ? '⭐'
+                        : b.key === 'participant' ? '🎗️'
+                          : '◈'}
+                  </div>
+
+                  <p className="text-xs font-medium truncate">
+                    {b.name}
+                  </p>
+
+                  <p className="text-[10px] text-[#6b6560] mt-1">
+                    {b.rank}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+                <div className="flex justify-center mt-12">
+          <button
+            onClick={() => navigate('/home')}
+            className="flex items-center gap-2 text-xs text-[#6b6560] hover:text-white"
+          >
+            <ArrowLeft size={14} />
+            Back to Dashboard
+          </button>
         </div>
       </div>
     </main>

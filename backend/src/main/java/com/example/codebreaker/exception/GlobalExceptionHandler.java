@@ -64,10 +64,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> handleGeneralException(
             Exception ex,
             WebRequest request) {
+        
+        ex.printStackTrace();
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .message("An unexpected error occurred")
+                .message("An unexpected error occurred: " + ex.getMessage())
                 .error(ex.getClass().getSimpleName())
                 .timestamp(LocalDateTime.now())
                 .path(request.getDescription(false).replace("uri=", ""))

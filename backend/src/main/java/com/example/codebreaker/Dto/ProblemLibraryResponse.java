@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,7 +39,7 @@ public class ProblemLibraryResponse {
                 .title(library.getTitle())
                 .description(library.getDescription())
                 .difficulty(library.getDifficulty())
-                .tags(library.getTags())
+                .tags(new ArrayList<>(library.getTags()))
                 .testCases(filteredTestCases)
                 .createdAt(library.getCreatedAt())
                 .build();

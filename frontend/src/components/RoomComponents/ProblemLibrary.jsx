@@ -41,7 +41,6 @@ export default function ProblemLibrary({ onSelectProblem }) {
 
     return (
         <div className="space-y-5 animate-in">
-            {}
             <div className="flex flex-col md:flex-row gap-3">
                 <div className="relative flex-1">
                     <input
@@ -80,7 +79,6 @@ export default function ProblemLibrary({ onSelectProblem }) {
                 </button>
             </div>
 
-            {}
             <div className="grid grid-cols-1 gap-3 overflow-y-auto max-h-[600px] pr-1 custom-scrollbar">
                 {filteredProblems.length > 0 ? (
                     filteredProblems.map((problem) => (

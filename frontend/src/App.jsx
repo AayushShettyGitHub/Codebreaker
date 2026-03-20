@@ -47,7 +47,7 @@ function AppContent() {
   return (
     <>
       {user && <Navbar user={user} />}
-      <div className="flex-1">
+      <div className="flex-1 pl-4 md:pl-8 lg:pl-12">
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/auth" element={<AuthPage />} />

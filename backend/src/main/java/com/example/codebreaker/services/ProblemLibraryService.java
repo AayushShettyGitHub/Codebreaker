@@ -13,7 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class ProblemLibraryService {
@@ -35,24 +37,21 @@ public class ProblemLibraryService {
         }
 
         long problemCount = repository.count();
-        long hiddenTestCount = repository.countHiddenTests();
+        if (!force && problemCount > 0) {
+            System.out.println("Database already seeded with " + problemCount + " problems. Skipping re-seeding.");
+            return;
+        }
 
         int jsonCount = countProblemsInJson(resource);
 
         if (force) {
             System.out.println("Seeding problems (FORCED)...");
             seedFromJson(resource, true);
-        } else if (problemCount == 0) {
-            System.out.println("No problems in DB. Seeding...");
+        } else if (problemCount == 0 || problemCount != jsonCount) {
+            System.out.println("Seeding/Updating problems (DB: " + problemCount + ", JSON: " + jsonCount + ")...");
             seedFromJson(resource, true);
-        } else if (problemCount != jsonCount) {
-            System.out.println("Problem count mismatch (DB: " + problemCount + ", JSON: " + jsonCount + "). Re-seeding...");
-            seedFromJson(resource, true);
-        } else if (hiddenTestCount == 0) {
-            System.out.println("Problems exist but hidden tests missing. Fixing...");
-            seedFromJson(resource, false);
         } else {
-            System.out.println("Database already seeded (" + problemCount + " problems, " + hiddenTestCount + " hidden tests). Skipping.");
+            System.out.println("Database already seeded with " + problemCount + " problems. Skipping.");
         }
     }
 
@@ -134,7 +133,7 @@ public class ProblemLibraryService {
                 diffLevel <= 3 ? "EASY" :
                 diffLevel >= 10 ? "HARD" : "MEDIUM";
 
-        List<String> tags = new ArrayList<>();
+        Set<String> tags = new HashSet<>();
         if (node.has("cf_tags") && node.get("cf_tags").isArray()) {
             node.get("cf_tags").forEach(t -> tags.add(t.asText()));
         }
@@ -144,8 +143,8 @@ public class ProblemLibraryService {
                 .description(description)
                 .difficulty(difficulty)
                 .tags(tags)
-                .testCases(new ArrayList<>())
-                .hiddenTestCases(new ArrayList<>())
+                .testCases(new HashSet<>())
+                .hiddenTestCases(new HashSet<>())
                 .build();
     }
 
