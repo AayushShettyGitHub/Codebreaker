@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import api from "../../config/client";
 import { useRoom } from "../../context/RoomContext";
@@ -103,8 +104,7 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
       });
       const grouped = Object.values(groups).map(g => {
         const sorted = g.submissions.sort((a, b) => {
-          if ((b.passed ? 1 : 0) !== (a.passed ? 1 : 0)) return (b.passed ? 1 : 0) - (a.passed ? 1 : 0);
-          return new Date(a.submittedAt) - new Date(b.submittedAt);
+          return new Date(b.submittedAt) - new Date(a.submittedAt);
         });
         const topSubmissions = sorted.slice(0, Math.max(2, showOnlyTopN));
         return { ...g, submissions: sorted, topSubmissions };
@@ -117,7 +117,8 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
     if (!room?.id || !room?.currentProblem?.id) return;
     try {
       const res = await api.get(`/rooms/${room.id}/top-solutions?problemId=${room.currentProblem.id}`);
-      setTopSolutions(res.data || []);
+      const sortedSolutions = (res.data || []).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+      setTopSolutions(sortedSolutions);
     } catch (err) {
       console.error("Failed to fetch top solutions:", err);
       setTopSolutions([]);
@@ -211,7 +212,7 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
     { key: "players", label: "Players" },
     { key: "problem", label: "Problem" },
     { key: "top_solutions", label: "Top Solutions" },
-    ...(!isAdmin ? [{ key: "my_submissions", label: "My Submissions" }] : []),
+    { key: "my_submissions", label: "My Submissions" },
   ];
 
   return (
@@ -237,12 +238,12 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
         </div>
       </div>
 
-      <div className="flex border-b border-[#1e1215] bg-[#0a0a0f] overflow-x-auto no-scrollbar">
+      <div className="flex gap-2 border-b border-[#1e1215] bg-[#0a0a0f] overflow-x-auto custom-scrollbar-h">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex-1 py-3 text-xs font-medium transition-all border-b-2 whitespace-nowrap px-2 ${activeTab === tab.key
+            className={`px-6 py-3 text-xs font-medium transition-all border-b-2 whitespace-nowrap flex-shrink-0 flex items-center justify-center gap-2 ${activeTab === tab.key
               ? "border-red-500 text-red-400 bg-red-500/5"
               : "border-transparent text-[#6b6560] hover:text-[#a8a29e] hover:bg-[#141118]"
               }`}
@@ -333,8 +334,34 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
               <div className="space-y-4">
                 <div className="p-5 rounded-lg bg-[#141118] border border-[#1e1215]">
                   <h3 className="text-base font-semibold text-[#e8e6e3] mb-3">{room.currentProblem.title}</h3>
-                  <p className="text-sm text-[#a8a29e] leading-relaxed">{room.currentProblem.description}</p>
+                  <div className="text-sm text-[#a8a29e] leading-relaxed whitespace-pre-wrap">{room.currentProblem.description}</div>
                 </div>
+
+                {room.currentProblem.testCases && room.currentProblem.testCases.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-[#6b6560] uppercase tracking-wider">Example Test Cases</h4>
+                    <div className="grid gap-3">
+                      {room.currentProblem.testCases.filter(tc => !tc.hidden).slice(0, 2).map((tc, idx) => (
+                        <div key={tc.id} className="p-4 rounded-lg bg-[#0a0a0f] border border-[#1e1215] space-y-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-1 h-3 rounded-full bg-red-500"></div>
+                            <p className="text-xs font-medium text-[#e8e6e3]">Example {idx + 1}</p>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-[10px] text-[#44403c] uppercase mb-1.5 font-bold">Input</p>
+                              <pre className="p-2.5 rounded bg-[#141118] border border-[#1e1215] text-xs text-[#a8a29e] font-mono whitespace-pre-wrap">{tc.input}</pre>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-[#44403c] uppercase mb-1.5 font-bold">Output</p>
+                              <pre className="p-2.5 rounded bg-[#141118] border border-[#1e1215] text-xs text-[#a8a29e] font-mono whitespace-pre-wrap">{tc.output}</pre>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {isProblemActive ? (
                   <div className={`p-4 rounded-lg text-center ${timeLeft <= 30 ? "bg-red-500/10 border border-red-500/20" : "bg-[#141118] border border-[#1e1215]"}`}>
@@ -380,11 +407,10 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
                   <div key={sub.id} className="p-4 rounded-lg bg-[#141118] border border-[#1e1215] hover:border-green-500/20 transition-all">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                          i === 0 ? "bg-yellow-500/20 text-yellow-400" :
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? "bg-yellow-500/20 text-yellow-400" :
                           i === 1 ? "bg-gray-400/20 text-gray-300" :
-                          "bg-orange-500/20 text-orange-400"
-                        }`}>
+                            "bg-orange-500/20 text-orange-400"
+                          }`}>
                           #{i + 1}
                         </div>
                         <div>
@@ -460,8 +486,8 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
         )}
       </div>
 
-      {codeModalVisible && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0a0a0f]/90 backdrop-blur-md p-4">
+      {codeModalVisible && createPortal(
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#0a0a0f]/90 backdrop-blur-md p-4">
           <div className="rounded-xl border border-[#1e1215] bg-[#0f0d12] w-full max-w-4xl shadow-2xl overflow-hidden animate-in" style={{ height: "75vh" }}>
             <div className="flex items-center justify-between px-6 py-4 bg-[#141118] border-b border-[#1e1215] shrink-0">
               <div className="flex items-center gap-3">
@@ -476,9 +502,9 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
               <div className="flex gap-3">
                 <button
                   onClick={() => { navigator.clipboard.writeText(modalContent?.code || ""); toastSuccess("Copied to clipboard!"); }}
-                  className="px-3 py-1.5 rounded-lg border border-[#1e1215] text-xs text-[#a8a29e] hover:text-[#e8e6e3] hover:border-red-500/30 transition-all flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-lg border border-[#1e1215] text-xs font-semibold text-[#a8a29e] hover:text-[#e8e6e3] hover:border-red-500/30 transition-all flex items-center gap-2 bg-[#0a0a0f]"
                 >
-                  <Copy size={12} /> Copy
+                  <Copy size={14} /> Copy
                 </button>
                 <button
                   onClick={() => setCodeModalVisible(false)}
@@ -508,7 +534,8 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
               />
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {profileModalVisible && (
@@ -540,7 +567,7 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
                     profilePlayer.badges.map((b) => (
                       <div key={b.key} className="flex items-center gap-3 p-3 rounded-xl bg-[#141118]/50 border border-[#1e1215] group hover:border-red-500/20 transition-all">
                         <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-sm">
-                           {b.key === 'first_solve' ? '🥇' : b.key === 'top_3' ? '⭐' : '◈'}
+                          {b.key === 'first_solve' ? '🥇' : b.key === 'top_3' ? '⭐' : '◈'}
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs font-bold text-[#e8e6e3] truncate">{b.name}</p>
@@ -552,7 +579,7 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={closeProfile}
                 className="w-full mt-6 py-2.5 rounded-xl bg-[#141118] border border-[#1e1215] text-[#e8e6e3] text-xs font-bold hover:bg-red-600 hover:border-red-600 transition-all"
               >

@@ -146,7 +146,7 @@ public class RoomController {
             return Collections.emptyList();
         }
 
-        return submissionRepository.findTop3ByRoomIdAndProblemIdAndPassedTrueOrderByIdAsc(roomId, problemId);
+        return submissionRepository.findTop3ByRoomIdAndProblemIdAndPassedTrueOrderBySubmittedAtDesc(roomId, problemId);
     }
 
 

@@ -101,6 +101,13 @@ public class CodeExecutor {
             return ExecutionResult.error(error.isEmpty() ? "Compilation error" : error);
         }
 
+        if (language.equals("cpp")) {
+            File binary = dir.resolve("main").toFile();
+            if (binary.exists()) {
+                binary.setExecutable(true, false);
+            }
+        }
+
         return ExecutionResult.success("");
     }
 

@@ -11,7 +11,7 @@ export default function SubmissionResult({ result }) {
     allPassed
   } = result;
 
-  const visibleResults = results.slice(0, 2);
+  const visibleResults = results.slice(0, 5);
   const remaining = Math.max(0, results.length - visibleResults.length);
 
   return (

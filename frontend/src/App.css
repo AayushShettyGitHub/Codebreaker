@@ -216,3 +216,20 @@ body.fullscreen-mode {
   background: var(--bg-elevated) !important;
   border: 1px solid var(--border-base) !important;
 }
+
+.custom-scrollbar-h::-webkit-scrollbar {
+  height: 4px;
+}
+
+.custom-scrollbar-h::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar-h::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 4px;
+}
+
+.custom-scrollbar-h::-webkit-scrollbar-thumb:hover {
+  background: var(--red-primary);
+}

@@ -9,7 +9,6 @@ import { Play, RotateCcw, AlertCircle, Lock, Loader2 } from "lucide-react";
 export default function Submit({ playerId, roomId: propsRoomId, problemId: propsProblemId }) {
   const { myRoom } = useRoom();
 
-  // Use props if provided, otherwise fallback to context
   const roomId = propsRoomId || myRoom?.id;
   const problemId = propsProblemId || myRoom?.currentProblem?.id;
 
@@ -32,7 +31,7 @@ export default function Submit({ playerId, roomId: propsRoomId, problemId: props
   const [loading, setLoading] = useState(false);
   const [maxSubmissionsReached, setMaxSubmissionsReached] = useState(false);
 
-  // Load persisted code and language
+
   useEffect(() => {
     setResult(null);
     setError("");
@@ -52,14 +51,13 @@ export default function Submit({ playerId, roomId: propsRoomId, problemId: props
     }
   }, [roomId, problemId]);
 
-  // Persist code on change
   useEffect(() => {
     if (problemId && roomId) {
       localStorage.setItem(`code:${roomId}:${problemId}`, code);
     }
   }, [code, roomId, problemId]);
 
-  // Persist language on change
+
   useEffect(() => {
     if (problemId && roomId) {
       localStorage.setItem(`lang:${roomId}:${problemId}`, language);
@@ -97,8 +95,8 @@ export default function Submit({ playerId, roomId: propsRoomId, problemId: props
           setMaxSubmissionsReached(true);
           setError("Maximum submissions reached. No more solutions can be accepted.");
         } else {
-          const displayError = err.response?.data?.error || err.response?.data?.message || errorMessage || "An unexpected error occurred";
-          setError(`${displayError}${err.response?.status ? ` (Status: ${err.response.status})` : ''}`);
+          const displayError = err.response?.data?.message || err.response?.data?.error || errorMessage || "An unexpected error occurred";
+          setError(displayError);
         }
       } catch (e) { setError(`Submission failed: ${err.message || 'Unknown error'}`); }
     } finally { setLoading(false); }

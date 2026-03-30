@@ -1,61 +1,75 @@
-
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     container_name: codebreaker-postgres
+    restart: always
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+      - postgres_volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     deploy:
       resources:
         limits:
           cpus: "0.75"
           memory: 512M
-        reservations:
-          memory: 256M
-    restart: unless-stopped
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: codebreaker-mq
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER:-guest}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS:-guest}
     ports:
       - "5672:5672"
       - "15672:15672"
+    volumes:
+      - rabbitmq_volume:/var/lib/rabbitmq
     deploy:
       resources:
         limits:
           cpus: "0.50"
           memory: 512M
-        reservations:
-          memory: 256M
-    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
     container_name: codebreaker-redis
-    ports:
-      - "6379:6379"
+    restart: always
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis_volume:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     deploy:
       resources:
         limits:
           memory: 256M
-    restart: unless-stopped
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: codebreaker-backend
+    restart: always
     depends_on:
-      - postgres
-      - rabbitmq
-      - redis
-      - code-executor
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      redis:
+        condition: service_healthy
+      code-executor:
+        condition: service_started
     ports:
       - "8080:8080"
     env_file:
@@ -64,57 +78,52 @@ services:
       - EXECUTOR_SERVICE_URL=http://code-executor:8081/api/execute
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/codebreaker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       - RABBITMQ_HOST=rabbitmq
     deploy:
       resources:
         limits:
           memory: 1024M
-    restart: unless-stopped
 
   code-executor:
     build:
       context: ./code-executor
       dockerfile: Dockerfile
-    container_name: code-executor
+    restart: always
     depends_on:
-      - rabbitmq
-    ports:
-      - "8081:8081"
+      rabbitmq:
+        condition: service_started
     env_file:
       - .env
     environment:
       - RABBITMQ_HOST=rabbitmq
       - SPRING_RABBITMQ_LISTENER_SIMPLE_PREFETCH=1
-    tmpfs:
-      - /executor:size=512M
     deploy:
       resources:
         limits:
           cpus: "4.0"
           memory: 4096M
-        reservations:
-          memory: 1024M
-    restart: unless-stopped
-
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: codebreaker-frontend
+    restart: always
     depends_on:
-      - backend
+      backend:
+        condition: service_started
     ports:
-      - "5173:5173"
+      - "5173:80"
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL}
     deploy:
       resources:
         limits:
           cpus: "0.50"
           memory: 512M
-        reservations:
-          memory: 256M
-    restart: unless-stopped
 
 volumes:
-  postgres_data:
+  postgres_volume:
+  redis_volume:
+  rabbitmq_volume:

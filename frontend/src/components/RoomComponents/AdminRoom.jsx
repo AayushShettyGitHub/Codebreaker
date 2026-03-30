@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import api from "../../config/client";
 import { useRoom } from "../../context/RoomContext";
 import websocketService from "../../services/websocketService";
@@ -29,6 +30,27 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
   const [selectedLibraryId, setSelectedLibraryId] = useState(null);
   const [modalContent, setModalContent] = useState(null);
   const [codeModalVisible, setCodeModalVisible] = useState(false);
+  const [groupedProblems, setGroupedProblems] = useState([]);
+  const [openProblems, setOpenProblems] = useState({});
+
+  const fetchSubmissions = async () => {
+    if (!roomId) return;
+    try {
+      const res = await api.get(`/rooms/${roomId}/submissions`);
+      let subs = (res.data || []).filter(s => s.player?.player?.id === playerId);
+      const groups = {};
+      subs.forEach(s => {
+        const pid = s.problem?.id || "unknown";
+        if (!groups[pid]) groups[pid] = { problemId: pid, problemTitle: s.problem?.title || `Problem ${pid}`, submissions: [] };
+        groups[pid].submissions.push(s);
+      });
+      setGroupedProblems(Object.values(groups).sort((a, b) => a.problemTitle.localeCompare(b.problemTitle)));
+    } catch (err) { console.error("Failed to fetch admin submissions:", err); }
+  };
+
+  useEffect(() => {
+    if (activeTab === "my_submissions") fetchSubmissions();
+  }, [activeTab, roomId]);
 
   const isProblemActive = useMemo(() => {
     if (!myRoom?.problemStartTime || !myRoom?.problemDuration) return false;
@@ -159,6 +181,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
     { key: "settings", label: "Settings", icon: <Settings size={14} /> },
     { key: "leaderboard", label: "Leaderboard", icon: <Trophy size={14} /> },
     { key: "solutions", label: "Top Solutions", icon: <Trophy size={14} /> },
+    { key: "my_submissions", label: "My Submissions", icon: <FileText size={14} /> },
   ];
 
   return (
@@ -187,18 +210,18 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
       </div>
 
       { }
-      <div className="flex border-b border-[#1e1215] bg-[#0a0a0f] overflow-x-auto no-scrollbar">
+      <div className="flex gap-3 border-b border-[#1e1215] bg-[#0a0a0f] overflow-x-auto custom-scrollbar-h">
         {adminTabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex-1 py-3 text-xs font-medium transition-all border-b-2 flex items-center justify-center gap-1.5 ${activeTab === tab.key
+            className={`px-6 py-3 text-xs font-medium transition-all border-b-2 flex-shrink-0 flex items-center justify-center gap-1.5 whitespace-nowrap ${activeTab === tab.key
               ? "border-red-500 text-red-400 bg-red-500/5"
               : "border-transparent text-[#6b6560] hover:text-[#a8a29e] hover:bg-[#141118]"
               }`}
           >
             {tab.icon}
-            <span className="hidden md:inline">{tab.label}</span>
+            <span className="">{tab.label}</span>
           </button>
         ))}
       </div>
@@ -477,10 +500,54 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
             )}
           </div>
         )}
+
+        {activeTab === "my_submissions" && (
+          <div className="animate-in space-y-4 max-w-4xl mx-auto">
+            <div className="flex items-center gap-2 pb-3 border-b border-[#1e1215]">
+              <FileText size={16} className="text-red-400" />
+              <p className="text-sm font-bold text-[#e8e6e3] uppercase tracking-wider">My Submissions</p>
+            </div>
+            
+            {groupedProblems.length === 0 ? (
+              <div className="text-center py-16 rounded-lg border border-dashed border-[#1e1215] bg-[#141118]">
+                <p className="text-sm text-[#44403c]">You haven't submitted any solutions yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {groupedProblems.map((group) => (
+                  <div key={group.problemId} className="space-y-3">
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-[#0a0a0f] border border-[#1e1215]">
+                      <h4 className="text-sm font-semibold text-[#e8e6e3]">{group.problemTitle}</h4>
+                      <span className="text-xs text-[#6b6560]">{group.submissions.length} Attempt(s)</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-4">
+                      {group.submissions.map(sub => (
+                        <div key={sub.id} className="p-4 rounded-lg bg-[#141118] border border-[#1e1215] hover:border-red-500/20 transition-all">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-[10px] font-bold text-[#6b6560] uppercase tracking-widest">{sub.language}</span>
+                            <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${sub.passed ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"}`}>
+                              {sub.passed ? "Passed" : "Failed"}
+                            </span>
+                          </div>
+                          <button 
+                            onClick={() => { setModalContent(sub); setCodeModalVisible(true); }}
+                            className="w-full py-2 rounded-lg bg-[#0a0a0f] border border-[#1e1215] text-xs font-medium text-[#a8a29e] hover:text-white transition-all"
+                          >
+                            View Submission
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {codeModalVisible && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0a0a0f]/90 backdrop-blur-xl p-4 md:p-10">
+      {codeModalVisible && createPortal(
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#0a0a0f]/90 backdrop-blur-xl p-4 md:p-10">
           <div className="rounded-2xl border border-[#1e1215] bg-[#0f0d12] w-full max-w-5xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.8)] overflow-hidden animate-in" style={{ height: "75vh" }}>
             <div className="flex items-center justify-between px-6 py-4 bg-[#141118] border-b border-[#1e1215] shrink-0">
               <div className="flex items-center gap-4">
@@ -531,7 +598,8 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
               />
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
