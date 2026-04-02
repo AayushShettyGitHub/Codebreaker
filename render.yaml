@@ -1,0 +1,90 @@
+services:
+  # 1. PostgreSQL (Managed Service)
+  # Render handles the image and setup automatically.
+  databases:
+    - name: codebreaker-db
+      plan: free
+      databaseName: codebreaker
+      user: postgres
+
+  # 2. Redis (Private Service)
+  - type: pserv
+    name: codebreaker-redis
+    env: docker
+    plan: free
+    dockerContext: . # Assuming your Dockerfile or image pull is handled here
+    dockerfilePath: ./redis/Dockerfile # Create a simple Dockerfile: FROM redis:7-alpine
+    envVars:
+      - key: REDIS_REBOOT_POLICY
+        value: allkeys-lru
+
+  # 3. RabbitMQ (Private Service)
+  - type: pserv
+    name: codebreaker-mq
+    env: docker
+    plan: free
+    dockerfilePath: ./rabbitmq/Dockerfile # Create a simple Dockerfile: FROM rabbitmq:3-management-alpine
+    envVars:
+      - key: RABBITMQ_DEFAULT_USER
+        sync: false # Set this in the Render Dashboard UI
+      - key: RABBITMQ_DEFAULT_PASS
+        sync: false # Set this in the Render Dashboard UI
+
+  # 4. Code Executor (Private Service)
+  - type: pserv
+    name: code-executor
+    env: docker
+    plan: free
+    dockerContext: ./code-executor
+    envVars:
+      - key: RABBITMQ_HOST
+        value: codebreaker-mq
+      - key: EXECUTOR_CONTAINER_PATH
+        value: /tmp/executor
+      - key: JAVA_OPTS
+        value: "-Xmx300m -Xss512k" # Limits Java memory to fit in 512MB RAM
+
+  # 5. Java Backend (Public Web Service)
+  - type: web
+    name: codebreaker-backend
+    env: docker
+    plan: free
+    dockerContext: ./backend
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: SERVER_PORT
+        value: 8080
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: codebreaker-db
+          property: connectionString
+      - key: SPRING_DATA_REDIS_HOST
+        fromService:
+          type: pserv
+          name: codebreaker-redis
+          property: host
+      - key: RABBITMQ_HOST
+        fromService:
+          type: pserv
+          name: codebreaker-mq
+          property: host
+      - key: EXECUTOR_SERVICE_URL
+        value: http://code-executor:8081/api/execute
+      - key: JWT_SECRET
+        generateValue: true # Render creates a random 32-char string for you
+      - key: JAVA_OPTS
+        value: "-Xmx300m -Xss512k"
+
+  # 6. Frontend (Static Site)
+  - type: web
+    name: codebreaker-frontend
+    runtime: static
+    buildCommand: npm install && npm run build
+    publishPath: ./frontend/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        fromService:
+          type: web
+          name: codebreaker-backend
+          property: host
