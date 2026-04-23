@@ -6,7 +6,6 @@ import JoinRoom from "../RoomComponents/JoinRoom";
 import RoomDisplay from "../RoomComponents/RoomDisplay";
 import AdminRoom from "../RoomComponents/AdminRoom";
 import Submit from "../RoomComponents/Submit";
-import Navbar from "../MainComponents/Navbar";
 import AvailableRooms from "../RoomComponents/AvailableRooms";
 
 import api from "../../config/client";
@@ -32,36 +31,36 @@ export default function Homepage() {
 
     if (roomLoading) {
         return (
-            <main className="flex-1 flex items-center justify-center bg-[#0a0a0f]">
+            <main className="flex-1 flex items-center justify-center bg-[#09090b]">
                 <div className="text-center">
-                    <div className="inline-flex items-center justify-center w-10 h-10 border-2 border-[#1e1215] border-t-red-500 rounded-full animate-spin mb-4"></div>
-                    <p className="text-sm text-[#6b6560]">Loading...</p>
+                    <div className="inline-flex items-center justify-center w-10 h-10 border-2 border-[#1c1c22] border-t-indigo-500 rounded-full animate-spin mb-4"></div>
+                    <p className="text-sm text-[#71717a]">Loading...</p>
                 </div>
             </main>
         );
     }
 
     return (
-        <main className="flex-1 bg-[#0a0a0f]">
-            <div className="max-w-[1440px] mx-auto py-10 px-8 md:px-16 lg:px-20">
-                {}
+        <main className="flex-1 bg-[#09090b]">
+            <div className="max-w-[1440px] mx-auto py-10 px-6 md:px-10 lg:px-16">
+                {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
-                            <Home size={20} className="text-red-400" />
+                        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+                            <Home size={20} className="text-indigo-400" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-[#e8e6e3]">
-                                Welcome, <span className="text-red-400">{user?.username}</span>
+                            <h1 className="text-2xl font-bold text-[#e4e4e7]">
+                                Welcome, <span className="text-indigo-400">{user?.username}</span>
                             </h1>
-                            <p className="text-sm text-[#6b6560]">Your coding dashboard</p>
+                            <p className="text-sm text-[#71717a]">Your coding dashboard</p>
                         </div>
                     </div>
                 </div>
 
                 {myRoom ? (
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                        {}
+                        {/* Sidebar */}
                         <div className="lg:col-span-1 h-fit animate-in">
                             <RoomDisplay
                                 room={myRoom}
@@ -70,7 +69,7 @@ export default function Homepage() {
                             />
                         </div>
 
-                        {}
+                        {/* Main content */}
                         <div className="lg:col-span-3 space-y-6 animate-in" style={{ animationDelay: "0.1s" }}>
                             {myRoom.admin?.id === user?.id && (
                                 <AdminRoom
@@ -92,15 +91,15 @@ export default function Homepage() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {}
+                        {/* Join/Create panel */}
                         <div className="lg:col-span-1">
-                            <div className="rounded-xl border border-[#1e1215] bg-[#0f0d12] overflow-hidden animate-in">
-                                <div className="flex p-1 m-4 bg-[#141118] rounded-lg">
+                            <div className="rounded-xl border border-[#1c1c22] bg-[#0f0f13] overflow-hidden animate-in">
+                                <div className="flex p-1 m-4 bg-[#141419] rounded-lg">
                                     <button
                                         onClick={() => setActiveTab("join")}
                                         className={`flex-1 py-2.5 text-xs font-medium rounded-md transition-all flex items-center justify-center gap-1.5 ${activeTab === "join"
-                                            ? "bg-red-600 text-white"
-                                            : "text-[#6b6560] hover:text-[#a8a29e]"
+                                            ? "bg-indigo-600 text-white"
+                                            : "text-[#71717a] hover:text-[#a1a1aa]"
                                             }`}
                                     >
                                         <ChevronRight size={14} /> Join
@@ -108,8 +107,8 @@ export default function Homepage() {
                                     <button
                                         onClick={() => setActiveTab("create")}
                                         className={`flex-1 py-2.5 text-xs font-medium rounded-md transition-all flex items-center justify-center gap-1.5 ${activeTab === "create"
-                                            ? "bg-red-600 text-white"
-                                            : "text-[#6b6560] hover:text-[#a8a29e]"
+                                            ? "bg-indigo-600 text-white"
+                                            : "text-[#71717a] hover:text-[#a1a1aa]"
                                             }`}
                                     >
                                         <Plus size={14} /> Create
@@ -126,7 +125,7 @@ export default function Homepage() {
                             </div>
                         </div>
 
-                        {}
+                        {/* Available rooms */}
                         <div className="lg:col-span-2 animate-in" style={{ animationDelay: "0.1s" }}>
                             <AvailableRooms onJoin={setMyRoom} />
                         </div>

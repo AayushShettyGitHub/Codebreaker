@@ -70,11 +70,11 @@ export default function Signup() {
   return (
     <form onSubmit={handleSignup} className="w-full space-y-5">
       <div>
-        <label className="block text-xs font-medium text-[#a8a29e] mb-2">
+        <label className="block text-xs font-medium text-[#a1a1aa] mb-2">
           Username
         </label>
         <input
-          className="w-full px-4 py-3 bg-[#141118] border border-[#1e1215] rounded-lg text-[#e8e6e3] text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all placeholder:text-[#44403c]"
+          className="w-full px-4 py-3 bg-[#141419] border border-[#1c1c22] rounded-lg text-[#e4e4e7] text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all placeholder:text-[#3f3f46]"
           placeholder="Choose a username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
@@ -84,13 +84,13 @@ export default function Signup() {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-[#a8a29e] mb-2">
+        <label className="block text-xs font-medium text-[#a1a1aa] mb-2">
           Password
         </label>
         <div className="relative">
           <input
             type={showPw ? "text" : "password"}
-            className="w-full px-4 py-3 pr-11 bg-[#141118] border border-[#1e1215] rounded-lg text-[#e8e6e3] text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all placeholder:text-[#44403c]"
+            className="w-full px-4 py-3 pr-11 bg-[#141419] border border-[#1c1c22] rounded-lg text-[#e4e4e7] text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all placeholder:text-[#3f3f46]"
             placeholder="Create a password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -100,7 +100,7 @@ export default function Signup() {
           <button
             type="button"
             onClick={() => setShowPw(!showPw)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#44403c] hover:text-[#a8a29e] transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#3f3f46] hover:text-[#a1a1aa] transition-colors"
           >
             {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
@@ -108,12 +108,12 @@ export default function Signup() {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-[#a8a29e] mb-2">
+        <label className="block text-xs font-medium text-[#a1a1aa] mb-2">
           Confirm Password
         </label>
         <input
           type={showPw ? "text" : "password"}
-          className="w-full px-4 py-3 bg-[#141118] border border-[#1e1215] rounded-lg text-[#e8e6e3] text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all placeholder:text-[#44403c]"
+          className="w-full px-4 py-3 bg-[#141419] border border-[#1c1c22] rounded-lg text-[#e4e4e7] text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all placeholder:text-[#3f3f46]"
           placeholder="Confirm your password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
@@ -125,7 +125,7 @@ export default function Signup() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-3 mt-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-semibold transition-all disabled:opacity-40 hover:shadow-[0_4px_20px_rgba(220,38,38,0.3)]"
+        className="w-full py-3 mt-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all disabled:opacity-40 hover:shadow-[0_4px_20px_rgba(99,102,241,0.3)]"
       >
         {loading ? "Creating Account..." : "Create Account"}
       </button>

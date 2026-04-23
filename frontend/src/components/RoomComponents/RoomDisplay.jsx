@@ -190,18 +190,18 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
 
   if (kickedOut) {
     return (
-      <div className="fixed inset-0 bg-[#0a0a0f]/90 backdrop-blur-md flex items-center justify-center z-50">
-        <div className="rounded-xl border border-red-500/30 bg-[#0f0d12] p-8 max-w-sm text-center shadow-2xl">
+      <div className="fixed inset-0 bg-[#09090b]/90 backdrop-blur-md flex items-center justify-center z-50">
+        <div className="rounded-xl border border-red-500/30 bg-[#0f0f13] p-8 max-w-sm text-center shadow-2xl">
           <div className="w-12 h-12 rounded-full bg-red-500/10 mx-auto mb-4 flex items-center justify-center">
             <UserX size={24} className="text-red-400" />
           </div>
-          <h2 className="text-xl font-bold text-[#e8e6e3] mb-2">Removed from Room</h2>
-          <p className="text-sm text-[#6b6560] mb-6">You have been removed from this room.</p>
+          <h2 className="text-xl font-bold text-[#e4e4e7] mb-2">Removed from Room</h2>
+          <p className="text-sm text-[#71717a] mb-6">You have been removed from this room.</p>
           <button
             onClick={() => { setKickedOut(false); navigate("/home"); }}
             className="w-full py-2.5 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold rounded-lg transition-all"
           >OK</button>
-          <p className="text-xs text-[#44403c] mt-4">Redirecting in 3 seconds...</p>
+          <p className="text-xs text-[#3f3f46] mt-4">Redirecting in 3 seconds...</p>
         </div>
       </div>
     );
@@ -216,13 +216,13 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
   ];
 
   return (
-    <div className="rounded-xl border border-[#1e1215] bg-[#0f0d12] overflow-hidden flex flex-col h-full animate-in">
-      <div className="px-5 py-4 bg-[#141118] border-b border-[#1e1215]">
+    <div className="rounded-xl border border-[#1c1c22] bg-[#0f0f13] overflow-hidden flex flex-col h-full animate-in">
+      <div className="px-5 py-4 bg-[#141419] border-b border-[#1c1c22]">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm font-semibold text-[#e8e6e3] truncate">{room.name}</h2>
+          <h2 className="text-sm font-semibold text-[#e4e4e7] truncate">{room.name}</h2>
           {isProblemActive && (
-            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs font-semibold ${timeLeft <= 30 ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-[#0f0d12] text-[#e8e6e3] border border-[#1e1215]"}`}>
-              <Clock size={12} className={timeLeft <= 30 ? "text-red-400" : "text-[#6b6560]"} />
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs font-semibold ${timeLeft <= 30 ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-[#0f0f13] text-[#e4e4e7] border border-[#1c1c22]"}`}>
+              <Clock size={12} className={timeLeft <= 30 ? "text-red-400" : "text-[#71717a]"} />
               <span>
                 {Math.floor(timeLeft / 60).toString().padStart(2, "0")}:
                 {(timeLeft % 60).toString().padStart(2, "0")}
@@ -231,21 +231,21 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
           )}
         </div>
         <div className="flex items-center justify-between">
-          <p className="text-xs text-[#6b6560]">
-            Host: <span className="text-[#a8a29e] font-medium">{room.admin?.username}</span>
+          <p className="text-xs text-[#71717a]">
+            Host: <span className="text-[#a1a1aa] font-medium">{room.admin?.username}</span>
           </p>
-          <span className="text-xs text-[#44403c] font-mono">#{room.id}</span>
+          <span className="text-xs text-[#3f3f46] font-mono">#{room.id}</span>
         </div>
       </div>
 
-      <div className="flex gap-2 border-b border-[#1e1215] bg-[#0a0a0f] overflow-x-auto custom-scrollbar-h">
+      <div className="flex gap-2 border-b border-[#1c1c22] bg-[#09090b] overflow-x-auto custom-scrollbar-h">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`px-6 py-3 text-xs font-medium transition-all border-b-2 whitespace-nowrap flex-shrink-0 flex items-center justify-center gap-2 ${activeTab === tab.key
-              ? "border-red-500 text-red-400 bg-red-500/5"
-              : "border-transparent text-[#6b6560] hover:text-[#a8a29e] hover:bg-[#141118]"
+              ? "border-indigo-500 text-indigo-400 bg-indigo-500/5"
+              : "border-transparent text-[#71717a] hover:text-[#a1a1aa] hover:bg-[#141419]"
               }`}
           >
             {tab.label}
@@ -262,9 +262,9 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
                 { l: 'Max', v: room?.maxCorrectAnswers || 0 },
                 { l: 'Solved', v: players?.filter(p => p?.hasAnsweredCorrectly)?.length || 0 }
               ].map((s, i) => (
-                <div key={i} className="p-3 rounded-lg bg-[#141118] border border-[#1e1215] text-center">
-                  <p className="text-[10px] text-[#6b6560] mb-0.5">{s.l}</p>
-                  <p className="text-lg font-bold text-[#e8e6e3]">{s.v}</p>
+                <div key={i} className="p-3 rounded-lg bg-[#141419] border border-[#1c1c22] text-center">
+                  <p className="text-[10px] text-[#71717a] mb-0.5">{s.l}</p>
+                  <p className="text-lg font-bold text-[#e4e4e7]">{s.v}</p>
                 </div>
               ))}
             </div>
@@ -276,20 +276,20 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
                   <div
                     key={player.id}
                     className={`flex items-center gap-3 p-3 rounded-lg transition-all ${isCurrentUser
-                      ? "bg-red-500/10 border border-red-500/20"
-                      : "bg-[#141118] border border-[#1e1215] hover:border-[#2a1519]"
+                      ? "bg-indigo-500/10 border border-indigo-500/20"
+                      : "bg-[#141419] border border-[#1c1c22] hover:border-[#27272a]"
                       }`}
                   >
-                    <div className={`text-xs font-bold w-6 text-center ${isCurrentUser ? "text-red-400" : "text-[#44403c]"}`}>
+                    <div className={`text-xs font-bold w-6 text-center ${isCurrentUser ? "text-indigo-400" : "text-[#3f3f46]"}`}>
                       {index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium truncate flex items-center gap-2 ${isCurrentUser ? "text-red-300" : "text-[#e8e6e3]"}`}>
+                      <p className={`text-sm font-medium truncate flex items-center gap-2 ${isCurrentUser ? "text-indigo-300" : "text-[#e4e4e7]"}`}>
                         {player.username}
-                        {player.id === room?.admin?.id && <Crown size={12} className="text-red-400 opacity-80" />}
+                        {player.id === room?.admin?.id && <Crown size={12} className="text-indigo-400 opacity-80" />}
                       </p>
                     </div>
-                    <p className="text-sm font-bold text-[#e8e6e3]">{player.score ?? 0}</p>
+                    <p className="text-sm font-bold text-[#e4e4e7]">{player.score ?? 0}</p>
                   </div>
                 );
               })}
@@ -304,19 +304,19 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
               return (
                 <div
                   key={player.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-[#141118] border border-[#1e1215] hover:border-[#2a1519] transition-all"
+                  className="flex items-center justify-between p-3 rounded-lg bg-[#141419] border border-[#1c1c22] hover:border-[#27272a] transition-all"
                 >
                   <div className="min-w-0 flex-1">
-                    <button onClick={() => openProfile(player.id)} className="text-sm font-medium text-[#e8e6e3] hover:text-red-400 transition-colors truncate flex items-center gap-2">
+                    <button onClick={() => openProfile(player.id)} className="text-sm font-medium text-[#e4e4e7] hover:text-indigo-400 transition-colors truncate flex items-center gap-2">
                       {player.username}
-                      {player.id === room.admin?.id && <Crown size={12} className="text-red-400" />}
+                      {player.id === room.admin?.id && <Crown size={12} className="text-indigo-400" />}
                     </button>
-                    <p className="text-xs text-[#6b6560] mt-0.5">{player.role ?? "Participant"}</p>
+                    <p className="text-xs text-[#71717a] mt-0.5">{player.role ?? "Participant"}</p>
                   </div>
 
                   {(isCurrentUser || isAdmin) && (
                     <button
-                      className="text-xs px-3 py-1.5 rounded-md border border-[#1e1215] text-[#6b6560] hover:text-red-400 hover:border-red-500/30 transition-all"
+                      className="text-xs px-3 py-1.5 rounded-md border border-[#1c1c22] text-[#71717a] hover:text-red-400 hover:border-red-500/30 transition-all"
                       onClick={() => handleLeavePlayer(player.id)}
                     >
                       {isCurrentUser ? "Leave" : "Kick"}
@@ -332,29 +332,29 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
           <div className="animate-in space-y-4">
             {room.currentProblem ? (
               <div className="space-y-4">
-                <div className="p-5 rounded-lg bg-[#141118] border border-[#1e1215]">
-                  <h3 className="text-base font-semibold text-[#e8e6e3] mb-3">{room.currentProblem.title}</h3>
-                  <div className="text-sm text-[#a8a29e] leading-relaxed whitespace-pre-wrap">{room.currentProblem.description}</div>
+                <div className="p-5 rounded-lg bg-[#141419] border border-[#1c1c22]">
+                  <h3 className="text-base font-semibold text-[#e4e4e7] mb-3">{room.currentProblem.title}</h3>
+                  <div className="text-sm text-[#a1a1aa] leading-relaxed whitespace-pre-wrap">{room.currentProblem.description}</div>
                 </div>
 
                 {room.currentProblem.testCases && room.currentProblem.testCases.length > 0 && (
                   <div className="space-y-3">
-                    <h4 className="text-xs font-bold text-[#6b6560] uppercase tracking-wider">Example Test Cases</h4>
+                    <h4 className="text-xs font-bold text-[#71717a] uppercase tracking-wider">Example Test Cases</h4>
                     <div className="grid gap-3">
                       {room.currentProblem.testCases.filter(tc => !tc.hidden).slice(0, 2).map((tc, idx) => (
-                        <div key={tc.id} className="p-4 rounded-lg bg-[#0a0a0f] border border-[#1e1215] space-y-3">
+                        <div key={tc.id} className="p-4 rounded-lg bg-[#09090b] border border-[#1c1c22] space-y-3">
                           <div className="flex items-center gap-2">
-                            <div className="w-1 h-3 rounded-full bg-red-500"></div>
-                            <p className="text-xs font-medium text-[#e8e6e3]">Example {idx + 1}</p>
+                            <div className="w-1 h-3 rounded-full bg-indigo-500"></div>
+                            <p className="text-xs font-medium text-[#e4e4e7]">Example {idx + 1}</p>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                              <p className="text-[10px] text-[#44403c] uppercase mb-1.5 font-bold">Input</p>
-                              <pre className="p-2.5 rounded bg-[#141118] border border-[#1e1215] text-xs text-[#a8a29e] font-mono whitespace-pre-wrap">{tc.input}</pre>
+                              <p className="text-[10px] text-[#3f3f46] uppercase mb-1.5 font-bold">Input</p>
+                              <pre className="p-2.5 rounded bg-[#141419] border border-[#1c1c22] text-xs text-[#a1a1aa] font-mono whitespace-pre-wrap">{tc.input}</pre>
                             </div>
                             <div>
-                              <p className="text-[10px] text-[#44403c] uppercase mb-1.5 font-bold">Output</p>
-                              <pre className="p-2.5 rounded bg-[#141118] border border-[#1e1215] text-xs text-[#a8a29e] font-mono whitespace-pre-wrap">{tc.output}</pre>
+                              <p className="text-[10px] text-[#3f3f46] uppercase mb-1.5 font-bold">Output</p>
+                              <pre className="p-2.5 rounded bg-[#141419] border border-[#1c1c22] text-xs text-[#a1a1aa] font-mono whitespace-pre-wrap">{tc.output}</pre>
                             </div>
                           </div>
                         </div>
@@ -364,22 +364,22 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
                 )}
 
                 {isProblemActive ? (
-                  <div className={`p-4 rounded-lg text-center ${timeLeft <= 30 ? "bg-red-500/10 border border-red-500/20" : "bg-[#141118] border border-[#1e1215]"}`}>
-                    <p className="text-xs text-[#6b6560] mb-1">Time Left</p>
-                    <p className={`text-2xl font-bold font-mono ${timeLeft <= 30 ? "text-red-400" : "text-[#e8e6e3]"}`}>
+                  <div className={`p-4 rounded-lg text-center ${timeLeft <= 30 ? "bg-red-500/10 border border-red-500/20" : "bg-[#141419] border border-[#1c1c22]"}`}>
+                    <p className="text-xs text-[#71717a] mb-1">Time Left</p>
+                    <p className={`text-2xl font-bold font-mono ${timeLeft <= 30 ? "text-red-400" : "text-[#e4e4e7]"}`}>
                       {Math.floor(timeLeft / 60).toString().padStart(2, "0")}:
                       {(timeLeft % 60).toString().padStart(2, "0")}
                     </p>
                   </div>
                 ) : room.problemStartTime && (
-                  <div className="p-4 rounded-lg bg-[#141118] border border-[#1e1215] text-center">
-                    <p className="text-sm text-[#6b6560]">Problem Ended</p>
+                  <div className="p-4 rounded-lg bg-[#141419] border border-[#1c1c22] text-center">
+                    <p className="text-sm text-[#71717a]">Problem Ended</p>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="text-center py-16 rounded-lg border border-dashed border-[#1e1215] bg-[#141118]">
-                <p className="text-sm text-[#44403c]">Waiting for problem...</p>
+              <div className="text-center py-16 rounded-lg border border-dashed border-[#1c1c22] bg-[#141419]">
+                <p className="text-sm text-[#3f3f46]">Waiting for problem...</p>
               </div>
             )}
           </div>
@@ -387,24 +387,24 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
 
         {activeTab === "top_solutions" && (
           <div className="animate-in space-y-4">
-            <div className="flex items-center gap-2 pb-3 border-b border-[#1e1215]">
+            <div className="flex items-center gap-2 pb-3 border-b border-[#1c1c22]">
               <Trophy size={14} className="text-yellow-500" />
-              <p className="text-xs font-bold text-[#e8e6e3] uppercase tracking-wider">Top Solutions</p>
+              <p className="text-xs font-bold text-[#e4e4e7] uppercase tracking-wider">Top Solutions</p>
             </div>
 
             {isProblemActive ? (
-              <div className="text-center py-16 rounded-lg border border-dashed border-[#1e1215] bg-[#141118]">
-                <Trophy size={28} className="text-[#44403c] mx-auto mb-3" />
-                <p className="text-sm text-[#44403c]">Solutions will appear after the round ends.</p>
+              <div className="text-center py-16 rounded-lg border border-dashed border-[#1c1c22] bg-[#141419]">
+                <Trophy size={28} className="text-[#3f3f46] mx-auto mb-3" />
+                <p className="text-sm text-[#3f3f46]">Solutions will appear after the round ends.</p>
               </div>
             ) : topSolutions.length === 0 ? (
-              <div className="text-center py-16 rounded-lg border border-dashed border-[#1e1215] bg-[#141118]">
-                <p className="text-sm text-[#44403c]">No successful solutions yet.</p>
+              <div className="text-center py-16 rounded-lg border border-dashed border-[#1c1c22] bg-[#141419]">
+                <p className="text-sm text-[#3f3f46]">No successful solutions yet.</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {topSolutions.map((sub, i) => (
-                  <div key={sub.id} className="p-4 rounded-lg bg-[#141118] border border-[#1e1215] hover:border-green-500/20 transition-all">
+                  <div key={sub.id} className="p-4 rounded-lg bg-[#141419] border border-[#1c1c22] hover:border-green-500/20 transition-all">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? "bg-yellow-500/20 text-yellow-400" :
@@ -414,8 +414,8 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
                           #{i + 1}
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-[#e8e6e3]">{sub.player?.player?.username}</p>
-                          <p className="text-[10px] text-[#6b6560] uppercase">{sub.language}</p>
+                          <p className="text-sm font-semibold text-[#e4e4e7]">{sub.player?.player?.username}</p>
+                          <p className="text-[10px] text-[#71717a] uppercase">{sub.language}</p>
                         </div>
                       </div>
                       <span className="text-xs px-2 py-0.5 rounded-md font-medium bg-green-500/10 text-green-400">Passed</span>
@@ -435,44 +435,44 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
 
         {activeTab === "my_submissions" && (
           <div className="animate-in space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#1e1215]">
-              <p className="text-xs font-medium text-[#6b6560]">Your Submission History</p>
-              <button onClick={() => setShowOnlyTopN(prev => prev === 2 ? 5 : 2)} className="text-xs px-2 py-1 rounded-md border border-[#1e1215] text-[#6b6560] hover:text-[#a8a29e] hover:border-[#2a1519] transition-all">
+            <div className="flex items-center justify-between pb-3 border-b border-[#1c1c22]">
+              <p className="text-xs font-medium text-[#71717a]">Your Submission History</p>
+              <button onClick={() => setShowOnlyTopN(prev => prev === 2 ? 5 : 2)} className="text-xs px-2 py-1 rounded-md border border-[#1c1c22] text-[#71717a] hover:text-[#a1a1aa] hover:border-[#27272a] transition-all">
                 Limit: {showOnlyTopN}
               </button>
             </div>
 
             <div className="space-y-3">
               {groupedProblems.length === 0 && (
-                <div className="text-center py-16 rounded-lg border border-dashed border-[#1e1215] bg-[#141118]">
-                  <p className="text-sm text-[#44403c]">No history found.</p>
+                <div className="text-center py-16 rounded-lg border border-dashed border-[#1c1c22] bg-[#141419]">
+                  <p className="text-sm text-[#3f3f46]">No history found.</p>
                 </div>
               )}
 
               {groupedProblems.map((group) => (
                 <div key={group.problemId} className="space-y-2">
                   <button
-                    className="flex items-center justify-between w-full text-left px-3 py-2 rounded-lg hover:bg-[#141118] transition-all group"
+                    className="flex items-center justify-between w-full text-left px-3 py-2 rounded-lg hover:bg-[#141419] transition-all group"
                     onClick={() => toggleProblemOpen(group.problemId)}
                   >
-                    <span className="text-sm font-medium text-[#e8e6e3] group-hover:text-red-400 transition-colors">{group.problemTitle}</span>
+                    <span className="text-sm font-medium text-[#e4e4e7] group-hover:text-indigo-400 transition-colors">{group.problemTitle}</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-[#44403c]">{group.submissions.length} submission(s)</span>
-                      {openProblems[group.problemId] ? <ChevronDown size={14} className="text-[#44403c]" /> : <ChevronRight size={14} className="text-[#44403c]" />}
+                      <span className="text-xs text-[#3f3f46]">{group.submissions.length} submission(s)</span>
+                      {openProblems[group.problemId] ? <ChevronDown size={14} className="text-[#3f3f46]" /> : <ChevronRight size={14} className="text-[#3f3f46]" />}
                     </div>
                   </button>
 
                   {openProblems[group.problemId] && (
-                    <div className="pl-3 border-l-2 border-red-500/20 space-y-2 ml-2">
+                    <div className="pl-3 border-l-2 border-indigo-500/20 space-y-2 ml-2">
                       {group.topSubmissions.slice(0, showOnlyTopN).map(sub => (
-                        <div key={sub.id} className="p-3 rounded-lg bg-[#141118] border border-[#1e1215]">
+                        <div key={sub.id} className="p-3 rounded-lg bg-[#141419] border border-[#1c1c22]">
                           <div className="flex items-center justify-between mb-3">
-                            <p className="text-sm font-medium text-[#e8e6e3]">{sub.player?.player?.username || "Unknown"}</p>
+                            <p className="text-sm font-medium text-[#e4e4e7]">{sub.player?.player?.username || "Unknown"}</p>
                             <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${sub.passed ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"}`}>
                               {sub.passed ? "Passed" : "Failed"}
                             </span>
                           </div>
-                          <button onClick={() => openCodeModal(sub)} className="w-full py-2 rounded-md border border-[#1e1215] text-xs text-[#a8a29e] hover:text-[#e8e6e3] hover:border-[#2a1519] transition-all">
+                          <button onClick={() => openCodeModal(sub)} className="w-full py-2 rounded-md border border-[#1c1c22] text-xs text-[#a1a1aa] hover:text-[#e4e4e7] hover:border-[#27272a] transition-all">
                             View Code
                           </button>
                         </div>
@@ -487,22 +487,22 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
       </div>
 
       {codeModalVisible && createPortal(
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#0a0a0f]/90 backdrop-blur-md p-4">
-          <div className="rounded-xl border border-[#1e1215] bg-[#0f0d12] w-full max-w-4xl shadow-2xl overflow-hidden animate-in" style={{ height: "75vh" }}>
-            <div className="flex items-center justify-between px-6 py-4 bg-[#141118] border-b border-[#1e1215] shrink-0">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#09090b]/90 backdrop-blur-md p-4">
+          <div className="rounded-xl border border-[#1c1c22] bg-[#0f0f13] w-full max-w-4xl shadow-2xl overflow-hidden animate-in" style={{ height: "75vh" }}>
+            <div className="flex items-center justify-between px-6 py-4 bg-[#141419] border-b border-[#1c1c22] shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded bg-red-500/10 flex items-center justify-center">
-                  <Code2 size={16} className="text-red-400" />
+                <div className="w-8 h-8 rounded bg-indigo-500/10 flex items-center justify-center">
+                  <Code2 size={16} className="text-indigo-400" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-[#e8e6e3] leading-none">{modalContent?.player?.player?.username || "Submission"}</h3>
-                  <p className="text-[10px] text-[#6b6560] mt-1 uppercase tracking-wider">{modalContent?.language || "plain"} • Solution</p>
+                  <h3 className="text-sm font-semibold text-[#e4e4e7] leading-none">{modalContent?.player?.player?.username || "Submission"}</h3>
+                  <p className="text-[10px] text-[#71717a] mt-1 uppercase tracking-wider">{modalContent?.language || "plain"} • Solution</p>
                 </div>
               </div>
               <div className="flex gap-3">
                 <button
                   onClick={() => { navigator.clipboard.writeText(modalContent?.code || ""); toastSuccess("Copied to clipboard!"); }}
-                  className="px-4 py-2 rounded-lg border border-[#1e1215] text-xs font-semibold text-[#a8a29e] hover:text-[#e8e6e3] hover:border-red-500/30 transition-all flex items-center gap-2 bg-[#0a0a0f]"
+                  className="px-4 py-2 rounded-lg border border-[#1c1c22] text-xs font-semibold text-[#a1a1aa] hover:text-[#e4e4e7] hover:border-red-500/30 transition-all flex items-center gap-2 bg-[#09090b]"
                 >
                   <Copy size={14} /> Copy
                 </button>
@@ -539,39 +539,39 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
       )}
 
       {profileModalVisible && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0a0a0f]/90 backdrop-blur-md p-4">
-          <div className="rounded-2xl border border-[#1e1215] bg-[#0f0d12] w-full max-w-sm overflow-hidden shadow-2xl animate-in">
-            <div className="h-20 bg-gradient-to-r from-red-900/40 to-black"></div>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#09090b]/90 backdrop-blur-md p-4">
+          <div className="rounded-2xl border border-[#1c1c22] bg-[#0f0f13] w-full max-w-sm overflow-hidden shadow-2xl animate-in">
+            <div className="h-20 bg-gradient-to-r from-indigo-900/40 to-black"></div>
             <div className="px-6 pb-6 relative">
-              <div className="absolute -top-10 left-6 p-1 bg-[#0f0d12] rounded-full">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-2xl font-bold text-white shadow-lg">
+              <div className="absolute -top-10 left-6 p-1 bg-[#0f0f13] rounded-full">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-2xl font-bold text-white shadow-lg">
                   {profilePlayer?.username?.[0]?.toUpperCase()}
                 </div>
               </div>
               <div className="pt-12 flex justify-between items-start">
                 <div>
-                  <h3 className="text-xl font-bold text-[#e8e6e3]">{profilePlayer?.username}</h3>
-                  <p className="text-xs text-[#6b6560] font-medium uppercase tracking-wider">{profilePlayer?.role || 'Player'}</p>
+                  <h3 className="text-xl font-bold text-[#e4e4e7]">{profilePlayer?.username}</h3>
+                  <p className="text-xs text-[#71717a] font-medium uppercase tracking-wider">{profilePlayer?.role || 'Player'}</p>
                 </div>
-                <button onClick={closeProfile} className="p-2 -mr-2 text-[#44403c] hover:text-red-400 transition-colors">
+                <button onClick={closeProfile} className="p-2 -mr-2 text-[#3f3f46] hover:text-red-400 transition-colors">
                   <X size={18} />
                 </button>
               </div>
 
               <div className="mt-8">
-                <h5 className="text-[10px] font-bold text-[#44403c] uppercase tracking-widest border-b border-[#1e1215] pb-2 mb-4">Achievements</h5>
+                <h5 className="text-[10px] font-bold text-[#3f3f46] uppercase tracking-widest border-b border-[#1c1c22] pb-2 mb-4">Achievements</h5>
                 <div className="grid grid-cols-1 gap-2">
                   {(!profilePlayer?.badges || profilePlayer.badges.length === 0) ? (
-                    <p className="text-xs text-[#44403c] py-4 text-center italic">No badges earned yet.</p>
+                    <p className="text-xs text-[#3f3f46] py-4 text-center italic">No badges earned yet.</p>
                   ) : (
                     profilePlayer.badges.map((b) => (
-                      <div key={b.key} className="flex items-center gap-3 p-3 rounded-xl bg-[#141118]/50 border border-[#1e1215] group hover:border-red-500/20 transition-all">
+                      <div key={b.key} className="flex items-center gap-3 p-3 rounded-xl bg-[#141419]/50 border border-[#1c1c22] group hover:border-red-500/20 transition-all">
                         <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-sm">
                           {b.key === 'first_solve' ? '🥇' : b.key === 'top_3' ? '⭐' : '◈'}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-bold text-[#e8e6e3] truncate">{b.name}</p>
-                          <p className="text-[9px] text-[#6b6560] font-medium uppercase">{b.rank}</p>
+                          <p className="text-xs font-bold text-[#e4e4e7] truncate">{b.name}</p>
+                          <p className="text-[9px] text-[#71717a] font-medium uppercase">{b.rank}</p>
                         </div>
                       </div>
                     ))
@@ -581,7 +581,7 @@ export default function RoomDisplay({ currentUser, onLeave = null }) {
 
               <button
                 onClick={closeProfile}
-                className="w-full mt-6 py-2.5 rounded-xl bg-[#141118] border border-[#1e1215] text-[#e8e6e3] text-xs font-bold hover:bg-red-600 hover:border-red-600 transition-all"
+                className="w-full mt-6 py-2.5 rounded-xl bg-[#141419] border border-[#1c1c22] text-[#e4e4e7] text-xs font-bold hover:bg-red-600 hover:border-red-600 transition-all"
               >
                 Close Profile
               </button>

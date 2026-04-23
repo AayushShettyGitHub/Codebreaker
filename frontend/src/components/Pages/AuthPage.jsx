@@ -31,34 +31,34 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex flex-col relative overflow-hidden">
-      {}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-red-600/5 rounded-full blur-[120px] pointer-events-none"></div>
+    <div className="min-h-screen bg-[#09090b] flex flex-col relative overflow-hidden">
+      {/* Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-indigo-600/5 rounded-full blur-[120px] pointer-events-none"></div>
 
       <div className="flex-1 flex items-center justify-center p-6 relative z-10">
         <div className="w-full max-w-md animate-in">
-          {}
+          {/* Header */}
           <div className="mb-10 text-center">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-red-600 to-red-800 mb-5 shadow-[0_0_30px_rgba(220,38,38,0.2)]">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 mb-5 shadow-[0_0_30px_rgba(99,102,241,0.2)]">
               <span className="text-white text-xl font-bold">CB</span>
             </div>
-            <h2 className="text-2xl font-bold text-[#e8e6e3] mb-1">
+            <h2 className="text-2xl font-bold text-[#e4e4e7] mb-1">
               Welcome back
             </h2>
-            <p className="text-sm text-[#6b6560]">
+            <p className="text-sm text-[#71717a]">
               Sign in to your account to continue
             </p>
           </div>
 
-          {}
-          <div className="rounded-xl border border-[#1e1215] bg-[#0f0d12] p-8 shadow-2xl">
-            {}
-            <div className="flex gap-1 mb-8 p-1 bg-[#141118] rounded-lg">
+          {/* Card */}
+          <div className="rounded-xl border border-[#1c1c22] bg-[#0f0f13] p-8 shadow-2xl">
+            {/* Tabs */}
+            <div className="flex gap-1 mb-8 p-1 bg-[#141419] rounded-lg">
               <button
                 onClick={() => handleTabSwitch("login")}
                 className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all ${showLogin
-                    ? "bg-red-600 text-white shadow-sm"
-                    : "text-[#6b6560] hover:text-[#a8a29e]"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-[#71717a] hover:text-[#a1a1aa]"
                   }`}
               >
                 Login
@@ -66,8 +66,8 @@ export default function AuthPage() {
               <button
                 onClick={() => handleTabSwitch("signup")}
                 className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all ${!showLogin
-                    ? "bg-red-600 text-white shadow-sm"
-                    : "text-[#6b6560] hover:text-[#a8a29e]"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-[#71717a] hover:text-[#a1a1aa]"
                   }`}
               >
                 Register
@@ -82,7 +82,7 @@ export default function AuthPage() {
           <div className="mt-6 text-center">
             <button
               onClick={() => navigate("/")}
-              className="text-sm text-[#44403c] hover:text-red-400 transition-colors"
+              className="text-sm text-[#3f3f46] hover:text-indigo-400 transition-colors"
             >
               ← Back to Home
             </button>

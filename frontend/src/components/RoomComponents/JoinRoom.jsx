@@ -48,17 +48,17 @@ export default function JoinRoom({ playerId, onJoin }) {
   return (
     <form onSubmit={handleJoin} className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-[#e8e6e3] mb-1">Join Room</h3>
-        <p className="text-sm text-[#6b6560]">
+        <h3 className="text-lg font-semibold text-[#e4e4e7] mb-1">Join Room</h3>
+        <p className="text-sm text-[#71717a]">
           Enter the join code to join an existing room.
         </p>
       </div>
 
       <div className="space-y-5">
         <div>
-          <label className="block text-xs font-medium text-[#a8a29e] mb-2">Join Code</label>
+          <label className="block text-xs font-medium text-[#a1a1aa] mb-2">Join Code</label>
           <input
-            className="w-full px-4 py-3 bg-[#141118] border border-[#1e1215] rounded-lg text-[#e8e6e3] text-sm font-mono tracking-wider focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all placeholder:text-[#44403c]"
+            className="w-full px-4 py-3 bg-[#141419] border border-[#1c1c22] rounded-lg text-[#e4e4e7] text-sm font-mono tracking-wider focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all placeholder:text-[#3f3f46]"
             type="text"
             placeholder="ABC-123"
             value={joinCode}
@@ -71,7 +71,7 @@ export default function JoinRoom({ playerId, onJoin }) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-semibold transition-all hover:shadow-[0_4px_20px_rgba(220,38,38,0.3)] active:scale-[0.98] disabled:opacity-40"
+          className="w-full py-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all hover:shadow-[0_4px_20px_rgba(99,102,241,0.3)] active:scale-[0.98] disabled:opacity-40"
         >
           {loading ? "Joining..." : "Join Room"}
         </button>

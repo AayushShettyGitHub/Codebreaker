@@ -8,8 +8,8 @@ import ProfilePage from "./components/Pages/ProfilePage";
 import CompetitionPage from "./components/Pages/CompetitionPage";
 import PublicRoomsPage from "./components/Pages/PublicRoomsPage";
 import AchievementsPage from "./components/Pages/AchievementsPage";
-import Footer from "./components/MainComponents/Footer";
-import Navbar from "./components/MainComponents/Navbar";
+import Footer from "./components/layout/Footer";
+import Navbar from "./components/layout/Navbar";
 import { AuthProvider } from "./context/AuthContext";
 import { RoomProvider } from "./context/RoomContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -32,7 +32,7 @@ export default function App() {
             pauseOnHover
             theme="dark"
           />
-          <div className="min-h-screen flex flex-col bg-[#0a0a0f]">
+          <div className="min-h-screen flex flex-col bg-[#09090b]">
             <AppContent />
           </div>
         </BrowserRouter>
@@ -47,7 +47,7 @@ function AppContent() {
   return (
     <>
       {user && <Navbar user={user} />}
-      <div className="flex-1 pl-4 md:pl-8 lg:pl-12">
+      <div className="flex-1">
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/auth" element={<AuthPage />} />

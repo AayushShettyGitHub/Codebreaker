@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import api from "../../config/client";
 import { useRoom } from "../../context/RoomContext";
@@ -185,22 +185,22 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
   ];
 
   return (
-    <div className="rounded-xl border border-[#1e1215] bg-[#0f0d12] overflow-hidden flex flex-col h-full animate-in">
+    <div className="rounded-xl border border-[#1c1c22] bg-[#0f0f13] overflow-hidden flex flex-col h-full animate-in">
       { }
       {message && (
-        <div className="bg-red-500/5 border-b border-red-500/10 px-5 py-2.5">
-          <p className="text-xs text-red-400 font-medium">{message}</p>
+        <div className="bg-indigo-500/5 border-b border-indigo-500/10 px-5 py-2.5">
+          <p className="text-xs text-indigo-400 font-medium">{message}</p>
         </div>
       )}
 
       { }
-      <div className="bg-[#141118] border-b border-[#1e1215] px-5 py-4">
+      <div className="bg-[#141419] border-b border-[#1c1c22] px-5 py-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-[#e8e6e3]">Admin Workspace</h2>
+          <h2 className="text-sm font-semibold text-[#e4e4e7]">Admin Workspace</h2>
           {isProblemActive && (
             <div className="flex items-center gap-2">
-              <Clock size={14} className="text-[#6b6560]" />
-              <div className={`font-mono text-xs font-semibold px-2.5 py-1 rounded-md ${timeLeft <= 30 ? "bg-red-500/10 text-red-400" : "bg-[#0f0d12] text-[#e8e6e3] border border-[#1e1215]"}`}>
+              <Clock size={14} className="text-[#71717a]" />
+              <div className={`font-mono text-xs font-semibold px-2.5 py-1 rounded-md ${timeLeft <= 30 ? "bg-indigo-500/10 text-indigo-400" : "bg-[#0f0f13] text-[#e4e4e7] border border-[#1c1c22]"}`}>
                 {Math.floor(timeLeft / 60).toString().padStart(2, "0")}:
                 {(timeLeft % 60).toString().padStart(2, "0")}
               </div>
@@ -210,14 +210,14 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
       </div>
 
       { }
-      <div className="flex gap-3 border-b border-[#1e1215] bg-[#0a0a0f] overflow-x-auto custom-scrollbar-h">
+      <div className="flex gap-3 border-b border-[#1c1c22] bg-[#09090b] overflow-x-auto custom-scrollbar-h">
         {adminTabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`px-6 py-3 text-xs font-medium transition-all border-b-2 flex-shrink-0 flex items-center justify-center gap-1.5 whitespace-nowrap ${activeTab === tab.key
-              ? "border-red-500 text-red-400 bg-red-500/5"
-              : "border-transparent text-[#6b6560] hover:text-[#a8a29e] hover:bg-[#141118]"
+              ? "border-indigo-500 text-indigo-400 bg-indigo-500/5"
+              : "border-transparent text-[#71717a] hover:text-[#a1a1aa] hover:bg-[#141419]"
               }`}
           >
             {tab.icon}
@@ -232,18 +232,18 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
           <div className="space-y-6 animate-in">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-xs font-medium text-[#a8a29e] mb-2">Problem Title</label>
+                <label className="block text-xs font-medium text-[#a1a1aa] mb-2">Problem Title</label>
                 <input
-                  className="w-full px-4 py-3 bg-[#141118] border border-[#1e1215] rounded-lg text-[#e8e6e3] text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all placeholder:text-[#44403c]"
+                  className="w-full px-4 py-3 bg-[#141419] border border-[#1c1c22] rounded-lg text-[#e4e4e7] text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all placeholder:text-[#3f3f46]"
                   placeholder="Two Sum"
                   value={title}
                   onChange={e => setTitle(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#a8a29e] mb-2">Difficulty</label>
+                <label className="block text-xs font-medium text-[#a1a1aa] mb-2">Difficulty</label>
                 <select
-                  className="w-full px-4 py-3 bg-[#141118] border border-[#1e1215] rounded-lg text-[#e8e6e3] text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all appearance-none cursor-pointer"
+                  className="w-full px-4 py-3 bg-[#141419] border border-[#1c1c22] rounded-lg text-[#e4e4e7] text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all appearance-none cursor-pointer"
                   value={difficulty}
                   onChange={e => setDifficulty(e.target.value)}
                 >
@@ -255,9 +255,9 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[#a8a29e] mb-2">Problem Description</label>
+              <label className="block text-xs font-medium text-[#a1a1aa] mb-2">Problem Description</label>
               <textarea
-                className="w-full px-4 py-3 bg-[#141118] border border-[#1e1215] rounded-lg text-[#e8e6e3] text-sm font-mono focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all placeholder:text-[#44403c]"
+                className="w-full px-4 py-3 bg-[#141419] border border-[#1c1c22] rounded-lg text-[#e4e4e7] text-sm font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all placeholder:text-[#3f3f46]"
                 placeholder="Describe the problem..."
                 rows={5}
                 value={description}
@@ -267,17 +267,17 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
 
             <div>
               <div className="flex items-center justify-between mb-3">
-                <label className="text-xs font-medium text-[#a8a29e]">Test Cases</label>
-                <span className="text-xs text-[#44403c]">{testCases.length} case(s)</span>
+                <label className="text-xs font-medium text-[#a1a1aa]">Test Cases</label>
+                <span className="text-xs text-[#3f3f46]">{testCases.length} case(s)</span>
               </div>
               <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
                 {testCases.map((tc, i) => (
-                  <div key={i} className="p-5 rounded-lg bg-[#141118] border border-[#1e1215] hover:border-[#2a1519] transition-all">
+                  <div key={i} className="p-5 rounded-lg bg-[#141419] border border-[#1c1c22] hover:border-[#27272a] transition-all">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                       <div>
-                        <label className="text-xs text-[#6b6560] mb-1.5 block">Input {i + 1}</label>
+                        <label className="text-xs text-[#71717a] mb-1.5 block">Input {i + 1}</label>
                         <textarea
-                          className="w-full px-3 py-2.5 bg-[#0a0a0f] border border-[#1e1215] rounded-lg text-[#e8e6e3] font-mono text-sm focus:outline-none focus:border-red-500 transition-all placeholder:text-[#44403c]"
+                          className="w-full px-3 py-2.5 bg-[#09090b] border border-[#1c1c22] rounded-lg text-[#e4e4e7] font-mono text-sm focus:outline-none focus:border-indigo-500 transition-all placeholder:text-[#3f3f46]"
                           placeholder="Input data"
                           rows={2}
                           value={tc.input}
@@ -285,9 +285,9 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-[#6b6560] mb-1.5 block">Expected Output {i + 1}</label>
+                        <label className="text-xs text-[#71717a] mb-1.5 block">Expected Output {i + 1}</label>
                         <textarea
-                          className="w-full px-3 py-2.5 bg-[#0a0a0f] border border-[#1e1215] rounded-lg text-[#e8e6e3] font-mono text-sm focus:outline-none focus:border-red-500 transition-all placeholder:text-[#44403c]"
+                          className="w-full px-3 py-2.5 bg-[#09090b] border border-[#1c1c22] rounded-lg text-[#e4e4e7] font-mono text-sm focus:outline-none focus:border-indigo-500 transition-all placeholder:text-[#3f3f46]"
                           placeholder="Expected output"
                           rows={2}
                           value={tc.output}
@@ -296,7 +296,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
                       </div>
                     </div>
                     {testCases.length > 1 && (
-                      <button className="text-xs text-red-400 hover:text-red-300 font-medium transition-colors" onClick={() => removeTestCase(i)}>
+                      <button className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors" onClick={() => removeTestCase(i)}>
                         Remove
                       </button>
                     )}
@@ -306,7 +306,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
 
               <button
                 onClick={addTestCase}
-                className="w-full py-3 mt-4 rounded-lg border border-dashed border-[#1e1215] text-[#6b6560] hover:text-[#a8a29e] hover:border-[#2a1519] text-sm font-medium transition-all"
+                className="w-full py-3 mt-4 rounded-lg border border-dashed border-[#1c1c22] text-[#71717a] hover:text-[#a1a1aa] hover:border-[#27272a] text-sm font-medium transition-all"
               >
                 + Add Test Case
               </button>
@@ -314,21 +314,21 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-xs font-medium text-[#a8a29e] mb-2">Timer Duration (seconds)</label>
+                <label className="block text-xs font-medium text-[#a1a1aa] mb-2">Timer Duration (seconds)</label>
                 <input
                   type="number"
                   min={10}
-                  className="w-full px-4 py-3 bg-[#141118] border border-[#1e1215] rounded-lg text-[#e8e6e3] text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all"
+                  className="w-full px-4 py-3 bg-[#141419] border border-[#1c1c22] rounded-lg text-[#e4e4e7] text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all"
                   value={timerDuration}
                   onChange={e => setTimerDuration(Number(e.target.value))}
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#a8a29e] mb-2">Max Possible Solvers</label>
+                <label className="block text-xs font-medium text-[#a1a1aa] mb-2">Max Possible Solvers</label>
                 <input
                   type="number"
                   min={1}
-                  className="w-full px-4 py-3 bg-[#141118] border border-[#1e1215] rounded-lg text-[#e8e6e3] text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all"
+                  className="w-full px-4 py-3 bg-[#141419] border border-[#1c1c22] rounded-lg text-[#e4e4e7] text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all"
                   value={maxCorrectAnswers}
                   onChange={e => setMaxCorrectAnswers(Number(e.target.value))}
                 />
@@ -336,7 +336,7 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
             </div>
 
             <button
-              className="w-full py-3.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-semibold transition-all hover:shadow-[0_4px_20px_rgba(220,38,38,0.3)] active:scale-[0.98] disabled:opacity-40"
+              className="w-full py-3.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all hover:shadow-[0_4px_20px_rgba(220,38,38,0.3)] active:scale-[0.98] disabled:opacity-40"
               onClick={handlePost}
               disabled={loading}
             >
@@ -356,8 +356,8 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
             {myRoom?.currentProblem ? (
               <Submit roomId={roomId} playerId={playerId} problemId={myRoom.currentProblem?.id} />
             ) : (
-              <div className="text-center py-16 rounded-lg border border-dashed border-[#1e1215] bg-[#141118]">
-                <p className="text-sm text-[#44403c]">No problem active. Create one to start.</p>
+              <div className="text-center py-16 rounded-lg border border-dashed border-[#1c1c22] bg-[#141419]">
+                <p className="text-sm text-[#3f3f46]">No problem active. Create one to start.</p>
               </div>
             )}
           </div>
@@ -365,22 +365,22 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
 
         {activeTab === "settings" && (
           <div className="space-y-8 animate-in max-w-2xl mx-auto">
-            <div className="rounded-xl border border-[#1e1215] bg-[#141118] p-8">
-              <h3 className="text-sm font-semibold text-[#e8e6e3] mb-6 flex items-center gap-2">
-                <Settings size={16} className="text-red-400" /> Room Settings
+            <div className="rounded-xl border border-[#1c1c22] bg-[#141419] p-8">
+              <h3 className="text-sm font-semibold text-[#e4e4e7] mb-6 flex items-center gap-2">
+                <Settings size={16} className="text-indigo-400" /> Room Settings
               </h3>
 
-              <div className="p-6 rounded-lg bg-[#0a0a0f] border border-[#1e1215] mb-6">
-                <p className="text-xs text-[#6b6560] mb-3">Join Code</p>
+              <div className="p-6 rounded-lg bg-[#09090b] border border-[#1c1c22] mb-6">
+                <p className="text-xs text-[#71717a] mb-3">Join Code</p>
                 <div className="flex items-center gap-3">
-                  <div className="flex-1 px-5 py-4 bg-[#141118] border border-[#1e1215] rounded-lg font-mono text-2xl font-bold text-[#e8e6e3] text-center">
+                  <div className="flex-1 px-5 py-4 bg-[#141419] border border-[#1c1c22] rounded-lg font-mono text-2xl font-bold text-[#e4e4e7] text-center">
                     {roomCode}
                   </div>
                   <button
                     onClick={copyRoomCode}
                     className={`px-5 py-4 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${copied
                       ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                      : "border border-[#1e1215] text-[#a8a29e] hover:border-red-500/30 hover:text-red-400"
+                      : "border border-[#1c1c22] text-[#a1a1aa] hover:border-indigo-500/30 hover:text-indigo-400"
                       }`}
                   >
                     {copied ? <><Check size={14} /> Copied!</> : <><Copy size={14} /> Copy</>}
@@ -389,17 +389,17 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
               </div>
 
               <div className="space-y-2.5">
-                <p className="text-xs text-[#6b6560] font-medium">Guidelines</p>
-                <ul className="space-y-1.5 text-xs text-[#44403c]">
-                  <li>• Share the join code with other players.</li>
-                  <li>• Players can only join if they have the code.</li>
-                  <li>• Admin can end the room at any time.</li>
+                <p className="text-xs text-[#71717a] font-medium">Guidelines</p>
+                <ul className="space-y-1.5 text-xs text-[#3f3f46]">
+                  <li>â€¢ Share the join code with other players.</li>
+                  <li>â€¢ Players can only join if they have the code.</li>
+                  <li>â€¢ Admin can end the room at any time.</li>
                 </ul>
               </div>
             </div>
 
             <button
-              className="w-full py-3.5 rounded-lg border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white text-sm font-semibold transition-all flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-lg border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500 hover:text-white text-sm font-semibold transition-all flex items-center justify-center gap-2"
               onClick={handleDelete}
               disabled={loading}
             >
@@ -416,9 +416,9 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
                 { l: 'Max Solvers', v: myRoom?.maxCorrectAnswers || 0 },
                 { l: 'Solved', v: players?.filter(p => p?.hasAnsweredCorrectly)?.length || 0 }
               ].map((s, i) => (
-                <div key={i} className="p-5 rounded-lg bg-[#141118] border border-[#1e1215] text-center">
-                  <p className="text-xs text-[#6b6560] mb-1">{s.l}</p>
-                  <p className="text-xl font-bold text-[#e8e6e3]">{s.v}</p>
+                <div key={i} className="p-5 rounded-lg bg-[#141419] border border-[#1c1c22] text-center">
+                  <p className="text-xs text-[#71717a] mb-1">{s.l}</p>
+                  <p className="text-xl font-bold text-[#e4e4e7]">{s.v}</p>
                 </div>
               ))}
             </div>
@@ -428,24 +428,24 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
                 {[...players]
                   .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
                   .map((player, idx) => (
-                    <div key={player.id} className="flex items-center gap-4 p-4 rounded-lg bg-[#141118] border border-[#1e1215] hover:border-[#2a1519] transition-all">
-                      <div className="text-xs font-bold text-[#44403c] w-6 text-center">{idx + 1}</div>
+                    <div key={player.id} className="flex items-center gap-4 p-4 rounded-lg bg-[#141419] border border-[#1c1c22] hover:border-[#27272a] transition-all">
+                      <div className="text-xs font-bold text-[#3f3f46] w-6 text-center">{idx + 1}</div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[#e8e6e3] truncate flex items-center gap-2">
+                        <p className="text-sm font-medium text-[#e4e4e7] truncate flex items-center gap-2">
                           {player.username}
-                          {player.id === myRoom.admin?.id && <Crown size={12} className="text-red-400" />}
+                          {player.id === myRoom.admin?.id && <Crown size={12} className="text-indigo-400" />}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-bold text-[#e8e6e3]">{player.score ?? 0}</p>
-                        <p className="text-[10px] text-[#44403c]">pts</p>
+                        <p className="text-lg font-bold text-[#e4e4e7]">{player.score ?? 0}</p>
+                        <p className="text-[10px] text-[#3f3f46]">pts</p>
                       </div>
                     </div>
                   ))}
               </div>
             ) : (
-              <div className="text-center py-16 rounded-lg border border-dashed border-[#1e1215] bg-[#141118]">
-                <p className="text-sm text-[#44403c]">No data records.</p>
+              <div className="text-center py-16 rounded-lg border border-dashed border-[#1c1c22] bg-[#141419]">
+                <p className="text-sm text-[#3f3f46]">No data records.</p>
               </div>
             )}
           </div>
@@ -453,24 +453,24 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
 
         {activeTab === "solutions" && (
           <div className="animate-in space-y-6 max-w-4xl mx-auto">
-            <div className="flex items-center gap-2 pb-3 border-b border-[#1e1215]">
+            <div className="flex items-center gap-2 pb-3 border-b border-[#1c1c22]">
               <Trophy size={14} className="text-yellow-500" />
-              <p className="text-xs font-bold text-[#e8e6e3] uppercase tracking-wider">Top 3 Solutions</p>
+              <p className="text-xs font-bold text-[#e4e4e7] uppercase tracking-wider">Top 3 Solutions</p>
             </div>
             {isProblemActive ? (
-              <div className="text-center py-16 rounded-lg border border-dashed border-[#1e1215] bg-[#141118]">
-                <Trophy size={28} className="text-[#44403c] mx-auto mb-3" />
-                <p className="text-sm text-[#44403c]">Solutions will appear after the round ends.</p>
+              <div className="text-center py-16 rounded-lg border border-dashed border-[#1c1c22] bg-[#141419]">
+                <Trophy size={28} className="text-[#3f3f46] mx-auto mb-3" />
+                <p className="text-sm text-[#3f3f46]">Solutions will appear after the round ends.</p>
               </div>
             ) : topSolutions.length === 0 ? (
-              <div className="text-center py-16 rounded-lg border border-dashed border-[#1e1215] bg-[#141118]">
-                <p className="text-sm text-[#44403c]">No successful solutions yet.</p>
+              <div className="text-center py-16 rounded-lg border border-dashed border-[#1c1c22] bg-[#141419]">
+                <p className="text-sm text-[#3f3f46]">No successful solutions yet.</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {topSolutions.map((sub, i) => (
-                  <div key={sub.id} className="rounded-xl border border-[#1e1215] bg-[#141118] overflow-hidden hover:border-green-500/20 transition-all">
-                    <div className="p-5 bg-green-500/5 border-b border-[#1e1215]">
+                  <div key={sub.id} className="rounded-xl border border-[#1c1c22] bg-[#141419] overflow-hidden hover:border-green-500/20 transition-all">
+                    <div className="p-5 bg-green-500/5 border-b border-[#1c1c22]">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
@@ -479,15 +479,15 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
                             "bg-orange-500/20 text-orange-400"
                           }`}>#{i + 1}</div>
                           <div>
-                            <p className="text-sm font-semibold text-[#e8e6e3]">{sub.player?.player?.username}</p>
-                            <p className="text-xs text-[#6b6560] mt-0.5">{sub.language?.toUpperCase()}</p>
+                            <p className="text-sm font-semibold text-[#e4e4e7]">{sub.player?.player?.username}</p>
+                            <p className="text-xs text-[#71717a] mt-0.5">{sub.language?.toUpperCase()}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wider bg-green-500/10 text-green-400">Passed</span>
                           <button
                             onClick={() => { setModalContent(sub); setCodeModalVisible(true); }}
-                            className="p-2 rounded-lg bg-[#0a0a0f] border border-[#1e1215] text-[#a8a29e] hover:text-white hover:border-green-500/30 transition-all"
+                            className="p-2 rounded-lg bg-[#09090b] border border-[#1c1c22] text-[#a1a1aa] hover:text-white hover:border-green-500/30 transition-all"
                           >
                             <Code2 size={14} />
                           </button>
@@ -503,35 +503,35 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
 
         {activeTab === "my_submissions" && (
           <div className="animate-in space-y-4 max-w-4xl mx-auto">
-            <div className="flex items-center gap-2 pb-3 border-b border-[#1e1215]">
-              <FileText size={16} className="text-red-400" />
-              <p className="text-sm font-bold text-[#e8e6e3] uppercase tracking-wider">My Submissions</p>
+            <div className="flex items-center gap-2 pb-3 border-b border-[#1c1c22]">
+              <FileText size={16} className="text-indigo-400" />
+              <p className="text-sm font-bold text-[#e4e4e7] uppercase tracking-wider">My Submissions</p>
             </div>
             
             {groupedProblems.length === 0 ? (
-              <div className="text-center py-16 rounded-lg border border-dashed border-[#1e1215] bg-[#141118]">
-                <p className="text-sm text-[#44403c]">You haven't submitted any solutions yet.</p>
+              <div className="text-center py-16 rounded-lg border border-dashed border-[#1c1c22] bg-[#141419]">
+                <p className="text-sm text-[#3f3f46]">You haven't submitted any solutions yet.</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {groupedProblems.map((group) => (
                   <div key={group.problemId} className="space-y-3">
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-[#0a0a0f] border border-[#1e1215]">
-                      <h4 className="text-sm font-semibold text-[#e8e6e3]">{group.problemTitle}</h4>
-                      <span className="text-xs text-[#6b6560]">{group.submissions.length} Attempt(s)</span>
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-[#09090b] border border-[#1c1c22]">
+                      <h4 className="text-sm font-semibold text-[#e4e4e7]">{group.problemTitle}</h4>
+                      <span className="text-xs text-[#71717a]">{group.submissions.length} Attempt(s)</span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-4">
                       {group.submissions.map(sub => (
-                        <div key={sub.id} className="p-4 rounded-lg bg-[#141118] border border-[#1e1215] hover:border-red-500/20 transition-all">
+                        <div key={sub.id} className="p-4 rounded-lg bg-[#141419] border border-[#1c1c22] hover:border-indigo-500/20 transition-all">
                           <div className="flex items-center justify-between mb-3">
-                            <span className="text-[10px] font-bold text-[#6b6560] uppercase tracking-widest">{sub.language}</span>
-                            <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${sub.passed ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"}`}>
+                            <span className="text-[10px] font-bold text-[#71717a] uppercase tracking-widest">{sub.language}</span>
+                            <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${sub.passed ? "bg-green-500/10 text-green-400" : "bg-indigo-500/10 text-indigo-400"}`}>
                               {sub.passed ? "Passed" : "Failed"}
                             </span>
                           </div>
                           <button 
                             onClick={() => { setModalContent(sub); setCodeModalVisible(true); }}
-                            className="w-full py-2 rounded-lg bg-[#0a0a0f] border border-[#1e1215] text-xs font-medium text-[#a8a29e] hover:text-white transition-all"
+                            className="w-full py-2 rounded-lg bg-[#09090b] border border-[#1c1c22] text-xs font-medium text-[#a1a1aa] hover:text-white transition-all"
                           >
                             View Submission
                           </button>
@@ -547,32 +547,32 @@ export default function AdminRoom({ adminId, playerId, onDelete }) {
       </div>
 
       {codeModalVisible && createPortal(
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#0a0a0f]/90 backdrop-blur-xl p-4 md:p-10">
-          <div className="rounded-2xl border border-[#1e1215] bg-[#0f0d12] w-full max-w-5xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.8)] overflow-hidden animate-in" style={{ height: "75vh" }}>
-            <div className="flex items-center justify-between px-6 py-4 bg-[#141118] border-b border-[#1e1215] shrink-0">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#09090b]/90 backdrop-blur-xl p-4 md:p-10">
+          <div className="rounded-2xl border border-[#1c1c22] bg-[#0f0f13] w-full max-w-5xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.8)] overflow-hidden animate-in" style={{ height: "75vh" }}>
+            <div className="flex items-center justify-between px-6 py-4 bg-[#141419] border-b border-[#1c1c22] shrink-0">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
-                  <Code2 size={20} className="text-red-400" />
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+                  <Code2 size={20} className="text-indigo-400" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-[#e8e6e3] leading-none">
+                  <h3 className="text-base font-bold text-[#e4e4e7] leading-none">
                     {modalContent?.player?.player?.username || modalContent?.player?.username || "Submission"}
                   </h3>
-                  <p className="text-xs text-[#6b6560] mt-1.5 font-medium">
-                    {modalContent?.language?.toUpperCase() || "PLAIN"} • Solution
+                  <p className="text-xs text-[#71717a] mt-1.5 font-medium">
+                    {modalContent?.language?.toUpperCase() || "PLAIN"} â€¢ Solution
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => { navigator.clipboard.writeText(modalContent?.code || ""); toastSuccess("Copied!"); }}
-                  className="px-4 py-2 rounded-lg border border-[#1e1215] text-xs font-semibold text-[#a8a29e] hover:text-[#e8e6e3] hover:border-red-500/30 transition-all flex items-center gap-2 bg-[#0a0a0f]"
+                  className="px-4 py-2 rounded-lg border border-[#1c1c22] text-xs font-semibold text-[#a1a1aa] hover:text-[#e4e4e7] hover:border-indigo-500/30 transition-all flex items-center gap-2 bg-[#09090b]"
                 >
                   <Copy size={14} /> Copy
                 </button>
                 <button
                   onClick={() => setCodeModalVisible(false)}
-                  className="px-3 py-1.5 rounded-lg bg-red-600/10 text-red-400 hover:bg-red-600 hover:text-white transition-all text-xs font-semibold"
+                  className="px-3 py-1.5 rounded-lg bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all text-xs font-semibold"
                 >
                   Close
                 </button>

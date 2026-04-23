@@ -8,16 +8,16 @@ export default function PublicRoomsPage() {
     const { user } = useAuth();
 
     return (
-        <main className="flex-1 bg-[#0a0a0f]">
-            <div className="max-w-[1440px] mx-auto py-12 px-8 md:px-16 lg:px-20">
+        <main className="flex-1 bg-[#09090b]">
+            <div className="max-w-[1440px] mx-auto py-12 px-6 md:px-10 lg:px-16">
                 <header className="mb-10">
                     <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
-                            <Globe size={20} className="text-red-400" />
+                        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+                            <Globe size={20} className="text-indigo-400" />
                         </div>
-                        <h1 className="text-3xl font-bold text-[#e8e6e3]">Public Rooms</h1>
+                        <h1 className="text-3xl font-bold text-[#e4e4e7]">Public Rooms</h1>
                     </div>
-                    <p className="text-sm text-[#6b6560] max-w-lg">
+                    <p className="text-sm text-[#71717a] max-w-lg">
                         Browse available public rooms and join a competition.
                     </p>
                 </header>
