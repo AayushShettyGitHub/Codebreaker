@@ -109,27 +109,12 @@ public class RoomService {
         return roomRepo.findByPrivateRoomFalse();
     }
 
+    @Transactional
     public Room joinRoomByCode(String joinCode, Long playerId) {
-        Player player = playerService.findById(playerId)
-                .orElseThrow(() -> new RuntimeException("Player not found"));
-
-        if (player.getRoom() != null) {
-            throw new RuntimeException("Player already in a room");
-        }
-
         Room room = roomRepo.findByJoinCode(joinCode)
                 .orElseThrow(() -> new RuntimeException("Invalid join code"));
 
-        player.setRoom(room);
-        playerService.save(player);
-
-        RoomPlayer rp = new RoomPlayer();
-        rp.setRoom(room);
-        rp.setPlayer(player);
-        rp.setScore(0);
-        roomPlayerRepo.save(rp);
-
-        roomSocketController.playerJoined(room.getId(), player);
+        joinRoom(room.getId(), playerId);
         return room;
     }
 

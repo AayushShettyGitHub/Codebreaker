@@ -127,7 +127,7 @@ export default function Homepage() {
 
                         {/* Available rooms */}
                         <div className="lg:col-span-2 animate-in" style={{ animationDelay: "0.1s" }}>
-                            <AvailableRooms onJoin={setMyRoom} />
+                            <AvailableRooms onJoin={setMyRoom} playerId={user?.id} />
                         </div>
                     </div>
                 )}

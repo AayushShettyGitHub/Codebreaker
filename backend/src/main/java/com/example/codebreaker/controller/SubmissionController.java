@@ -17,7 +17,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import java.time.Duration;
 import java.util.Map;
 
-
 @RestController
 @RequestMapping("/api/submissions")
 public class SubmissionController {
@@ -38,8 +37,7 @@ public class SubmissionController {
 
         if (Boolean.TRUE.equals(alreadySubmitted)) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(
-                    MessageResponse.builder().error("Please wait 5 seconds between submissions").build()
-            );
+                    MessageResponse.builder().error("Please wait 5 seconds between submissions").build());
         }
 
         redisTemplate.opsForValue().set(rateLimitKey, "1", Duration.ofSeconds(5));
@@ -48,15 +46,12 @@ public class SubmissionController {
             SubmissionResult result = submissionService.submitCode(request);
             return ResponseEntity.ok(result);
         } catch (RuntimeException ex) {
-            ex.printStackTrace(); 
+            ex.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    MessageResponse.builder().error(ex.getMessage()).build()
-            );
+                    MessageResponse.builder().error(ex.getMessage()).build());
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    MessageResponse.builder().error("Internal server error: " + ex.getMessage()).build()
-            );
+                    MessageResponse.builder().error("Internal server error: " + ex.getMessage()).build());
         }
     }
 }
-

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../config/client";
 import { toastError, toastSuccess } from "../../utils/toast";
 import { Users, Globe, ChevronRight } from "lucide-react";
 
-export default function AvailableRooms({ onJoin }) {
+export default function AvailableRooms({ onJoin, playerId }) {
     const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -25,13 +26,21 @@ export default function AvailableRooms({ onJoin }) {
         return () => clearInterval(interval);
     }, []);
 
+    const navigate = useNavigate();
+
     async function handleJoin(room) {
+        if (!playerId) {
+            toastError("You must be logged in to join a room");
+            return;
+        }
+
         try {
-            const res = await api.post("/rooms/join", {
-                joinCode: room.joinCode
+            const res = await api.post(`/rooms/${room.id}/join`, {
+                playerId
             });
             toastSuccess(`Joined ${room.name}`);
             onJoin(res.data);
+            navigate("/compete");
         } catch (err) {
             console.error("Join failed", err);
             toastError("Failed to join room");

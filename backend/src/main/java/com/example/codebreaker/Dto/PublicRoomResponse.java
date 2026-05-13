@@ -14,5 +14,6 @@ public class PublicRoomResponse {
     private String name;
     private int playersCount;
     private int minPlayersToStart;
+    private String joinCode;
     private boolean privateRoom;
 }

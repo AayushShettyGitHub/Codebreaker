@@ -78,7 +78,7 @@ const CodeEditor = ({ value, onChange, language = "python", disabled = false }) 
       className={`relative w-full transition-all duration-300 flex flex-col ${isFullscreen ? "fixed inset-0 z-50 m-0" : "h-full min-h-[500px]"}`}
       style={{ backgroundColor: "#09090b" }}
     >
-      {}
+      { }
       <div className="flex items-center justify-between bg-[#141419] px-5 py-2.5 border-b border-[#1c1c22] shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex gap-1.5">

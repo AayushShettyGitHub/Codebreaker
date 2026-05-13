@@ -22,7 +22,7 @@ export default function PublicRoomsPage() {
                     </p>
                 </header>
 
-                <AvailableRooms onJoin={setMyRoom} />
+                <AvailableRooms onJoin={setMyRoom} playerId={user?.id} />
             </div>
         </main>
     );

@@ -57,6 +57,7 @@ public class RoomController {
                 .name(r.getName())
                 .playersCount(r.getPlayers() == null ? 0 : r.getPlayers().size())
                 .minPlayersToStart(r.getMinPlayersToStart())
+                .joinCode(r.getJoinCode())
                 .privateRoom(r.isPrivateRoom())
                 .build()).toList();
     }
